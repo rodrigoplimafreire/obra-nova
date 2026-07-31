@@ -51,7 +51,7 @@ export function AberturaDoMestre({
   const outrosDias = dias.filter((d) => d.dia !== hoje && d.atividades.length > 0);
 
   return (
-    <main className="flex flex-1 flex-col bg-azul">
+    <main className="flex flex-1 flex-col bg-tinta">
       <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-6 pt-10 pb-8 md:max-w-2xl md:px-12 md:py-16">
         <p className="rotulo !text-papel/70">{obra.nome}</p>
 
@@ -87,7 +87,7 @@ export function AberturaDoMestre({
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-[0.65rem] ${
                       a.status === "pendente"
                         ? "border border-papel/40 text-papel/80"
-                        : "bg-limao text-tinta"
+                        : "bg-amarelo text-tinta"
                     }`}
                   >
                     {a.status === "pendente" ? i + 1 : <Certo />}
@@ -157,14 +157,16 @@ export function AberturaDoMestre({
           </details>
         )}
 
+        {/* Amarelo sobre o grafite da tela: é a única área cheia de cor aqui,
+            e é para onde o olho tem que ir com o celular na mão. */}
         <div className="mt-auto pt-10">
           {proxima ? (
             <Link
               href={`/o/${token}/a/${proxima}`}
-              className="flex w-full items-center justify-between gap-4 rounded-full bg-tinta py-4 pr-3 pl-7 text-left font-semibold text-papel transition active:scale-[0.99]"
+              className="flex w-full items-center justify-between gap-4 rounded-full bg-amarelo py-4 pr-3 pl-7 text-left font-semibold text-tinta transition active:scale-[0.99]"
             >
               {tudoPronto ? "Rever os serviços" : "Confirmar os serviços"}
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-limao text-tinta">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-tinta text-amarelo">
                 <Seta />
               </span>
             </Link>

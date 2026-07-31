@@ -1,29 +1,34 @@
 @import "tailwindcss";
 
-/* Brand System Rodrigo Peixoto · v1.0
-   Preto e papel carregam 85% da peça. Azul lidera raciocínio (ação, foco).
-   Limão é grito de atenção — dose única por tela, nunca junto com o azul gritando. */
+/* Manual de marca Obra Nova · v1.0 · 2026
+   Duas cores mandam: amarelo de sinalização e grafite de estrutura. Os neutros
+   só sustentam interface e papel.
+
+   Grafite é a estrutura: superfícies escuras, botões redondos, texto.
+   Amarelo é o acento — um por tela, onde o olho precisa cair. Nunca como
+   texto sobre claro: aí entra `amarelo-tinta`, que passa em contraste. */
 @theme {
-  --color-tinta: #0e0e0e;
-  --color-grafite: #2a2a28;
-  --color-fumaca: #45453f;
-  --color-cinza: #8c8c8a;
-  --color-nevoa: #cdcdcb;
-  --color-papel: #f4f4f2;
-  --color-papel-fundo: #e4e4e0;
+  --color-tinta: #14181a; /* Grafite */
+  --color-grafite: #2a2f31; /* Grafite 80 */
+  --color-fumaca: #5c6360;
+  /* O #8A8378 do manual é cor de pôster: em micro-texto de 11px ele dá 2,9:1
+     sobre cal e reprova na AA. Aqui ele desce até passar, sem sair da família
+     quente do manual. */
+  --color-cinza: #5f5a51;
+  --color-nevoa: #dcd6cc;
+  --color-papel: #f5f2ec; /* Cal */
+  --color-papel-fundo: #e7e2da;
+  --color-concreto: #c9c4ba;
 
-  --color-azul: #5271ff;
-  --color-azul-vazado: #dfe5ff;
-
-  --color-limao: #c5f23d;
-  --color-limao-tinta: #5a6b1f;
+  --color-amarelo: #f7e407; /* Amarelo Obra */
+  --color-amarelo-tinta: #8a7a05; /* o amarelo que dá para ler sobre claro */
+  --color-amarelo-vazado: #fbf4c0;
 
   --color-alerta: #ff8a80;
   --color-alerta-tinta: #5c2b2e;
 
   --font-sans: var(--font-archivo), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-newsreader), Georgia, serif;
-  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
 @layer base {
@@ -46,7 +51,7 @@
   }
 
   ::selection {
-    background: var(--color-limao);
+    background: var(--color-amarelo);
     color: var(--color-tinta);
   }
 
@@ -58,7 +63,7 @@
 }
 
 @layer components {
-  /* Space Mono só em micro-texto: rótulo, índice, metadado. Caixa-alta, tracking aberto. */
+  /* Mono só no que mede: rótulo, índice, metadado. Caixa-alta, tracking aberto. */
   .rotulo {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
@@ -66,6 +71,12 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--color-cinza);
+  }
+
+  /* Sobre grafite o rótulo troca o cinza por concreto: mesmo micro-texto, e
+     legível dos dois lados. */
+  .rotulo-claro {
+    color: var(--color-concreto);
   }
 
   /* Uma escala de botão para o painel inteiro. Antes cada tela tinha a sua e o
@@ -86,9 +97,11 @@
   .btn:disabled {
     opacity: 0.45;
   }
+  /* A ação principal é amarela com texto grafite, como no manual. Amarelo
+     sobre claro só funciona como área cheia; como texto, nunca. */
   .btn-principal {
-    background: var(--color-azul);
-    color: #fff;
+    background: var(--color-amarelo);
+    color: var(--color-tinta);
   }
   .btn-escuro {
     background: var(--color-tinta);
@@ -137,7 +150,7 @@
     outline: none;
   }
   .campo:focus {
-    border-color: var(--color-azul);
+    border-color: var(--color-tinta);
   }
 
   /* Dica em hover, só onde existe mouse de verdade: no toque ela ficaria

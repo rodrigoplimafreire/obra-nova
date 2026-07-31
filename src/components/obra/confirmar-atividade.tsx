@@ -38,8 +38,8 @@ const OPCOES: { valor: Escolha; rotulo: string; nota: string }[] = [
 ];
 
 const COR_OPCAO = {
-  feita: "border-limao bg-limao text-limao-tinta",
-  parcial: "border-azul bg-azul text-white",
+  feita: "border-amarelo bg-amarelo text-tinta",
+  parcial: "border-tinta bg-tinta text-papel",
   nao_feita: "border-alerta bg-alerta text-alerta-tinta",
 } as const;
 
@@ -219,7 +219,7 @@ export function ConfirmarAtividade({
       <header className="relative shrink-0 rounded-b-[2rem] bg-tinta px-5 pt-5 pb-6 md:px-8 md:pt-7 md:pb-8">
         {navegando && (
           <span className="absolute inset-x-0 top-0 h-1 overflow-hidden bg-fumaca">
-            <span className="animate-barra block h-full w-1/3 bg-limao" />
+            <span className="animate-barra block h-full w-1/3 bg-amarelo" />
           </span>
         )}
 
@@ -236,7 +236,7 @@ export function ConfirmarAtividade({
             </svg>
           </button>
 
-          <p className="rotulo min-w-0 flex-1 truncate text-center">
+          <p className="rotulo rotulo-claro min-w-0 flex-1 truncate text-center">
             {obra.nome}
           </p>
 
@@ -246,7 +246,7 @@ export function ConfirmarAtividade({
             disabled={navegando}
             className={`flex h-10 shrink-0 items-center gap-2 rounded-full pr-3 pl-5 text-sm font-semibold transition ${
               marcado
-                ? "bg-limao text-tinta active:scale-[0.98] disabled:opacity-60"
+                ? "bg-amarelo text-tinta active:scale-[0.98] disabled:opacity-60"
                 : "border border-papel/20 text-papel/70"
             }`}
           >
@@ -273,14 +273,14 @@ export function ConfirmarAtividade({
                     a.status !== "pendente" ? ", já confirmado" : ""
                   }`}
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-mono text-xs transition ${
-                    indo ? "animate-pulse bg-limao text-tinta" : ""
+                    indo ? "animate-pulse bg-amarelo text-tinta" : ""
                   } ${
                     !indo && atual
-                      ? "bg-azul text-white"
+                      ? "bg-tinta text-papel"
                       : !indo && a.status !== "pendente"
                         ? "bg-papel text-tinta active:scale-95 md:hover:bg-white"
                         : !indo
-                          ? "border border-fumaca text-cinza active:scale-95 md:hover:border-nevoa md:hover:text-nevoa"
+                          ? "border border-fumaca text-concreto active:scale-95 md:hover:border-nevoa md:hover:text-nevoa"
                           : ""
                   } ${navegando && !indo ? "opacity-40" : ""}`}
                 >
@@ -292,10 +292,10 @@ export function ConfirmarAtividade({
         </ol>
 
         <div className="mx-auto w-full max-w-2xl">
-          <p className="rotulo mt-5">
+          <p className="rotulo rotulo-claro mt-5">
             Serviço {posicao + 1} de {total}
           </p>
-          <h1 className="mt-2 font-serif text-[1.6rem] leading-tight text-papel md:text-3xl">
+          <h1 className="mt-2 font-sans text-[1.6rem] leading-tight font-semibold -tracking-[0.02em] text-papel md:text-3xl">
             {atividade.titulo}
           </h1>
           {atividade.detalhe && (
@@ -415,14 +415,14 @@ export function ConfirmarAtividade({
                         <button
                           type="button"
                           onClick={() => void p.tentar()}
-                          className="acao-texto text-azul"
+                          className="acao-texto text-amarelo-tinta"
                         >
                           tentar de novo
                         </button>
                       </>
                     ) : (
                       <span className="flex items-center gap-2">
-                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-nevoa border-t-azul" />
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-nevoa border-t-tinta" />
                         <span className="rotulo">
                           {p.estado === "salvo" ? "salvo" : "enviando"}
                         </span>

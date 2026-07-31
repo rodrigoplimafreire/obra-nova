@@ -132,15 +132,15 @@ export function AbaDeRelatorio({
               )}
 
               {r.atencao.length > 0 && (
-                <div className="rounded-3xl border-2 border-limao bg-limao/10 px-5 py-4">
-                  <p className="rotulo !text-limao-tinta">Pontos de atenção</p>
+                <div className="rounded-3xl border-2 border-amarelo bg-amarelo/10 px-5 py-4">
+                  <p className="rotulo !text-amarelo-tinta">Pontos de atenção</p>
                   <ul className="mt-2 flex flex-col gap-2">
                     {r.atencao.map((a, i) => (
                       <li key={i}>
                         <p className="text-sm font-semibold text-tinta">
                           {a.titulo}
                           {a.precisaDecisao && (
-                            <span className="ml-2 font-mono text-[0.55rem] tracking-widest text-limao-tinta uppercase">
+                            <span className="ml-2 font-mono text-[0.55rem] tracking-widest text-amarelo-tinta uppercase">
                               precisa de decisão
                             </span>
                           )}
@@ -253,7 +253,7 @@ function Publicacao({
     <Secao titulo="Link do cliente">
       <div
         className={`rounded-3xl border-2 px-5 py-4 ${
-          noAr ? "border-limao bg-limao/10" : "border-nevoa bg-white"
+          noAr ? "border-amarelo bg-amarelo/10" : "border-nevoa bg-white"
         }`}
       >
         <p className="text-sm leading-relaxed text-grafite">

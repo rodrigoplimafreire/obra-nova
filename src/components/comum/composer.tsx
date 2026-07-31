@@ -183,14 +183,14 @@ export function Composer({
             Descartar
           </button>
 
-          <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-limao" />
+          <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-amarelo" />
           <span className="shrink-0 font-mono text-sm tabular-nums text-papel">
             {formatarDuracao(decorridoMs)}
           </span>
 
           <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-fumaca">
             <span
-              className="block h-full bg-limao transition-[width] duration-75"
+              className="block h-full bg-amarelo transition-[width] duration-75"
               style={{ width: `${Math.min(100, Math.round(nivel * 140))}%` }}
             />
           </span>
@@ -199,7 +199,7 @@ export function Composer({
             type="button"
             onClick={() => void encerrarGravacao(true)}
             aria-label="Enviar áudio"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-limao"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amarelo"
           >
             <Seta className="h-5 w-5 stroke-tinta" />
           </button>
@@ -248,7 +248,7 @@ export function Composer({
                   : undefined
               }
               className={`dica dica-cima flex h-9 w-9 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${
-                destaque === "foto" ? "text-azul" : "text-cinza"
+                destaque === "foto" ? "text-amarelo-tinta" : "text-cinza"
               }`}
             >
               <Camera className="h-5 w-5" />
@@ -296,9 +296,9 @@ export function Composer({
               onClick={() => void submeterTexto()}
               disabled={ocupado || !texto.trim()}
               aria-label="Enviar"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-azul disabled:opacity-40"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amarelo disabled:opacity-40"
             >
-              <Seta className="h-5 w-5 stroke-white" />
+              <Seta className="h-5 w-5 stroke-tinta" />
             </button>
           ) : (
             <button
@@ -309,7 +309,7 @@ export function Composer({
               data-dica="Responder por áudio é mais rápido e ajuda a captar melhor o que você quer dizer."
               // dica-cima: o botão fica no rodapé da tela, e a dica aberta para
               // baixo era cortada pela borda da janela.
-              className="dica dica-cima dica-esq flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-azul disabled:opacity-50"
+              className="dica dica-cima dica-esq flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amarelo text-tinta disabled:opacity-50"
             >
               <Microfone />
             </button>
@@ -331,7 +331,7 @@ function Seta({ className }: { className: string }) {
 
 function Microfone() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-white" strokeWidth={1.8} strokeLinecap="round">
+    <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round">
       <rect x="9" y="3" width="6" height="11" rx="3" />
       <path d="M5 11a7 7 0 0 0 14 0" />
       <path d="M12 18v3" />

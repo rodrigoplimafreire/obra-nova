@@ -55,6 +55,25 @@ npm run dev
 - **Duração de áudio por cronômetro**, nunca por metadata: o container sai sem
   cabeçalho e `audio.duration` vira `Infinity`.
 
+## Marca
+
+Manual Obra Nova v1.0, importado do projeto de design. Duas cores mandam:
+**Amarelo Obra `#F7E407`** de sinalização e **Grafite `#14181A`** de estrutura.
+Os neutros (Cal, Concreto, Névoa) só sustentam interface e papel.
+
+A regra que o código segue: **grafite é estrutura, amarelo é o acento — um por
+tela.** Ação principal é área cheia de amarelo com texto grafite; amarelo como
+texto só na variante escura (`amarelo-tinta`), que passa em contraste.
+
+Tipografia: **Archivo** para tudo que fala, **IBM Plex Mono** para tudo que
+mede. Sem serifada.
+
+O logotipo é arquivo de contorno fechado — nunca redigitado em Archivo. Vive em
+`public/marca/` e entra por `mask-image`, então a cor vem de `currentColor`: as
+três variantes do manual (grafite, cal e amarelo) são a mesma geometria pintada
+pelo contexto, em vez de três arquivos que divergem com o tempo. Trocar o
+desenho é trocar dois arquivos, em `src/components/marca.tsx`.
+
 ## O link do escritório
 
 Toda obra nasce com um mestre chamado **Escritório**, criado junto com ela. É

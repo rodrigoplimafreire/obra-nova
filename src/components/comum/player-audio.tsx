@@ -85,7 +85,7 @@ export function PlayerDeAudio({
         type="button"
         onClick={alternar}
         aria-label={tocando ? "Pausar" : "Ouvir"}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-azul"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tinta"
       >
         {tocando ? (
           <span className="flex gap-1">
@@ -93,7 +93,7 @@ export function PlayerDeAudio({
             <span className="h-3.5 w-1.5 rounded-sm bg-white" />
           </span>
         ) : (
-          <svg viewBox="0 0 24 24" className="ml-0.5 h-5 w-5 fill-white">
+          <svg viewBox="0 0 24 24" className="ml-0.5 h-5 w-5 fill-papel">
             <path d="M8 5.5v13l11-6.5z" />
           </svg>
         )}
@@ -110,7 +110,7 @@ export function PlayerDeAudio({
       >
         <div className="relative top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-nevoa">
           <div
-            className="h-full rounded-full bg-azul"
+            className="h-full rounded-full bg-tinta"
             style={{ width: `${progresso * 100}%` }}
           />
         </div>

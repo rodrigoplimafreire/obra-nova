@@ -1,5 +1,5 @@
 import { FormularioDeLogin } from "@/components/admin/formulario-login";
-import { Monograma } from "@/components/marca";
+import { Logotipo } from "@/components/marca";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +19,10 @@ export default async function Login({
   return (
     <main className="flex flex-1 flex-col bg-tinta">
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-        <Monograma tamanho={56} />
-        <p className="rotulo mt-6">Painel</p>
+        <Logotipo altura={30} className="text-papel" />
+        <p className="rotulo rotulo-claro mt-7">Painel</p>
         <h1 className="mt-3 font-sans text-4xl leading-[0.95] font-extrabold -tracking-[0.03em] text-papel">
-          Obra
-          <br />
-          Nova
+          Entrar
         </h1>
 
         {erro && MENSAGENS[erro] && (

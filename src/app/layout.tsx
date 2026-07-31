@@ -1,20 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Newsreader, Space_Mono } from "next/font/google";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+
+/* Manual, seção 05: grotesca neutra para tudo que fala, monoespaçada para
+   tudo que mede. Duas famílias e ponto. */
 
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
 });
 
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin"],
-});
-
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
-  weight: ["400", "700"],
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["400", "500"],
   subsets: ["latin"],
 });
 
@@ -39,7 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#f4f4f2",
+  themeColor: "#f5f2ec",
 };
 
 export default function RootLayout({
@@ -50,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${archivo.variable} ${newsreader.variable} ${spaceMono.variable} h-full`}
+      className={`${archivo.variable} ${plexMono.variable} h-full`}
     >
       <body className="altura-tela flex flex-col">{children}</body>
     </html>

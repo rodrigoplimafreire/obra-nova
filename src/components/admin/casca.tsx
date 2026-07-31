@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Monograma, RodapeDaMarca } from "@/components/marca";
+import { Logotipo, RodapeDaMarca } from "@/components/marca";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
 
 /**
@@ -55,15 +55,10 @@ export function Casca({
       <aside className="flex shrink-0 flex-col overflow-clip bg-tinta md:sticky md:top-0 md:h-dvh md:w-60">
         <Link
           href="/admin"
-          className="flex items-center gap-3 px-5 py-4 md:px-6 md:py-6"
+          className="flex flex-col gap-1.5 px-5 py-4 md:px-6 md:py-6"
         >
-          <Monograma tamanho={40} />
-          <div className="min-w-0">
-            <p className="font-sans leading-none font-extrabold -tracking-[0.02em] text-papel">
-              Obra Nova
-            </p>
-            <p className="rotulo mt-1">Painel</p>
-          </div>
+          <Logotipo altura={22} className="text-papel" />
+          <p className="rotulo rotulo-claro">Painel</p>
         </Link>
 
         {/* A rolagem horizontal precisa ficar no nav: no ul ela não contém,
@@ -96,7 +91,7 @@ export function Casca({
         {/* Altura compartilhada com o rodapé do conteúdo: é o que faz os dois
             traços virarem uma linha só ao chegar no fim da página. */}
         <div className="hidden h-[var(--altura-rodape)] shrink-0 flex-col justify-center border-t border-fumaca px-5 md:flex">
-          <p className="truncate font-mono text-[0.6rem] text-cinza">{email}</p>
+          <p className="truncate font-mono text-[0.6rem] text-concreto">{email}</p>
           <button
             type="button"
             onClick={() => void sair()}

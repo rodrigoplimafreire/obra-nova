@@ -32,9 +32,9 @@ const ROTULO_STATUS = {
 } as const;
 
 const COR_STATUS = {
-  pendente: "bg-nevoa text-fumaca",
-  feita: "bg-limao text-limao-tinta",
-  parcial: "bg-azul-vazado text-azul",
+  pendente: "bg-nevoa text-grafite",
+  feita: "bg-amarelo text-tinta",
+  parcial: "bg-amarelo-vazado text-tinta",
   nao_feita: "bg-alerta/25 text-alerta-tinta",
 } as const;
 
@@ -53,7 +53,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
     <main className="min-h-dvh bg-papel-fundo">
       <header className="bg-tinta px-5 py-10 md:px-8 md:py-14">
         <div className="mx-auto w-full max-w-3xl">
-          <p className="rotulo">Relatório da semana</p>
+          <p className="rotulo rotulo-claro">Relatório da semana</p>
           <h1 className="mt-3 font-sans text-3xl leading-[1.05] font-extrabold -tracking-[0.03em] text-papel md:text-5xl">
             {obra.nome}
           </h1>
@@ -61,7 +61,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
             {obra.cliente}
           </p>
           {obra.endereco && (
-            <p className="mt-1 text-sm text-cinza">{obra.endereco}</p>
+            <p className="mt-1 text-sm text-concreto">{obra.endereco}</p>
           )}
           <p className="mt-5 font-mono text-[0.7rem] tracking-widest text-nevoa uppercase">
             {PERIODO.format(new Date(`${primeiroDia}T12:00:00Z`))} a{" "}
@@ -96,7 +96,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
             <ul className="flex flex-col gap-2">
               {r.destaques.map((d, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-limao-tinta" />
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amarelo-tinta" />
                   <span className="leading-relaxed text-grafite">{d}</span>
                 </li>
               ))}
@@ -113,14 +113,14 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
                   key={i}
                   className={`rounded-3xl border-2 px-5 py-4 ${
                     a.precisaDecisao
-                      ? "border-limao bg-limao/10"
+                      ? "border-amarelo bg-amarelo/10"
                       : "border-nevoa bg-white"
                   }`}
                 >
                   <div className="flex flex-wrap items-baseline gap-2">
                     <p className="font-semibold text-tinta">{a.titulo}</p>
                     {a.precisaDecisao && (
-                      <span className="rounded-full bg-limao px-2.5 py-0.5 font-mono text-[0.55rem] tracking-widest text-limao-tinta uppercase">
+                      <span className="rounded-full bg-amarelo px-2.5 py-0.5 font-mono text-[0.55rem] tracking-widest text-tinta uppercase">
                         precisa da sua decisão
                       </span>
                     )}
@@ -278,7 +278,7 @@ function Numero({
       <p className="rotulo">{rotulo}</p>
       <p
         className={`mt-2 font-sans text-4xl leading-none font-extrabold -tracking-[0.03em] ${
-          destaque ? "text-limao-tinta" : "text-tinta"
+          destaque ? "text-amarelo-tinta" : "text-tinta"
         }`}
       >
         {valor}

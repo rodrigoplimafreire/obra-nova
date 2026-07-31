@@ -48,7 +48,7 @@ export function PainelDeObras({ obras }: { obras: ResumoDeObra[] }) {
                 <li key={o.id}>
                   <Link
                     href={`/admin/obras/${o.id}`}
-                    className="flex items-center justify-between gap-4 rounded-3xl border border-nevoa bg-white px-5 py-4 transition md:hover:border-azul"
+                    className="flex items-center justify-between gap-4 rounded-3xl border border-nevoa bg-white px-5 py-4 transition md:hover:border-tinta"
                   >
                     <span className="min-w-0">
                       <span className="block text-lg leading-tight font-semibold text-tinta">

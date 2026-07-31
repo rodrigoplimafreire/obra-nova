@@ -27,9 +27,9 @@ const ROTULO_STATUS = {
 } as const;
 
 const COR_STATUS = {
-  pendente: "bg-nevoa text-fumaca",
-  feita: "bg-limao text-limao-tinta",
-  parcial: "bg-azul-vazado text-azul",
+  pendente: "bg-nevoa text-grafite",
+  feita: "bg-amarelo text-tinta",
+  parcial: "bg-amarelo-vazado text-tinta",
   nao_feita: "bg-alerta/25 text-alerta-tinta",
 } as const;
 
@@ -109,7 +109,7 @@ export function TelaDaObra({
             valor={`${confirmadas}/${atividades.length}`}
             destaque={
               atividades.length > 0 && confirmadas === atividades.length
-                ? "limao"
+                ? "amarelo"
                 : undefined
             }
           />
@@ -134,7 +134,7 @@ export function TelaDaObra({
               aria-current={aba === chave ? "page" : undefined}
               className={`-mb-px border-b-2 px-1 pb-3 text-sm font-semibold transition ${
                 aba === chave
-                  ? "border-azul text-tinta"
+                  ? "border-tinta text-tinta"
                   : "border-transparent text-cinza"
               }`}
             >
@@ -286,7 +286,7 @@ function DadosDaObra({
           {pendente ? "Salvando…" : "Salvar"}
         </button>
         {estado?.ok && (
-          <span className="font-mono text-[0.65rem] tracking-widest text-azul uppercase">
+          <span className="font-mono text-[0.65rem] tracking-widest text-amarelo-tinta uppercase">
             salvo
           </span>
         )}
@@ -321,7 +321,7 @@ function ItemDeAtividade({
 
   if (editando) {
     return (
-      <li className="rounded-3xl border-2 border-azul bg-white px-5 py-4">
+      <li className="rounded-3xl border-2 border-tinta bg-white px-5 py-4">
         <form action={acao}>
           <p className="rotulo">Editando o serviço {numero}</p>
           <input type="hidden" name="id" value={atividade.id} />
@@ -430,7 +430,7 @@ function ItemDeAtividade({
             <button
               type="button"
               onClick={() => setEditando(true)}
-              className="acao-texto text-azul"
+              className="acao-texto text-amarelo-tinta"
             >
               editar
             </button>
@@ -451,7 +451,7 @@ function Evidencia({
   if (fotos === 0 && audios === 0) return null;
 
   return (
-    <span className="font-mono text-[0.6rem] tracking-widest text-azul uppercase">
+    <span className="font-mono text-[0.6rem] tracking-widest text-amarelo-tinta uppercase">
       {fotos > 0 && `${fotos} ${fotos === 1 ? "foto" : "fotos"}`}
       {fotos > 0 && audios > 0 && " · "}
       {audios > 0 && `${audios} ${audios === 1 ? "áudio" : "áudios"}`}
@@ -510,12 +510,12 @@ function EditorDoDia({
       {aTrazer.length > 0 && (
         <form
           action={acaoTrazer}
-          className="mb-4 rounded-3xl border-2 border-limao bg-limao/10 px-5 py-4"
+          className="mb-4 rounded-3xl border-2 border-amarelo bg-amarelo/10 px-5 py-4"
         >
           <input type="hidden" name="obraId" value={obraId} />
           <input type="hidden" name="dia" value={dia} />
 
-          <p className="rotulo !text-limao-tinta">
+          <p className="rotulo !text-amarelo-tinta">
             Ficou pendente em {formatarDiaCurto(pendencias.deQualDia)}
           </p>
           <ul className="mt-2 flex flex-col gap-1">
@@ -576,7 +576,7 @@ function EditorDoDia({
           <p
             className={`mt-3 rounded-2xl px-4 py-3 text-sm leading-relaxed ${
               salvar.ok
-                ? "bg-azul-vazado text-azul"
+                ? "bg-amarelo-vazado text-tinta"
                 : "bg-alerta/20 text-alerta-tinta"
             }`}
           >
@@ -677,7 +677,7 @@ function FormularioDeMestre({
       )}
 
       {estado?.ok && (
-        <p className="mt-3 rounded-2xl bg-limao/30 px-4 py-3 text-sm leading-relaxed text-limao-tinta">
+        <p className="mt-3 rounded-2xl bg-amarelo/30 px-4 py-3 text-sm leading-relaxed text-tinta">
           Mestre cadastrado. O link fixo dele já aparece na lista, é só mandar
           no WhatsApp uma vez.
         </p>

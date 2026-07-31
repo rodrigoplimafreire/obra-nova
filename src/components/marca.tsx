@@ -1,16 +1,30 @@
 /**
- * A marca em um lugar só.
+ * A marca em um lugar só. Manual Obra Nova v1.0.
  *
- * Enquanto a identidade do Obra Nova não fica pronta, o monograma é
- * tipográfico: as iniciais dentro do disco, sem arquivo de imagem. É de
- * propósito — o produto não pode sair assinado com a marca de outra coisa, e um
- * placeholder honesto é melhor do que a marca errada.
- *
- * Para trocar por um arquivo, é aqui e em nenhum outro lugar: troque o corpo de
- * `Monograma` por um `next/image` e devolva as referências em
- * `src/app/layout.tsx` (ícone e imagem de preview do WhatsApp).
+ * Os arquivos em `/marca` são de contorno fechado, como manda o manual: o
+ * logotipo nunca é redigitado em Archivo. Eles entram por `mask-image` e não
+ * por `<img>` — assim a cor vem de `currentColor` e as três variantes do
+ * manual (grafite, cal e amarelo) são a mesma geometria pintada pelo contexto,
+ * em vez de três arquivos que podem divergir com o tempo.
  */
 
+/** Proporções dos arquivos, para a altura definir a largura sozinha. */
+const PROPORCAO_LOCKUP = 700 / 148;
+
+function mascara(arquivo: string) {
+  return {
+    WebkitMaskImage: `url(/marca/${arquivo})`,
+    maskImage: `url(/marca/${arquivo})`,
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+    WebkitMaskSize: "contain",
+    maskSize: "contain",
+    WebkitMaskPosition: "center",
+    maskPosition: "center",
+  } as const;
+}
+
+/** O símbolo: o N cortado pela via. Ícone do produto. */
 export function Monograma({
   tamanho = 40,
   className = "",
@@ -21,17 +35,40 @@ export function Monograma({
   return (
     <span
       aria-hidden
-      style={{ width: tamanho, height: tamanho, fontSize: tamanho * 0.36 }}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-limao font-sans font-extrabold -tracking-[0.04em] text-tinta ${className}`}
-    >
-      ON
-    </span>
+      style={{ ...mascara("logo-mark.svg"), width: tamanho, height: tamanho }}
+      className={`inline-block shrink-0 bg-current ${className}`}
+    />
   );
 }
 
 /**
- * Assinatura de rodapé. `tom` acompanha o fundo: `claro` para telas de papel,
- * `escuro` para o azul e o preto.
+ * A assinatura completa: símbolo e logotipo. `altura` é a do arquivo inteiro;
+ * a largura sai da proporção, porque esticar invalida a assinatura.
+ */
+export function Logotipo({
+  altura = 28,
+  className = "",
+}: {
+  altura?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      role="img"
+      aria-label="Obra Nova"
+      style={{
+        ...mascara("logo-lockup.svg"),
+        height: altura,
+        width: altura * PROPORCAO_LOCKUP,
+      }}
+      className={`inline-block shrink-0 bg-current ${className}`}
+    />
+  );
+}
+
+/**
+ * Assinatura de rodapé. `tom` acompanha o fundo: `claro` para telas de cal,
+ * `escuro` para o grafite e o amarelo.
  */
 export function RodapeDaMarca({
   tom = "claro",
@@ -49,7 +86,7 @@ export function RodapeDaMarca({
   semBorda?: boolean;
 }) {
   const escuro = tom === "escuro";
-  // Assinatura de outra empresa não vem acompanhada do nosso monograma. O
+  // Assinatura de outra empresa não vem acompanhada da nossa marca. O
   // relatório é da empreiteira; nós somos o rodapé discreto, não o co-autor.
   const nosso = !nome;
 
@@ -61,20 +98,24 @@ export function RodapeDaMarca({
           : `mt-auto border-t pt-5 ${escuro ? "border-white/15" : "border-nevoa"}`
       }`}
     >
-      {nosso && (
-        <Monograma tamanho={28} className={escuro ? "opacity-90" : ""} />
-      )}
       <div className="min-w-0">
-        <p
-          className={`font-sans text-sm leading-none font-extrabold -tracking-[0.02em] ${
-            escuro ? "text-papel" : "text-tinta"
-          }`}
-        >
-          {nome ?? "Obra Nova"}
-        </p>
+        {nosso ? (
+          <Logotipo
+            altura={20}
+            className={escuro ? "text-papel" : "text-tinta"}
+          />
+        ) : (
+          <p
+            className={`font-sans text-sm leading-none font-extrabold -tracking-[0.02em] ${
+              escuro ? "text-papel" : "text-tinta"
+            }`}
+          >
+            {nome}
+          </p>
+        )}
         {nota && (
           <p
-            className={`mt-1 font-mono text-[0.6rem] tracking-widest uppercase ${
+            className={`mt-1.5 font-mono text-[0.6rem] tracking-widest uppercase ${
               escuro ? "text-papel/60" : "text-cinza"
             }`}
           >

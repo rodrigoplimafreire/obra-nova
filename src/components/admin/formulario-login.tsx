@@ -43,7 +43,7 @@ export function FormularioDeLogin() {
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="username"
           required
-          className="rounded-2xl border border-fumaca bg-grafite px-4 py-3 text-papel outline-none focus:border-azul"
+          className="rounded-2xl border border-fumaca bg-grafite px-4 py-3 text-papel outline-none focus:border-amarelo"
         />
       </label>
 
@@ -55,7 +55,7 @@ export function FormularioDeLogin() {
           onChange={(e) => setSenha(e.target.value)}
           autoComplete="current-password"
           required
-          className="rounded-2xl border border-fumaca bg-grafite px-4 py-3 text-papel outline-none focus:border-azul"
+          className="rounded-2xl border border-fumaca bg-grafite px-4 py-3 text-papel outline-none focus:border-amarelo"
         />
       </label>
 
@@ -71,7 +71,7 @@ export function FormularioDeLogin() {
         className="mt-2 flex items-center justify-between gap-4 rounded-full bg-papel py-4 pr-3 pl-7 text-left font-semibold text-tinta disabled:opacity-60"
       >
         {entrando ? "Entrando…" : "Entrar"}
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-limao">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amarelo">
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-tinta" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
