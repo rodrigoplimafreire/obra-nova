@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/* Brand System Rodrigo Peixoto · v1.0
+   Preto e papel carregam 85% da peça. Azul lidera raciocínio (ação, foco).
+   Limão é grito de atenção — dose única por tela, nunca junto com o azul gritando. */
+@theme {
+  --color-tinta: #0e0e0e;
+  --color-grafite: #2a2a28;
+  --color-fumaca: #45453f;
+  --color-cinza: #8c8c8a;
+  --color-nevoa: #cdcdcb;
+  --color-papel: #f4f4f2;
+  --color-papel-fundo: #e4e4e0;
+
+  --color-azul: #5271ff;
+  --color-azul-vazado: #dfe5ff;
+
+  --color-limao: #c5f23d;
+  --color-limao-tinta: #5a6b1f;
+
+  --color-alerta: #ff8a80;
+  --color-alerta-tinta: #5c2b2e;
+
+  --font-sans: var(--font-archivo), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  :root {
+    /* Altura do rodapé do painel. A mesma na barra lateral e na coluna de
+       conteúdo, para os dois traços se encontrarem numa linha só. */
+    --altura-rodape: 4.5rem;
+  }
+
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-papel);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-limao);
+    color: var(--color-tinta);
+  }
+
+  /* iOS: o teclado empurra o layout e o rodapé fixo some.
+     dvh acompanha a viewport visível; o restante fica na Fase 2. */
+  .altura-tela {
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  /* Space Mono só em micro-texto: rótulo, índice, metadado. Caixa-alta, tracking aberto. */
+  .rotulo {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-cinza);
+  }
+
+  /* Uma escala de botão para o painel inteiro. Antes cada tela tinha a sua e o
+     olho precisava procurar onde estava a ação. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    transition: opacity 150ms;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+  }
+  .btn-principal {
+    background: var(--color-azul);
+    color: #fff;
+  }
+  .btn-escuro {
+    background: var(--color-tinta);
+    color: var(--color-papel);
+  }
+  .btn-vazado {
+    border: 1px solid var(--color-nevoa);
+    background: #fff;
+    color: var(--color-grafite);
+  }
+  .btn-perigo {
+    background: var(--color-alerta-tinta);
+    color: var(--color-papel);
+  }
+
+  /* Link discreto de ação secundária: sempre mono, sempre sublinhado. */
+  .acao-texto {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* Barra indeterminada de navegação: a pessoa precisa ver que a tela está
+     carregando, senão parece que travou. */
+  @keyframes barra {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
+  .animate-barra {
+    animation: barra 1.1s ease-in-out infinite;
+  }
+
+  .campo {
+    width: 100%;
+    border-radius: 1rem;
+    border: 1px solid var(--color-nevoa);
+    background: #fff;
+    padding: 0.75rem 1rem;
+    outline: none;
+  }
+  .campo:focus {
+    border-color: var(--color-azul);
+  }
+
+  /* Dica em hover, só onde existe mouse de verdade: no toque ela ficaria
+     presa na tela depois do tap. O texto vem de data-dica. */
+  @media (hover: hover) and (pointer: fine) {
+    .dica {
+      position: relative;
+    }
+    .dica::after {
+      content: attr(data-dica);
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      left: 50%;
+      z-index: 60;
+      max-width: 16rem;
+      width: max-content;
+      transform: translateX(-50%);
+      border-radius: 0.75rem;
+      background: var(--color-tinta);
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.35;
+      letter-spacing: 0;
+      text-transform: none;
+      text-decoration: none;
+      color: var(--color-papel);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease 200ms;
+    }
+    .dica:hover::after,
+    .dica:focus-visible::after {
+      opacity: 1;
+    }
+    /* Perto da borda direita, ancora pela direita para não vazar da tela. */
+    .dica-esq::after {
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+
+    /* Perto da borda de baixo (o Sair da barra lateral), abre pra cima —
+       embaixo ela seria cortada pelo overflow-clip do container. */
+    .dica-cima::after {
+      top: auto;
+      bottom: calc(100% + 0.5rem);
+    }
+  }
+
+  /* A barra nativa do Windows rasgava o canto arredondado da janela modal. */
+  .rolagem {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-nevoa) transparent;
+    overscroll-behavior: contain;
+  }
+
+  /* O campo de texto do composer, no comportamento do WhatsApp Web: sem barra
+     nenhuma enquanto o texto cabe, e quando passa do teto a barra aparece
+     dentro do balão, fina e afastada da borda arredondada. A borda
+     transparente com background-clip cria esse respiro sem reservar largura
+     extra no layout. */
+  .rolagem-campo {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-nevoa) transparent;
+    overscroll-behavior: contain;
+  }
+  .rolagem-campo::-webkit-scrollbar {
+    width: 14px;
+  }
+  .rolagem-campo::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .rolagem-campo::-webkit-scrollbar-thumb {
+    background-color: var(--color-nevoa);
+    border-radius: 9999px;
+    border: 5px solid transparent;
+    background-clip: padding-box;
+  }
+  .rolagem-campo::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-cinza);
+  }
+}
