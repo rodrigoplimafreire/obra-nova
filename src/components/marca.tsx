@@ -49,6 +49,9 @@ export function RodapeDaMarca({
   semBorda?: boolean;
 }) {
   const escuro = tom === "escuro";
+  // Assinatura de outra empresa não vem acompanhada do nosso monograma. O
+  // relatório é da empreiteira; nós somos o rodapé discreto, não o co-autor.
+  const nosso = !nome;
 
   return (
     <footer
@@ -58,7 +61,9 @@ export function RodapeDaMarca({
           : `mt-auto border-t pt-5 ${escuro ? "border-white/15" : "border-nevoa"}`
       }`}
     >
-      <Monograma tamanho={28} className={escuro ? "opacity-90" : ""} />
+      {nosso && (
+        <Monograma tamanho={28} className={escuro ? "opacity-90" : ""} />
+      )}
       <div className="min-w-0">
         <p
           className={`font-sans text-sm leading-none font-extrabold -tracking-[0.02em] ${

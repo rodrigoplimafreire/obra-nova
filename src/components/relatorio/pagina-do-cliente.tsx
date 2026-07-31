@@ -247,12 +247,16 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
             nome={obra.marcaNome ?? undefined}
             nota="Relatório de obra"
           />
+          {/* A nota não pode afirmar quem digitou o relato: às vezes é o mestre
+              no canteiro, às vezes é o escritório lançando o que a equipe
+              passou por áudio. O que sempre vale é que o texto foi redigido
+              automaticamente e revisado por gente antes de chegar aqui. */}
           <p className="mt-5 text-xs leading-relaxed text-cinza">
             O texto deste relatório foi redigido automaticamente a partir do
-            relato diário do mestre de obras, digitado ou gravado no canteiro.
-            As fotos são do canteiro e não passaram por análise automática:
-            elas estão aqui para você olhar. Qualquer dúvida sobre um serviço,
-            fale com a equipe da obra.
+            relato da equipe da obra, e revisado antes de ser publicado. As
+            fotos vêm do canteiro e não passaram por análise automática: elas
+            estão aqui para você olhar. Qualquer dúvida sobre um serviço, fale
+            com a equipe da obra.
           </p>
         </footer>
       </div>
