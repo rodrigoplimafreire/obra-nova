@@ -278,7 +278,7 @@ function Numero({
       <p className="rotulo">{rotulo}</p>
       <p
         className={`mt-2 font-sans text-4xl leading-none font-extrabold -tracking-[0.03em] ${
-          destaque ? "text-amarelo-tinta" : "text-tinta"
+          destaque ? "text-arroio-tinta" : "text-tinta"
         }`}
       >
         {valor}

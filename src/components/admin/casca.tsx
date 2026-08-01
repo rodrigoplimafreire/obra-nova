@@ -57,7 +57,7 @@ export function Casca({
           href="/admin"
           className="flex flex-col gap-1.5 px-5 py-4 md:px-6 md:py-6"
         >
-          <Logotipo altura={22} className="text-papel" />
+          <Logotipo altura={28} className="text-papel" />
           <p className="rotulo rotulo-claro">Painel</p>
         </Link>
 

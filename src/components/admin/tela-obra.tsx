@@ -109,7 +109,7 @@ export function TelaDaObra({
             valor={`${confirmadas}/${atividades.length}`}
             destaque={
               atividades.length > 0 && confirmadas === atividades.length
-                ? "amarelo"
+                ? "arroio"
                 : undefined
             }
           />

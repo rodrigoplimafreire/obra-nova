@@ -57,13 +57,23 @@ npm run dev
 
 ## Marca
 
-Manual Obra Nova v1.0, importado do projeto de design. Duas cores mandam:
-**Amarelo Obra `#F7E407`** de sinalização e **Grafite `#14181A`** de estrutura.
-Os neutros (Cal, Concreto, Névoa) só sustentam interface e papel.
+Manual Obra Nova v1.0, importado do projeto de design.
 
-A regra que o código segue: **grafite é estrutura, amarelo é o acento — um por
-tela.** Ação principal é área cheia de amarelo com texto grafite; amarelo como
-texto só na variante escura (`amarelo-tinta`), que passa em contraste.
+O símbolo são **sete vias que se abrem a partir de um centro vazio** — repetição
+radial das duas hastes verticais, com o miolo livre de propósito.
+
+**Cores.** Amarelo Obra `#F7E407` e Grafite `#14181A` mandam. **Arroio
+`#2E7D74`** é a cor do dado que corre: progresso, medição. Concreto e Cal só
+sustentam.
+
+A regra que o código segue:
+
+- **grafite é estrutura** — superfícies escuras, botões redondos, texto
+- **amarelo é o acento, um por tela** — a ação principal é área cheia de
+  amarelo com texto grafite; como texto só na variante `amarelo-tinta`
+- **arroio é medida, nunca ação** — barra de progresso, número que diz quanto
+  andou. Como texto pequeno, `arroio-tinta`: o tom cheio dá 4,3:1 sobre cal e
+  reprova na AA
 
 Tipografia: **Archivo** para tudo que fala, **IBM Plex Mono** para tudo que
 mede. Sem serifada.
@@ -73,6 +83,10 @@ O logotipo é arquivo de contorno fechado — nunca redigitado em Archivo. Vive 
 três variantes do manual (grafite, cal e amarelo) são a mesma geometria pintada
 pelo contexto, em vez de três arquivos que divergem com o tempo. Trocar o
 desenho é trocar dois arquivos, em `src/components/marca.tsx`.
+
+A **redução mínima de 28px** do manual está no código, não na disciplina:
+`Monograma` e `Logotipo` fazem `Math.max` com ela. Abaixo disso os vértices
+fecham entre si e o miolo some.
 
 ## O link do escritório
 

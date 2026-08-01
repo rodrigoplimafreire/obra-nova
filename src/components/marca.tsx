@@ -1,6 +1,9 @@
 /**
  * A marca em um lugar só. Manual Obra Nova v1.0.
  *
+ * O símbolo são sete vias que se abrem a partir de um centro vazio — repetição
+ * radial das duas hastes verticais, com o miolo livre de propósito.
+ *
  * Os arquivos em `/marca` são de contorno fechado, como manda o manual: o
  * logotipo nunca é redigitado em Archivo. Eles entram por `mask-image` e não
  * por `<img>` — assim a cor vem de `currentColor` e as três variantes do
@@ -8,8 +11,15 @@
  * em vez de três arquivos que podem divergir com o tempo.
  */
 
-/** Proporções dos arquivos, para a altura definir a largura sozinha. */
-const PROPORCAO_LOCKUP = 700 / 148;
+/** Proporção do lockup, para a altura definir a largura sozinha. */
+const PROPORCAO_LOCKUP = 706 / 137;
+
+/**
+ * Redução mínima do símbolo, do manual: abaixo disso os vértices fecham entre
+ * si e o miolo some. Vale para o lockup também, porque nele o símbolo ocupa a
+ * altura inteira.
+ */
+const MINIMO = 28;
 
 function mascara(arquivo: string) {
   return {
@@ -32,10 +42,11 @@ export function Monograma({
   tamanho?: number;
   className?: string;
 }) {
+  const lado = Math.max(tamanho, MINIMO);
   return (
     <span
       aria-hidden
-      style={{ ...mascara("logo-mark.svg"), width: tamanho, height: tamanho }}
+      style={{ ...mascara("logo-mark.svg"), width: lado, height: lado }}
       className={`inline-block shrink-0 bg-current ${className}`}
     />
   );
@@ -46,20 +57,21 @@ export function Monograma({
  * a largura sai da proporção, porque esticar invalida a assinatura.
  */
 export function Logotipo({
-  altura = 28,
+  altura = MINIMO,
   className = "",
 }: {
   altura?: number;
   className?: string;
 }) {
+  const alto = Math.max(altura, MINIMO);
   return (
     <span
       role="img"
       aria-label="Obra Nova"
       style={{
         ...mascara("logo-lockup.svg"),
-        height: altura,
-        width: altura * PROPORCAO_LOCKUP,
+        height: alto,
+        width: alto * PROPORCAO_LOCKUP,
       }}
       className={`inline-block shrink-0 bg-current ${className}`}
     />
@@ -100,10 +112,7 @@ export function RodapeDaMarca({
     >
       <div className="min-w-0">
         {nosso ? (
-          <Logotipo
-            altura={20}
-            className={escuro ? "text-papel" : "text-tinta"}
-          />
+          <Logotipo className={escuro ? "text-papel" : "text-tinta"} />
         ) : (
           <p
             className={`font-sans text-sm leading-none font-extrabold -tracking-[0.02em] ${

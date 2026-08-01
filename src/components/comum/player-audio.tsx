@@ -110,7 +110,7 @@ export function PlayerDeAudio({
       >
         <div className="relative top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-nevoa">
           <div
-            className="h-full rounded-full bg-tinta"
+            className="h-full rounded-full bg-arroio"
             style={{ width: `${progresso * 100}%` }}
           />
         </div>

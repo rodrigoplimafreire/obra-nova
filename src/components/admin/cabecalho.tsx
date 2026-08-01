@@ -65,7 +65,8 @@ export function Indicador({
   rotulo: string;
   valor: number | string;
   detalhe?: string;
-  destaque?: "tinta" | "amarelo";
+  /** `arroio` é medida (quanto andou), `amarelo` é atenção. */
+  destaque?: "tinta" | "amarelo" | "arroio";
   dica?: string;
 }) {
   return (
@@ -82,8 +83,8 @@ export function Indicador({
             ? "text-xl md:text-2xl"
             : "text-4xl leading-none"
         } ${
-          destaque === "tinta"
-            ? "text-tinta"
+          destaque === "arroio"
+            ? "text-arroio-tinta"
             : destaque === "amarelo"
               ? "text-amarelo-tinta"
               : "text-tinta"

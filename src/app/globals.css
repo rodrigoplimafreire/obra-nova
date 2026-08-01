@@ -24,6 +24,13 @@
   --color-amarelo-tinta: #8a7a05; /* o amarelo que dá para ler sobre claro */
   --color-amarelo-vazado: #fbf4c0;
 
+  /* Arroio é a cor do dado que corre: progresso, medição, água. Entra em
+     barra e número de medida, nunca como cor de ação. O tom cheio reprova
+     em contraste como texto pequeno sobre cal (4,3:1) — para texto, usar
+     `arroio-tinta`. */
+  --color-arroio: #2e7d74;
+  --color-arroio-tinta: #25635c;
+
   --color-alerta: #ff8a80;
   --color-alerta-tinta: #5c2b2e;
 
