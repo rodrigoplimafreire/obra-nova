@@ -120,6 +120,14 @@ npm run dev
 - **Virar orçamento roda a mesma IA do "Falar orçamento".** Podia só colar o
   texto numa observação, mas aí sobraria para a pessoa ler e digitar os itens —
   que é exatamente o trabalho que o módulo existe para tirar.
+- **A ponte é de mão dupla.** Da transcrição sai "Criar orçamento", para quem
+  começa pelo áudio; de dentro da tabela de custos sai "Usar uma transcrição",
+  para quem já está com o orçamento aberto e lembra que tem o áudio guardado.
+  Só o primeiro sentido deixava a segunda pessoa criando um orçamento paralelo
+  para depois juntar os dois à mão.
+- **Uma transcrição pode alimentar mais de um orçamento.** Obra grande se
+  divide em etapas, e o áudio que fala das duas serve para as duas.
+  `transcricoes.orcamento_id` marca só o primeiro destino.
 - **O que o cliente usa mora em `tipos.ts`.** As telas são componentes cliente,
   e importar `nomeDaTranscricao` do módulo de dados arrastava `supabaseAdmin` e
   `next/headers` para o bundle do navegador. `tsc` não vê essa fronteira; só o

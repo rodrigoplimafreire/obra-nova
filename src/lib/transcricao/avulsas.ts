@@ -78,3 +78,37 @@ export async function carregarTranscricao(
     atualizadoEm: data.updated_at,
   };
 }
+
+/**
+ * As que já têm texto, para escolher de dentro de um orçamento.
+ *
+ * Só as prontas: uma transcrição que falhou ou ainda está na fila não tem o
+ * que oferecer, e listá-la só faria a pessoa clicar para descobrir isso.
+ */
+export async function listarProntas(): Promise<ResumoDeTranscricao[]> {
+  const org = await orgAtual();
+
+  const { data } = await supabaseAdmin()
+    .from("transcricoes")
+    .select(
+      "id, titulo, arquivo_nome, status, duracao_ms, texto, editado_em, orcamento_id, created_at",
+    )
+    .eq("org_id", org)
+    .eq("status", "pronta")
+    .not("texto", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  return (data ?? []).map((t) => ({
+    id: t.id,
+    titulo: t.titulo,
+    arquivoNome: t.arquivo_nome,
+    status: t.status,
+    duracaoMs: t.duracao_ms,
+    previa: t.texto ? t.texto.slice(0, 180) : null,
+    temTexto: Boolean(t.texto),
+    editado: Boolean(t.editado_em),
+    virouOrcamento: t.orcamento_id,
+    criadoEm: t.created_at,
+  }));
+}

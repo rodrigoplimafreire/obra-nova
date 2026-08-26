@@ -393,3 +393,94 @@ export async function criarOrcamentoDaTranscricao(
     criados: saida.ok ? saida.criados : 0,
   };
 }
+
+export type SaidaDoUso =
+  | { ok: true; criados: number; entendido: string; faltando: string[] }
+  | { ok: false; erro: string };
+
+/**
+ * O caminho inverso: trazer uma transcrição para um orçamento que já existe.
+ *
+ * `criarOrcamentoDaTranscricao` resolve quem começa pelo áudio. Este resolve
+ * quem já está com o orçamento aberto e lembra que tem o áudio do cliente
+ * guardado — sem obrigar a sair, achar a transcrição e criar um orçamento novo
+ * que ele teria que juntar ao que já tinha.
+ *
+ * O texto entra como bloco de fala e passa pela mesma IA, com as mesmas
+ * regras. Uma transcrição pode alimentar mais de um orçamento: obra grande se
+ * divide em etapas, e o áudio que fala das duas serve para as duas.
+ */
+export async function usarTranscricaoNoOrcamento(
+  orcamentoId: string,
+  transcricaoId: string,
+): Promise<SaidaDoUso> {
+  const orgId = await minhaTranscricao(transcricaoId);
+  if (!orgId) return { ok: false, erro: "Transcrição inválida." };
+
+  const sb = supabaseAdmin();
+
+  // O orçamento tem que ser da mesma org: sem esta checagem, um id de outra
+  // conta colaria o texto lá dentro.
+  const { data: orcamento } = await sb
+    .from("orc_orcamentos")
+    .select("id")
+    .eq("id", orcamentoId)
+    .eq("org_id", orgId)
+    .maybeSingle();
+  if (!orcamento) return { ok: false, erro: "Orçamento inválido." };
+
+  const { data: linha } = await sb
+    .from("transcricoes")
+    .select("texto, orcamento_id")
+    .eq("id", transcricaoId)
+    .maybeSingle();
+
+  if (!linha?.texto) {
+    return { ok: false, erro: "Esta transcrição ainda não tem texto." };
+  }
+
+  const { data: ultimo } = await sb
+    .from("orc_blocos")
+    .select("position")
+    .eq("orcamento_id", orcamentoId)
+    .order("position", { ascending: false })
+    .limit(1);
+
+  const { data: bloco, error: erroBloco } = await sb
+    .from("orc_blocos")
+    .insert({
+      orcamento_id: orcamentoId,
+      pergunta_id: null,
+      position: (ultimo?.[0]?.position ?? 0) + 1,
+      type: "text",
+      text_content: linha.texto,
+    })
+    .select("id")
+    .single();
+
+  if (erroBloco || !bloco) {
+    return { ok: false, erro: erroBloco?.message ?? "Falha ao trazer o texto." };
+  }
+
+  const saida = await montarItensDaFala(orcamentoId, orgId, bloco.id);
+  if (!saida.ok) return { ok: false, erro: saida.erro };
+
+  // Só marca o primeiro destino: a transcrição usada em dois orçamentos
+  // continua apontando para aquele de onde ela nasceu.
+  if (!linha.orcamento_id) {
+    await sb
+      .from("transcricoes")
+      .update({ orcamento_id: orcamentoId, updated_at: new Date().toISOString() })
+      .eq("id", transcricaoId);
+  }
+
+  revalidatePath(`/admin/orcamentos/${orcamentoId}`);
+  revalidar(transcricaoId);
+
+  return {
+    ok: true,
+    criados: saida.criados,
+    entendido: saida.entendido,
+    faltando: saida.faltando,
+  };
+}

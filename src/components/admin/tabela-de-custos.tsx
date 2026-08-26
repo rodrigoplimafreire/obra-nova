@@ -7,6 +7,7 @@ import { Dica } from "@/components/comum/dica";
 import { Girando } from "@/components/comum/esqueleto";
 import { ItemDeMenu, Menu, SeparadorDeMenu } from "@/components/comum/menu";
 import { FalarOrcamento } from "./falar-orcamento";
+import { UsarTranscricao } from "./usar-transcricao";
 import { ImportarItens } from "./importar-itens";
 import {
   adicionarItem,
@@ -66,6 +67,7 @@ export function TabelaDeCustos({
   const [adicionando, setAdicionando] = useState(false);
   const [falando, setFalando] = useState(false);
   const [importando, setImportando] = useState(false);
+  const [usandoTranscricao, setUsandoTranscricao] = useState(false);
   const [verRemovidos, setVerRemovidos] = useState(false);
 
   const semPreco = itens.filter((i) => i.valorUnitario === null).length;
@@ -77,26 +79,12 @@ export function TabelaDeCustos({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 className="rotulo">Detalhamento de custos</h2>
 
-        {/* As três formas de encher a tabela, lado a lado e no mesmo lugar:
-            falar, trazer de uma planilha, ou digitar. Antes o "falar" morava
-            noutra página, longe de onde o resultado dele aparece.
-
-            Três estilos diferentes, não só três rótulos: "Importar" e
-            "Incluir" são os dois botões secundários, e com o mesmo contorno
-            branco viravam a mesma mancha visual. Sutil (cinza cheio) marca
-            o terceiro sem competir com o amarelo do primário. */}
+        {/* Quatro maneiras de encher a tabela, e por isso duas à vista e as
+            outras no menu: falar e incluir à mão são as de todo dia; usar uma
+            transcrição e importar planilha acontecem quando existe material
+            pronto. Somar um quarto botão em linha era o caminho fácil e
+            devolveria a barra cheia de botão que já foi problema aqui. */}
         <div className="ml-auto hidden items-center gap-2 sm:flex">
-          {removidos.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setVerRemovidos((v) => !v)}
-              className="acao-texto mr-1 text-cinza"
-            >
-              {verRemovidos
-                ? "Esconder removidos"
-                : `Removidos (${removidos.length})`}
-            </button>
-          )}
           <Dica texto="Conte o serviço falando. A IA transcreve e quebra em linhas da tabela.">
             <button
               type="button"
@@ -107,24 +95,40 @@ export function TabelaDeCustos({
               Falar orçamento
             </button>
           </Dica>
-          <Dica texto="Traga um orçamento pronto do Excel. Você diz qual coluna é qual.">
-            <button
-              type="button"
-              onClick={() => setImportando(true)}
-              className="btn btn-secundario"
-            >
-              <IconeImportar />
-              Importar tabela
-            </button>
-          </Dica>
           <button
             type="button"
             onClick={() => setAdicionando(true)}
-            className="btn btn-sutil"
+            className="btn btn-secundario"
           >
             <IconeMais />
             Incluir item
           </button>
+          <Menu>
+            <ItemDeMenu
+              icone={<IconeOnda />}
+              aoClicar={() => setUsandoTranscricao(true)}
+              nota="o áudio que o cliente mandou, já transcrito"
+            >
+              Usar uma transcrição
+            </ItemDeMenu>
+            <ItemDeMenu
+              icone={<IconeImportar />}
+              aoClicar={() => setImportando(true)}
+              nota="planilha pronta; você diz qual coluna é qual"
+            >
+              Importar tabela
+            </ItemDeMenu>
+            {removidos.length > 0 && (
+              <>
+                <SeparadorDeMenu />
+                <ItemDeMenu aoClicar={() => setVerRemovidos((v) => !v)}>
+                  {verRemovidos
+                    ? "Esconder removidos"
+                    : `Removidos (${removidos.length})`}
+                </ItemDeMenu>
+              </>
+            )}
+          </Menu>
         </div>
 
         {/* No mobile os três em linha quebravam e empurravam a tabela para
@@ -140,6 +144,12 @@ export function TabelaDeCustos({
             Falar
           </button>
           <Menu>
+            <ItemDeMenu
+              icone={<IconeOnda />}
+              aoClicar={() => setUsandoTranscricao(true)}
+            >
+              Usar uma transcrição
+            </ItemDeMenu>
             <ItemDeMenu
               icone={<IconeImportar />}
               aoClicar={() => setImportando(true)}
@@ -201,8 +211,8 @@ export function TabelaDeCustos({
             {itens.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-sm text-cinza">
-                  Nenhum item ainda. Inclua na mão, ou grave o serviço e deixe a
-                  IA montar a primeira versão.
+                  Nenhum item ainda. Grave o serviço, traga uma transcrição do
+                  áudio que o cliente mandou, ou inclua na mão.
                 </td>
               </tr>
             )}
@@ -322,6 +332,12 @@ export function TabelaDeCustos({
         aoFechar={() => setFalando(false)}
       />
 
+      <UsarTranscricao
+        orcamentoId={orcamentoId}
+        aberto={usandoTranscricao}
+        aoFechar={() => setUsandoTranscricao(false)}
+      />
+
       <ImportarItens
         orcamentoId={orcamentoId}
         aberto={importando}
@@ -359,6 +375,21 @@ function IconeImportar() {
     >
       <path d="M12 3v12M7 10l5 5 5-5" />
       <path d="M4 19h16" />
+    </svg>
+  );
+}
+
+/** Onda sonora — o mesmo símbolo do módulo de Transcrição na navegação. */
+function IconeOnda() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 fill-none stroke-current"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    >
+      <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4" />
     </svg>
   );
 }
