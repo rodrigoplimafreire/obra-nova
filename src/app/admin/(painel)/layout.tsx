@@ -12,7 +12,12 @@ export default async function LayoutDoPainel({
 }) {
   const admin = await exigirAdmin();
   return (
-    <Casca email={admin.email} avatar={admin.avatar}>
+    <Casca
+      email={admin.email}
+      avatar={admin.avatar}
+      orgs={admin.orgs}
+      orgAtiva={admin.orgId}
+    >
       {children}
     </Casca>
   );

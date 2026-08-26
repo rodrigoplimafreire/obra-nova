@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "verificar:falas": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-falas-sequenciais.ts"
+    "verificar:falas": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-falas-sequenciais.ts",
+    "verificar:org": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-org-ativa.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

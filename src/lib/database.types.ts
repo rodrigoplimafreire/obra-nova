@@ -33,6 +33,18 @@ type Tabelas = {
       logo_caminho?: string | null;
     };
   };
+  /**
+   * Capacidade de console, separada da autorizacao de dados.
+   *
+   * `org_members` decide o que a pessoa le e escreve; esta tabela decide se
+   * ela pode trocar de empreiteira e mexer em cota e cobranca. Sem `org_id`:
+   * ser operador e global.
+   */
+  operadores: {
+    Row: { user_id: string; criado_em: string };
+    Insert: { user_id: string; criado_em?: string };
+    Update: { criado_em?: string };
+  };
   org_members: {
     Row: { org_id: string; user_id: string; created_at: string };
     Insert: { org_id: string; user_id: string; created_at?: string };

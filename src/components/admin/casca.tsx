@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BarraDeContexto } from "./barra-de-contexto";
 import { ProvedorDaTrilha } from "./trilha";
 import { Logotipo } from "@/components/marca";
+import type { OrgAcessivel } from "@/lib/admin/sessao";
 
 /**
  * Casca do painel: navegação sempre no mesmo lugar.
@@ -91,11 +93,16 @@ function iniciais(email: string): string {
 export function Casca({
   email,
   avatar,
+  orgs,
+  orgAtiva,
   children,
 }: {
   email: string;
   /** URL da foto do usuário. Sem ela, o avatar cai nas iniciais. */
   avatar: string | null;
+  /** As empreiteiras acessíveis. Uma só, para usuário comum. */
+  orgs: OrgAcessivel[];
+  orgAtiva: string;
   children: React.ReactNode;
 }) {
   const caminho = usePathname();
@@ -109,7 +116,13 @@ export function Casca({
   return (
     <ProvedorDaTrilha>
       {(migalha) => (
-        <div className="flex min-h-dvh flex-col bg-papel md:flex-row">
+        <div className="flex min-h-dvh flex-col bg-papel">
+          {/* Acima de tudo, inclusive da barra lateral: a empreiteira ativa
+              atravessa a tela inteira porque publicar na marca errada é erro
+              que nada mais na interface denuncia. */}
+          <BarraDeContexto orgs={orgs} ativa={orgAtiva} />
+
+          <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           {/* ---------- Celular: barra fina no topo ---------- */}
           <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-tinta px-4 py-3 md:hidden">
             <Link href="/admin" aria-label="Painel">
@@ -238,6 +251,7 @@ export function Casca({
               })}
             </ul>
           </nav>
+          </div>
         </div>
       )}
     </ProvedorDaTrilha>
