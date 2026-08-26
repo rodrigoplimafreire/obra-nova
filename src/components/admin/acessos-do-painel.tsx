@@ -14,7 +14,11 @@ import type { Acesso } from "@/lib/admin/acessos";
 import type { Resultado } from "@/lib/admin/tipos";
 
 /**
- * Quem entra no painel. Só o operador vê esta seção.
+ * Os usuários da plataforma. Só o admin vê esta seção.
+ *
+ * Cada pessoa trabalha dentro da empreiteira dela e não enxerga as outras; o
+ * admin é o único com vínculo em todas — e esse vínculo nasce sozinho, por
+ * trigger, para não depender de alguém lembrar de criá-lo.
  *
  * **O que ela conserta** é uma espera invisível. A lista de acesso morava numa
  * variável de ambiente, então liberar alguém exigia deploy — e ninguém no
@@ -35,19 +39,20 @@ export function AcessosDoPainel({
   const [liberando, setLiberando] = useState(false);
 
   return (
-    <Secao titulo="Quem entra no painel">
+    <Secao titulo="Usuários">
       <div className="cartao px-5 py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <p className="min-w-0 max-w-prose text-sm leading-relaxed text-fumaca">
-            Não existe cadastro público: criar conta não dá acesso. Quem entra é
-            quem está nesta lista, e só você pode editá-la.
+            Criar conta não dá acesso: quem entra é quem está nesta lista. Cada
+            pessoa trabalha dentro da empreiteira dela e não enxerga as outras.
+            Você é o único que vê todas.
           </p>
           <button
             type="button"
             onClick={() => setLiberando(true)}
             className="btn btn-secundario shrink-0"
           >
-            Liberar e-mail
+            Novo usuário
           </button>
         </div>
 
@@ -61,8 +66,8 @@ export function AcessosDoPainel({
       <Dialogo
         aberto={liberando}
         aoFechar={() => setLiberando(false)}
-        titulo="Liberar acesso ao painel"
-        descricao="A pessoa ainda precisa criar a conta dela e definir a própria senha. Você libera a entrada, não a senha."
+        titulo="Novo usuário"
+        descricao="Você libera a entrada, não a senha: a pessoa ainda cria a conta dela e escolhe a própria senha."
         estreito
       >
         {liberando && <Formulario aoFechar={() => setLiberando(false)} />}
@@ -105,9 +110,22 @@ function Pessoa({ acesso, euSou }: { acesso: Acesso; euSou: string }) {
           {acesso.email}
           {souEu && <span className="rotulo ml-2">você</span>}
         </p>
-        {acesso.nota && (
-          <p className="mt-0.5 text-xs text-cinza">{acesso.nota}</p>
-        )}
+
+        <p className="mt-0.5 text-xs text-fumaca">
+          {acesso.ehAdmin ? (
+            <span className="font-semibold text-tinta">
+              Admin — vê todas as empreiteiras
+            </span>
+          ) : acesso.empreiteira ? (
+            acesso.empreiteira
+          ) : (
+            <span className="text-cinza">
+              Sem empreiteira: ganha uma nova no primeiro login
+            </span>
+          )}
+          {acesso.nota && <span className="text-cinza"> · {acesso.nota}</span>}
+        </p>
+
         <Situacao acesso={acesso} />
         {erro && <p className="aviso aviso-erro mt-2 text-sm">{erro}</p>}
       </div>
@@ -207,6 +225,20 @@ function Formulario({ aoFechar }: { aoFechar: () => void }) {
         </label>
 
         <label className="flex flex-col gap-1.5">
+          <span className="rotulo-campo">Empreiteira</span>
+          <input
+            name="empreiteira"
+            placeholder="Construtora Silva"
+            className="campo"
+          />
+          <span className="ajuda-campo">
+            O espaço de trabalho dela: obras, orçamentos, transcrições e preços
+            ficam aqui dentro, e ninguém de fora vê. Em branco, ela ganha um
+            espaço novo batizado com o próprio e-mail.
+          </span>
+        </label>
+
+        <label className="flex flex-col gap-1.5">
           <span className="rotulo-campo">Quem é</span>
           <input
             name="nota"
@@ -234,7 +266,7 @@ function Formulario({ aoFechar }: { aoFechar: () => void }) {
           className={`btn ${pendente ? "btn-carregando" : "btn-primario"}`}
         >
           {pendente && <Girando />}
-          {pendente ? "Liberando…" : "Liberar"}
+          {pendente ? "Cadastrando…" : "Cadastrar"}
         </button>
       </div>
     </form>

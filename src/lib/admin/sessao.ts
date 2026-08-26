@@ -224,6 +224,26 @@ async function conferirOperador(userId: string): Promise<boolean> {
 async function garantirOrg(userId: string, email: string): Promise<string> {
   const sb = supabaseAdmin();
 
+  // O convite pode já ter dito a que empreiteira esta pessoa pertence. É o
+  // caminho normal do cliente: o admin cadastra a empreiteira, convida o
+  // e-mail, e no primeiro login a pessoa cai dentro dela já nomeada — em vez
+  // de ganhar uma org batizada com o próprio e-mail para renomear depois.
+  const { data: convite } = await sb
+    .from("acessos")
+    .select("org_id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (convite?.org_id) {
+    await sb
+      .from("org_members")
+      .upsert(
+        { org_id: convite.org_id, user_id: userId },
+        { onConflict: "org_id,user_id", ignoreDuplicates: true },
+      );
+    return convite.org_id;
+  }
+
   // `ignoreDuplicates` faz o segundo a chegar não escrever nada; o select
   // seguinte devolve a linha que o primeiro criou. Sem corrida e sem erro.
   const { error: erroUpsert } = await sb

@@ -74,6 +74,10 @@ export type Acesso = {
   email: string;
   nota: string | null;
   criadoEm: string;
+  /** A empreiteira desta pessoa. Nula = ganha uma nova no primeiro login. */
+  empreiteira: string | null;
+  /** Admin não tem empreiteira: tem todas. */
+  ehAdmin: boolean;
   /** Já entrou alguma vez? Distingue "convidado" de "usando". */
   ultimoAcesso: string | null;
   /** Criou conta mas não confirmou o e-mail — trava silenciosa mais comum. */
@@ -92,16 +96,26 @@ export type Acesso = {
 export async function listarAcessos(): Promise<Acesso[]> {
   const sb = supabaseAdmin();
 
-  const [{ data: linhas }, { data: contas }] = await Promise.all([
-    sb.from("acessos").select("email, nota, criado_em").order("criado_em"),
-    sb.auth.admin.listUsers({ perPage: 200 }),
-  ]);
+  const [{ data: linhas }, { data: contas }, { data: orgs }, { data: admins }] =
+    await Promise.all([
+      sb
+        .from("acessos")
+        .select("email, nota, org_id, criado_em")
+        .order("criado_em"),
+      sb.auth.admin.listUsers({ perPage: 200 }),
+      sb.from("orgs").select("id, name, nome_exibicao"),
+      sb.from("operadores").select("user_id"),
+    ]);
 
   const porEmail = new Map(
     (contas?.users ?? []).flatMap((u) =>
       u.email ? [[u.email.toLowerCase(), u] as const] : [],
     ),
   );
+  const nomeDaOrg = new Map(
+    (orgs ?? []).map((o) => [o.id, o.nome_exibicao?.trim() || o.name]),
+  );
+  const ehAdmin = new Set((admins ?? []).map((a) => a.user_id));
 
   const daTabela: Acesso[] = (linhas ?? []).map((l) => {
     const conta = porEmail.get(l.email);
@@ -109,6 +123,8 @@ export async function listarAcessos(): Promise<Acesso[]> {
       email: l.email,
       nota: l.nota,
       criadoEm: l.criado_em,
+      empreiteira: l.org_id ? (nomeDaOrg.get(l.org_id) ?? null) : null,
+      ehAdmin: Boolean(conta && ehAdmin.has(conta.id)),
       ultimoAcesso: conta?.last_sign_in_at ?? null,
       aguardandoConfirmacao: Boolean(conta) && !conta?.email_confirmed_at,
       doAmbiente: false,
@@ -125,6 +141,8 @@ export async function listarAcessos(): Promise<Acesso[]> {
         email,
         nota: null,
         criadoEm: conta?.created_at ?? "",
+        empreiteira: null,
+        ehAdmin: Boolean(conta && ehAdmin.has(conta.id)),
         ultimoAcesso: conta?.last_sign_in_at ?? null,
         aguardandoConfirmacao: Boolean(conta) && !conta?.email_confirmed_at,
         doAmbiente: true,

@@ -163,6 +163,31 @@ async function main() {
     );
   }
 
+  // --- Admin vê todas; cliente vê a dele --------------------------------
+  const { data: todasOrgs } = await sb.from("orgs").select("id");
+  const quantasOrgs = (todasOrgs ?? []).length;
+
+  const semTodas: string[] = [];
+  for (const id of ids) {
+    const minhas = await orgsDe(id);
+    if (minhas.length !== quantasOrgs) semTodas.push(id);
+  }
+  conferir(
+    `admin tem vínculo em todas as ${quantasOrgs} orgs`,
+    semTodas.length === 0,
+    semTodas.length ? `faltando para ${semTodas.join(", ")}` : "",
+  );
+
+  const admins = new Set(ids);
+  const clientesComDemais = [...porUsuario.entries()].filter(
+    ([id, o]) => !admins.has(id) && o.length > 1,
+  );
+  conferir(
+    "nenhum cliente tem vínculo em mais de uma org",
+    clientesComDemais.length === 0,
+    clientesComDemais.map(([id]) => id).join(", "),
+  );
+
   // --- E as orgs de fato guardam coisas diferentes -------------------------
   const [itensA, itensB] = await Promise.all([orcamentosDe(a.id), orcamentosDe(b.id)]);
   console.log(`\n  ${a.nome}: ${itensA.length} orçamento(s) — ${itensA.join(", ") || "—"}`);

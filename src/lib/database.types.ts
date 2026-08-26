@@ -23,7 +23,12 @@ type Tabelas = {
       /** Caminho no bucket público `marca`. */
       logo_caminho: string | null;
     };
-    Insert: { id?: string; name: string; created_at?: string };
+    Insert: {
+      id?: string;
+      name: string;
+      created_at?: string;
+      nome_exibicao?: string | null;
+    };
     Update: {
       name?: string;
       nome_exibicao?: string | null;
@@ -49,16 +54,18 @@ type Tabelas = {
     Row: {
       email: string;
       nota: string | null;
+      org_id: string | null;
       criado_em: string;
       criado_por: string | null;
     };
     Insert: {
       email: string;
       nota?: string | null;
+      org_id?: string | null;
       criado_em?: string;
       criado_por?: string | null;
     };
-    Update: { nota?: string | null };
+    Update: { nota?: string | null; org_id?: string | null };
   };
   org_members: {
     Row: { org_id: string; user_id: string; created_at: string };

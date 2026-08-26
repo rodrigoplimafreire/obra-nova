@@ -37,25 +37,52 @@ export async function liberarAcesso(
     .trim()
     .toLowerCase();
   const nota = String(form.get("nota") ?? "");
+  const empreiteira = String(form.get("empreiteira") ?? "").trim();
 
   if (!email.includes("@") || email.startsWith("@")) {
     return { ok: false, erro: "Isso não parece um e-mail." };
   }
 
-  const { error } = await supabaseAdmin()
-    .from("acessos")
-    .upsert(
-      {
-        email,
-        nota: nota.trim() || null,
-        criado_por: admin.id,
-      },
-      { onConflict: "email" },
-    );
+  const sb = supabaseAdmin();
+
+  // A empreiteira é criada aqui, no convite, e não no primeiro login da
+  // pessoa. Assim o admin já a vê na barra de contexto antes mesmo de ela
+  // entrar — e o trigger `org_nova_vincula_operadores` cuida do vínculo.
+  let orgId: string | null = null;
+  if (empreiteira) {
+    const { data: existente } = await sb
+      .from("orgs")
+      .select("id")
+      .eq("name", empreiteira)
+      .maybeSingle();
+
+    if (existente) {
+      orgId = existente.id;
+    } else {
+      const { data: nova, error: erroOrg } = await sb
+        .from("orgs")
+        .insert({ name: empreiteira, nome_exibicao: empreiteira })
+        .select("id")
+        .single();
+
+      if (erroOrg) return { ok: false, erro: erroOrg.message };
+      orgId = nova.id;
+    }
+  }
+
+  const { error } = await sb.from("acessos").upsert(
+    {
+      email,
+      nota: nota.trim() || null,
+      org_id: orgId,
+      criado_por: admin.id,
+    },
+    { onConflict: "email" },
+  );
 
   if (error) return { ok: false, erro: error.message };
 
-  revalidatePath("/admin/perfil");
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
