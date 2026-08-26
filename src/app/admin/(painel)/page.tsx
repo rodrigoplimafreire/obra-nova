@@ -1,9 +1,18 @@
-import { redirect } from "next/navigation";
+import { carregarVisaoDoDia } from "@/lib/admin/visao-do-dia";
+import { empreiteiraAtual } from "@/lib/admin/empreiteira";
+import { TelaDeInicio } from "@/components/admin/tela-inicio";
+
+export const dynamic = "force-dynamic";
 
 /**
- * O painel tem um assunto só: obras. A raiz existe para que `/admin` continue
- * sendo um endereço válido — quem chega por ele cai na lista.
+ * A abertura do painel. Antes esta rota só redirecionava para Obras, e não
+ * existia lugar que respondesse "o que precisa de mim hoje?".
  */
-export default function Painel() {
-  redirect("/admin/obras");
+export default async function Painel() {
+  const [visao, empreiteira] = await Promise.all([
+    carregarVisaoDoDia(),
+    empreiteiraAtual(),
+  ]);
+
+  return <TelaDeInicio visao={visao} nome={empreiteira.nome} />;
 }

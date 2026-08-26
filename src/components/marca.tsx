@@ -85,6 +85,7 @@ export function Logotipo({
 export function RodapeDaMarca({
   tom = "claro",
   nome,
+  logo,
   nota,
   semBorda = false,
 }: {
@@ -93,6 +94,9 @@ export function RodapeDaMarca({
    *  empresa passa o nome dela aqui em vez de usar o padrão — mesmo rodapé,
    *  assinatura diferente. É o que faz o produto ser white label. */
   nome?: string;
+  /** O logotipo da empreiteira, quando ela subiu um no Perfil. Vence o nome
+   *  escrito: quem tem marca assina com ela, não com o nome digitado. */
+  logo?: string | null;
   nota?: string;
   /** No painel a borda vem do container, que a alinha com a da barra lateral. */
   semBorda?: boolean;
@@ -100,7 +104,7 @@ export function RodapeDaMarca({
   const escuro = tom === "escuro";
   // Assinatura de outra empresa não vem acompanhada da nossa marca. O
   // relatório é da empreiteira; nós somos o rodapé discreto, não o co-autor.
-  const nosso = !nome;
+  const nosso = !nome && !logo;
 
   return (
     <footer
@@ -113,6 +117,15 @@ export function RodapeDaMarca({
       <div className="min-w-0">
         {nosso ? (
           <Logotipo className={escuro ? "text-papel" : "text-tinta"} />
+        ) : logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logo}
+            alt={nome ?? "Logotipo da empreiteira"}
+            // `self-start` e altura fixa: sem os dois, o flex do rodapé estica
+            // a imagem — é a mesma armadilha que já mordeu na capa impressa.
+            className="h-8 w-auto max-w-[12rem] self-start object-contain"
+          />
         ) : (
           <p
             className={`font-sans text-sm leading-none font-extrabold -tracking-[0.02em] ${

@@ -1,0 +1,290 @@
+/* =========================================================
+   OBRA NOVA · Folha do documento do cliente
+   Manual Obra Nova v2 · Amarelo #F7E407 · Arroio #2E7D74
+   Tinta #14181A · Cal #F5F2EC
+   Display: Archivo · Rótulos e números: IBM Plex Mono
+
+   Espelha o contrato de classes do `marcas/rd/brand.css`: o mesmo markup de
+   `documento-do-cliente.tsx` e `gate-do-orcamento.tsx` tem de servir às duas
+   marcas sem um `if` no componente. O que muda é só a pintura.
+
+   Os três papéis do manual mandam aqui e não se invertem:
+     amarelo é AÇÃO   — um único botão amarelo por tela;
+     arroio  é DADO   — número, medida, progresso, marcador de seção;
+     grafite é ESTRUTURA — fundo, borda, superfície.
+   ========================================================= */
+:root{
+  --accent:#F7E407;        /* amarelo ação */
+  --accent-deep:#C4B505;
+  --accent-ink:#8A7A05;    /* o amarelo virado texto, quando o fundo é claro */
+
+  /* Arroio sobe de tom no escuro: o #2E7D74 do manual é cor de superfície
+     clara e sobre tinta fica em 2,4:1. Este passa em AA como texto. */
+  --dado:#5FB3A8;
+  --dado-deep:#25635C;     /* o mesmo papel, sobre cal */
+
+  --ink:#14181A;           /* tinta · fundo do documento */
+  --ink-2:#1A1F21;
+  --ink-3:#22282A;         /* grafite · superfície secundária e campo */
+  --ink-card:#22282A;
+  --line:#343C3F;
+  --line-soft:#262D2F;
+  --white:#ffffff;
+  --fog:#DCD6CC;           /* névoa · texto corrido sobre escuro */
+  --fog-2:#8F9799;
+  --paper:#F5F2EC;         /* cal */
+  --paper-line:#DCD6CC;
+  --paper-ink:#14181A;
+
+  /* As duas famílias do manual, servidas pelo `next/font` do layout raiz. Os
+     nomes literais ficam de reserva para quando esta folha for aberta fora do
+     app (revisão de impressão, print de tela). */
+  --archivo:var(--font-archivo),"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:var(--font-plex-mono),"IBM Plex Mono",ui-monospace,"Cascadia Mono","Consolas",monospace;
+
+  /* Raio curto: a marca é angular e o documento acompanha.
+     0 tabela e faixa · 4 botão e campo · 8 card. */
+  --r-controle:4px;
+  --r-cartao:8px;
+
+  --maxw:1120px;
+  --margin:clamp(20px,5vw,64px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body.locked{overflow:hidden}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--ink);color:var(--white);
+  font-family:var(--archivo);line-height:1.6;letter-spacing:-0.01em;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--margin)}
+
+/* rótulos mono */
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dado);font-weight:400}
+.mono{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+
+/* ---------- BOTÕES ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  padding:15px 26px;border-radius:var(--r-controle);cursor:pointer;border:1px solid transparent;
+  transition:background .22s ease,color .22s ease,border-color .22s ease}
+/* amarelo com tinta = 13:1. É o botão que diz o que fazer agora. */
+.btn.solid{background:var(--accent);color:var(--ink);font-weight:600;border-color:var(--accent)}
+.btn.solid:hover{background:#FFF04A;border-color:#FFF04A}
+.btn.solid:disabled{background:var(--accent-deep);border-color:var(--accent-deep);opacity:.7;cursor:progress}
+.btn.ink{background:var(--paper);color:var(--ink);font-weight:600}
+.btn.ink:hover{background:var(--accent)}
+.btn.ghost{background:transparent;color:var(--fog);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--dado);color:var(--dado)}
+.btn.big{font-size:13px;padding:18px 34px}
+a:focus-visible,.btn:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* O componente do imprimir é `btn solid` fixo, e nesta tela o amarelo já é do
+   aceite. Rebaixado aqui, pelo lugar onde ele está — assim a regra do manual
+   vale sem um `if` no React. */
+.sc-print .btn.solid{background:transparent;color:var(--fog);border-color:var(--line);font-weight:400}
+.sc-print .btn.solid:hover{border-color:var(--dado);color:var(--dado);background:transparent}
+
+/* ---------- NAV (não existe no orçamento; fica pelo contrato de classes) --- */
+nav{position:sticky;top:0;z-index:50;background:rgba(20,24,26,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-soft)}
+nav .wrap{display:flex;align-items:center;gap:24px;height:66px}
+.nav-logo{flex:none;display:flex;align-items:center}
+.nav-logo img{height:19px;width:auto}
+nav ul{display:flex;align-items:center;gap:22px;list-style:none;margin-left:auto;flex-wrap:wrap}
+nav ul a{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog);transition:color .2s}
+nav ul a:hover{color:var(--dado)}
+nav .btn{padding:11px 18px}
+
+/* ---------- HERO ---------- */
+header{padding:clamp(70px,10vw,120px) 0 clamp(56px,8vw,88px);border-bottom:1px solid var(--line-soft);position:relative;overflow:hidden}
+/* O símbolo da marca são vias que se abrem de um centro vazio. O brilho do
+   topo é essa abertura, não um halo redondo: um leque de luz arroio. */
+header::before{content:"";position:absolute;top:-30%;right:-6%;width:min(620px,76vw);aspect-ratio:1;pointer-events:none;
+  background:conic-gradient(from 200deg at 50% 50%,transparent 0deg,rgba(46,125,116,.30) 24deg,transparent 52deg,transparent 96deg,rgba(46,125,116,.18) 120deg,transparent 148deg);
+  filter:blur(26px)}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:44px;align-items:end;position:relative}
+@media(min-width:900px){.hero-grid{grid-template-columns:1.55fr .95fr}}
+.hero-doc{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fog-2);margin-bottom:20px;display:flex;gap:14px;flex-wrap:wrap}
+.hero-doc b{color:var(--dado);font-weight:400}
+header h1{font-family:var(--archivo);font-weight:800;font-size:clamp(38px,6.6vw,72px);line-height:.98;letter-spacing:-.035em;margin:0 0 22px;max-width:15ch}
+header h1 em{font-style:normal;color:var(--dado)}
+.lede{font-size:clamp(16px,1.9vw,20px);line-height:1.5;max-width:52ch;color:var(--fog)}
+.meta{margin-top:30px;display:flex;gap:9px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);padding:8px 13px;border-radius:var(--r-controle);color:var(--fog)}
+
+/* card de resumo no hero */
+.spec-card{background:var(--ink-3);border:1px solid var(--line);border-radius:var(--r-cartao);overflow:hidden}
+.spec-card .sc-top{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog-2)}
+.spec-card .sc-top b{color:var(--dado);font-weight:400}
+.sc-body{padding:6px 20px 18px}
+.sc-print{padding:16px 20px;border-top:1px solid var(--line)}
+.sc-print .btn{width:100%}
+.sc-row{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.sc-row:last-child{border-bottom:none}
+.sc-row .k{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--fog-2)}
+/* O valor do resumo é dado que se compara — mono tabular, como manda o
+   manual para tudo que é número. */
+.sc-row .v{font-family:var(--mono);font-size:13.5px;font-weight:500;text-align:right;letter-spacing:0;font-variant-numeric:tabular-nums}
+
+/* ---------- SEÇÕES ---------- */
+section{padding:clamp(64px,9vw,104px) 0;border-bottom:1px solid var(--line-soft)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dado);font-weight:400;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+/* O número da seção é progresso: fica no arroio, e o rótulo desce de peso. */
+.kicker .s-num{color:var(--fog-2);letter-spacing:0;font-variant-numeric:tabular-nums}
+h2{font-family:var(--archivo);font-weight:800;font-size:clamp(26px,4vw,42px);line-height:1.04;letter-spacing:-.03em;margin-bottom:18px;max-width:20ch}
+.intro{font-size:16.5px;max-width:60ch;color:var(--fog);margin-bottom:12px}
+.intro strong{color:var(--white);font-weight:600}
+h3{font-family:var(--archivo);font-weight:700;font-size:19px;letter-spacing:-.02em;margin-bottom:9px}
+
+/* O PROJETO */
+.proj-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:40px}
+@media(min-width:760px){.proj-grid{grid-template-columns:repeat(3,1fr)}}
+.pcard{border:1px solid var(--line);border-radius:var(--r-cartao);padding:26px 24px;background:var(--ink-2)}
+.pcard .pn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dado);margin-bottom:14px}
+.pcard h3{font-size:17px}
+.pcard p{font-size:14px;color:var(--fog)}
+
+/* ---------- TABELA DE CUSTOS ---------- */
+/* A planilha vira papel: cal sobre tinta, do jeito que o cliente veria
+   impresso. Raio 0, porque tabela e faixa não arredondam. */
+.cost-wrap{margin-top:26px;border:1px solid var(--paper-line);border-radius:0;background:var(--paper);overflow-x:auto}
+.cost-table{width:100%;min-width:620px;border-collapse:collapse;color:var(--paper-ink)}
+.cost-table th{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  color:#3E4548;background:#E7E2DA;padding:12px 14px;text-align:left;border:1px solid #D3CDC3;border-top:none}
+.cost-table th:first-child{border-left:none}
+.cost-table th:last-child{border-right:none}
+.cost-table th.ct-num{text-align:right}
+.cost-table td{font-size:13.5px;line-height:1.45;padding:12px 14px;border:1px solid var(--paper-line);vertical-align:middle;color:#2A2F31}
+.cost-table td:first-child{border-left:none}
+.cost-table td:last-child{border-right:none}
+.cost-table tbody tr:last-child td{border-bottom:none}
+/* a observação do item, sob a descrição */
+.cost-table td small{display:block;margin-top:4px;font-size:11.5px;line-height:1.4;color:#5F5A51}
+.cost-table td.num{font-family:var(--mono);font-size:12.5px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cost-table td.unit{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#5F5A51;white-space:nowrap}
+.cost-table td.total{font-weight:600;color:var(--paper-ink)}
+.cost-table .ct-group td{background:#EDE9E1;font-family:var(--archivo);font-weight:700;font-size:13.5px;color:var(--paper-ink);letter-spacing:-.01em}
+.cost-table .ct-group .gn{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--dado-deep);margin-right:10px}
+
+/* total geral — é o dado maior do documento, não uma ação: arroio, não
+   amarelo. O amarelo desta tela é do botão de aceitar. */
+.total-bar{margin-top:22px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px;
+  background:var(--dado-deep);color:var(--paper);border-radius:0;padding:26px 30px}
+.total-bar .tb-label{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.total-bar .tb-value{font-family:var(--mono);font-weight:500;font-size:clamp(28px,4.6vw,40px);letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.total-note{margin-top:16px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--fog-2);text-transform:uppercase}
+.total-note b{color:var(--fog);font-weight:400}
+
+/* ---------- OBSERVAÇÕES ---------- */
+.obs-wrap{display:grid;grid-template-columns:1fr;gap:26px;align-items:start;margin-top:34px}
+@media(min-width:820px){.obs-wrap{grid-template-columns:1.2fr .8fr}}
+.obs-list{list-style:none;display:grid;gap:2px}
+.obs-list li{padding:22px 0;border-top:1px solid var(--line-soft);display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.obs-list li:first-child{border-top:none}
+.obs-ic{width:34px;height:34px;flex:none;border-radius:var(--r-controle);display:grid;place-items:center;background:rgba(95,179,168,.14);color:var(--dado)}
+.obs-ic svg{width:18px;height:18px}
+.obs-list h3{font-size:15px;margin-bottom:5px}
+.obs-list p{font-size:13.5px;color:var(--fog);line-height:1.5}
+
+/* nota de cal — o aceite registrado abre aqui. Sem inclinação: a RD gira a
+   dela em -1,3°, e girar papel é assinatura da RD, não nossa. */
+.paper-note{background:var(--paper);color:var(--paper-ink);border:1px solid var(--paper-line);border-left:3px solid var(--dado-deep);
+  border-radius:0;padding:28px;max-width:46rem;margin-inline:auto;text-align:left}
+.paper-note .pin{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dado-deep);margin-bottom:14px}
+.paper-note h3{color:var(--paper-ink);font-size:17px;margin-bottom:10px}
+.paper-note p{font-size:13.5px;line-height:1.55;color:#3A403F}
+.paper-note .pn-val{margin-top:16px;padding-top:14px;border-top:1px dashed #C9C4BA;font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--paper-ink);font-variant-numeric:tabular-nums}
+
+/* ---------- COMO A OBRA ACONTECE ---------- */
+.timeline{list-style:none;display:grid;gap:2px;margin-top:20px}
+.timeline li{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;padding:24px 0;border-top:1px solid var(--line-soft)}
+.timeline li:first-child{border-top:none}
+.tl-n{flex:none;width:40px;height:40px;border-radius:var(--r-controle);display:grid;place-items:center;background:var(--ink-2);border:1px solid var(--line);color:var(--dado);font-family:var(--mono);font-weight:500;font-size:15px}
+.timeline h3{font-size:17px;margin-bottom:3px}
+.timeline p{font-size:14px;color:var(--fog)}
+
+/* ---------- ACEITE ---------- */
+.accept{text-align:center}
+.accept h2{margin-inline:auto}
+.accept .intro{margin-inline:auto;margin-bottom:34px}
+.accept-row{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:center}
+/* O campo do nome leva estilo inline do componente, apontando para
+   `--ink-3` e `--line`. Os dois existem aqui de propósito: é o contrato que
+   faz o mesmo React servir às duas marcas. */
+.accept-row input::placeholder{color:var(--fog-2)}
+.accept-row input:focus{outline:2px solid var(--accent);outline-offset:2px}
+.sign-solo{display:flex;justify-content:center;max-width:360px;margin:48px auto 0}
+.sign{border:1px solid var(--line);border-radius:var(--r-cartao);padding:30px 30px 26px;text-align:center;background:var(--ink-2);width:100%}
+.sign .sl{height:56px;border-bottom:1px solid var(--line);margin-bottom:14px;display:flex;align-items:flex-end;justify-content:center}
+.sign .sl-placeholder{font-size:30px;line-height:1;color:var(--fog);opacity:.85;padding-bottom:6px}
+.sign .sname{font-weight:700;font-size:15px}
+.sign .srole{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fog-2);margin-top:4px}
+.sign .smotto{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dado)}
+.validade{margin-top:30px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fog-2)}
+.validade b{color:var(--dado);font-weight:400}
+
+/* ---------- RODAPÉ ---------- */
+footer{padding:70px 0 50px;border-bottom:none}
+footer .wrap{display:grid;gap:30px}
+.foot-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:26px;align-items:flex-start}
+.foot-logo img{height:26px;width:auto}   /* lockup em cal, sobre tinta */
+.foot-contact{display:grid;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--fog)}
+.foot-contact a:hover{color:var(--dado)}
+.foot-bottom{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;border-top:1px solid var(--line-soft);padding-top:22px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--fog-2)}
+.foot-bottom a{color:var(--fog-2)}
+.foot-bottom a:hover{color:var(--dado)}
+
+/* ---------- GATE (senha) ---------- */
+#gate{position:fixed;inset:0;z-index:100;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:28px;overflow:hidden}
+#gate::before{content:"";position:absolute;top:-22%;right:-8%;width:min(620px,84vw);aspect-ratio:1;pointer-events:none;
+  background:conic-gradient(from 200deg at 50% 50%,transparent 0deg,rgba(46,125,116,.30) 24deg,transparent 52deg,transparent 96deg,rgba(46,125,116,.18) 120deg,transparent 148deg);
+  filter:blur(26px)}
+#gate.hide{opacity:0;visibility:hidden;transition:opacity .5s ease,visibility .5s ease}
+.gate-box{position:relative;width:100%;max-width:400px;text-align:center}
+/* O lockup tem proporção travada pelo manual: só a altura manda. */
+.gate-logo{height:34px;width:auto;margin:0 auto 30px;display:block}
+.gate-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dado)}
+.gate-title{font-family:var(--archivo);font-weight:800;font-size:clamp(24px,5vw,34px);line-height:1.02;letter-spacing:-.03em;margin:14px 0 12px}
+.gate-sub{font-size:15px;line-height:1.5;color:var(--fog);max-width:34ch;margin:0 auto 30px}
+#gate-form{display:flex;flex-direction:column;gap:12px}
+.gate-field{position:relative;display:flex;align-items:center}
+#gate-input{width:100%;font-family:var(--archivo);font-size:16px;color:var(--white);background:var(--ink-3);
+  border:1px solid var(--line);border-radius:var(--r-controle);padding:15px 52px 15px 18px;letter-spacing:.02em;transition:border-color .2s}
+#gate-input::placeholder{color:var(--fog-2)}
+#gate-input:focus{outline:none;border-color:var(--accent)}
+.gate-toggle{position:absolute;right:8px;width:38px;height:38px;display:grid;place-items:center;background:transparent;border:none;border-radius:var(--r-controle);color:var(--fog-2);cursor:pointer;transition:color .2s,background .2s}
+.gate-toggle:hover{color:var(--white);background:rgba(255,255,255,.06)}
+.gate-toggle svg{width:20px;height:20px}
+.gate-toggle .icon-off{display:none}
+.gate-toggle.is-visible .icon-on{display:none}
+.gate-toggle.is-visible .icon-off{display:block}
+.gate-btn{width:100%;padding:16px 24px}
+/* O vermelho de erro do manual (#A8331F) é de fundo claro; sobre tinta ele
+   reprova. Este é o mesmo vermelho clareado até passar em AA. */
+.gate-error{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#F09080;margin-top:14px}
+#gate.shake .gate-box{animation:gate-shake .4s}
+@keyframes gate-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){#gate.shake .gate-box{animation:none}}
+
+/* ---------- REVEAL ---------- */
+[data-rv]{opacity:0;transform:translateY(20px);transition:opacity .7s cubic-bezier(.16,.84,.44,1),transform .7s cubic-bezier(.16,.84,.44,1)}
+[data-rv].in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){[data-rv]{opacity:1;transform:none;transition:none}}
+
+/* ---------- RESPONSIVO ---------- */
+@media(max-width:720px){
+  nav ul li.nav-hide{display:none}
+  .total-bar{padding:22px}
+  .accept-row{flex-direction:column;align-items:stretch}
+  .accept-row .btn{width:100%}
+}
+
+/* ---------- ELEMENTOS SÓ DE IMPRESSÃO ---------- */
+/* escondidos na tela por padrão; print.css os revela sob @media print */
+.print-cover,.print-letterhead,.print-footer{display:none}

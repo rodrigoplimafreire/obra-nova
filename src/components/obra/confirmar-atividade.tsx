@@ -40,7 +40,7 @@ const OPCOES: { valor: Escolha; rotulo: string; nota: string }[] = [
 const COR_OPCAO = {
   feita: "border-amarelo bg-amarelo text-tinta",
   parcial: "border-tinta bg-tinta text-papel",
-  nao_feita: "border-alerta bg-alerta text-alerta-tinta",
+  nao_feita: "border-atraso bg-atraso text-papel",
 } as const;
 
 export function ConfirmarAtividade({
@@ -323,7 +323,7 @@ export function ConfirmarAtividade({
                   onClick={() => void marcar(o.valor)}
                   disabled={salvandoStatus}
                   aria-pressed={escolhido}
-                  className={`rounded-3xl border-2 px-3 py-4 text-center transition active:scale-[0.98] disabled:opacity-60 ${
+                  className={`rounded-lg border-2 px-3 py-4 text-center transition active:scale-[0.98] disabled:opacity-60 ${
                     escolhido ? COR_OPCAO[o.valor] : "border-nevoa bg-white text-tinta"
                   }`}
                 >
@@ -343,7 +343,7 @@ export function ConfirmarAtividade({
           </div>
 
           {marcado && !temFoto && (
-            <p className="mt-4 rounded-2xl bg-alerta/20 px-4 py-3 text-sm leading-relaxed text-alerta-tinta">
+            <p className="mt-4 aviso aviso-erro text-sm leading-relaxed text-tinta">
               Falta a foto. É ela que vai no relatório do cliente como prova do
               serviço.
             </p>
@@ -352,7 +352,7 @@ export function ConfirmarAtividade({
           <p className="rotulo mt-7 mb-3">O que você mandou</p>
 
           {atividade.blocos.length === 0 && pendentes.length === 0 ? (
-            <p className="rounded-3xl border border-dashed border-nevoa bg-white px-5 py-8 text-center text-sm leading-relaxed text-cinza">
+            <p className="rounded-lg border border-dashed border-nevoa bg-white px-5 py-8 text-center text-sm leading-relaxed text-cinza">
               Mande uma foto do serviço. Se quiser explicar alguma coisa, grave
               um áudio, é mais rápido que escrever.
             </p>
@@ -361,7 +361,7 @@ export function ConfirmarAtividade({
               {atividade.blocos.map((b) => (
                 <li
                   key={b.id}
-                  className={`rounded-3xl border border-nevoa/70 bg-white px-4 py-3.5 transition-opacity ${
+                  className={`rounded-lg border border-nevoa/70 bg-white px-4 py-3.5 transition-opacity ${
                     removendo === b.id ? "opacity-40" : ""
                   }`}
                 >
@@ -378,7 +378,7 @@ export function ConfirmarAtividade({
                     <img
                       src={b.url}
                       alt="Foto do serviço"
-                      className="max-h-80 w-full rounded-2xl object-cover"
+                      className="max-h-80 w-full rounded-sm object-cover"
                     />
                   )}
 
@@ -401,7 +401,7 @@ export function ConfirmarAtividade({
               {pendentes.map((p) => (
                 <li
                   key={p.id}
-                  className="rounded-3xl border border-nevoa/70 bg-white/70 px-4 py-3.5"
+                  className="rounded-lg border border-nevoa/70 bg-white/70 px-4 py-3.5"
                 >
                   <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap text-fumaca">
                     {p.previa}
@@ -409,7 +409,7 @@ export function ConfirmarAtividade({
                   <div className="mt-2.5 flex items-center gap-3 border-t border-nevoa/50 pt-2.5">
                     {p.estado === "erro" ? (
                       <>
-                        <span className="rotulo !text-alerta-tinta">
+                        <span className="rotulo !text-tinta">
                           não foi enviado
                         </span>
                         <button

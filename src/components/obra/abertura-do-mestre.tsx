@@ -81,7 +81,7 @@ export function AberturaDoMestre({
               <li key={a.id}>
                 <Link
                   href={`/o/${token}/a/${a.id}`}
-                  className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 transition active:scale-[0.99]"
+                  className="flex items-center gap-3 rounded-sm bg-white/10 px-4 py-3 transition active:scale-[0.99]"
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-[0.65rem] ${
@@ -109,7 +109,7 @@ export function AberturaDoMestre({
         )}
 
         {outrosDias.length > 0 && (
-          <details className="mt-6 rounded-3xl bg-white/10 px-5 py-4">
+          <details className="mt-6 rounded-lg bg-white/10 px-5 py-4">
             <summary className="cursor-pointer font-mono text-[0.7rem] tracking-widest text-papel/80 uppercase">
               {mestre.escritorio ? "A semana inteira" : "O resto da semana"}
             </summary>
@@ -158,20 +158,18 @@ export function AberturaDoMestre({
         )}
 
         {/* Amarelo sobre o grafite da tela: é a única área cheia de cor aqui,
-            e é para onde o olho tem que ir com o celular na mão. */}
+            e é para onde o olho tem que ir com o celular na mão. Tamanho
+            campo, 52 — o único que o documento manda usar no mobile. */}
         <div className="mt-auto pt-10">
           {proxima ? (
             <Link
               href={`/o/${token}/a/${proxima}`}
-              className="flex w-full items-center justify-between gap-4 rounded-full bg-amarelo py-4 pr-3 pl-7 text-left font-semibold text-tinta transition active:scale-[0.99]"
+              className="btn btn-primario btn-campo w-full"
             >
               {tudoPronto ? "Rever os serviços" : "Confirmar os serviços"}
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-tinta text-amarelo">
-                <Seta />
-              </span>
             </Link>
           ) : (
-            <p className="rounded-3xl bg-white/10 px-5 py-4 text-sm leading-relaxed text-papel/90">
+            <p className="rounded-lg bg-white/10 px-5 py-4 text-sm leading-relaxed text-papel/90">
               Pode fechar. Quando o serviço do dia for lançado, é só voltar por
               este mesmo link.
             </p>
@@ -190,14 +188,6 @@ function Certo() {
   return (
     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-tinta" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 12.5 9.5 18 20 6.5" />
-    </svg>
-  );
-}
-
-function Seta() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 stroke-current" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>
   );
 }

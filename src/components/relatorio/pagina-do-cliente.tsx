@@ -32,10 +32,10 @@ const ROTULO_STATUS = {
 } as const;
 
 const COR_STATUS = {
-  pendente: "bg-nevoa text-grafite",
-  feita: "bg-amarelo text-tinta",
-  parcial: "bg-amarelo-vazado text-tinta",
-  nao_feita: "bg-alerta/25 text-alerta-tinta",
+  pendente: "selo-neutro",
+  feita: "selo-emdia",
+  parcial: "selo-atencao",
+  nao_feita: "selo-atraso",
 } as const;
 
 export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto }) {
@@ -111,7 +111,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
               {r.atencao.map((a, i) => (
                 <li
                   key={i}
-                  className={`rounded-3xl border-2 px-5 py-4 ${
+                  className={`rounded-lg border-2 px-5 py-4 ${
                     a.precisaDecisao
                       ? "border-amarelo bg-amarelo/10"
                       : "border-nevoa bg-white"
@@ -143,7 +143,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
               {r.pendencias.map((p, i) => (
                 <li
                   key={i}
-                  className="rounded-3xl border border-nevoa bg-white px-5 py-4"
+                  className="rounded-lg border border-nevoa bg-white px-5 py-4"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <p className="font-semibold text-tinta">{p.titulo}</p>
@@ -173,11 +173,11 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
                   {d.servicos.map((s) => (
                     <li
                       key={s.id}
-                      className="rounded-3xl border border-nevoa bg-white px-5 py-4"
+                      className="rounded-lg border border-nevoa bg-white px-5 py-4"
                     >
                       <div className="flex flex-wrap items-baseline gap-2">
                         <span
-                          className={`rounded-full px-2.5 py-0.5 font-mono text-[0.6rem] tracking-widest uppercase ${COR_STATUS[s.status]}`}
+                          className={`selo ${COR_STATUS[s.status]}`}
                         >
                           {ROTULO_STATUS[s.status]}
                         </span>
@@ -201,7 +201,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
                               <img
                                 src={f.url}
                                 alt={`Foto do serviço: ${s.titulo}`}
-                                className="h-40 w-full rounded-2xl object-cover"
+                                className="h-40 w-full rounded-sm object-cover"
                               />
                             </li>
                           ))}
@@ -230,7 +230,7 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
         )}
 
         {r && r.lacunas.length > 0 && (
-          <section className="mt-8 rounded-3xl border border-dashed border-nevoa px-5 py-4">
+          <section className="mt-8 rounded-lg border border-dashed border-nevoa px-5 py-4">
             <h2 className="rotulo mb-2">Este relatório não afirma</h2>
             <ul className="flex flex-col gap-1.5">
               {r.lacunas.map((l, i) => (
@@ -245,7 +245,12 @@ export function PaginaDoCliente({ relatorio }: { relatorio: RelatorioCompleto })
         <footer className="mt-12 border-t border-nevoa pt-6">
           <RodapeDaMarca
             nome={obra.marcaNome ?? undefined}
-            nota="Relatório de obra"
+            logo={obra.marcaLogo}
+            nota={
+              obra.contato
+                ? `Relatório de obra · ${obra.contato}`
+                : "Relatório de obra"
+            }
           />
           {/* A nota não pode afirmar quem digitou o relato: às vezes é o mestre
               no canteiro, às vezes é o escritório lançando o que a equipe
@@ -274,7 +279,7 @@ function Numero({
   destaque?: boolean;
 }) {
   return (
-    <div className="rounded-3xl border border-nevoa bg-white px-5 py-4">
+    <div className="rounded-lg border border-nevoa bg-white px-5 py-4">
       <p className="rotulo">{rotulo}</p>
       <p
         className={`mt-2 font-sans text-4xl leading-none font-extrabold -tracking-[0.03em] ${

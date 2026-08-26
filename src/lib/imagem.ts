@@ -9,8 +9,19 @@ export async function reduzirImagem(
   arquivo: File,
   maiorLado = 1600,
   qualidade = 0.82,
+  /**
+   * PNG só para logotipo. JPEG achata o fundo transparente num retângulo
+   * branco, e logotipo com fundo chapado no cabeçalho do documento é
+   * exatamente o que a empreiteira não quer ver.
+   */
+  saida: "image/jpeg" | "image/png" = "image/jpeg",
 ): Promise<{ blob: Blob; mimeType: string; extensao: string }> {
-  const original = { blob: arquivo as Blob, mimeType: arquivo.type, extensao: "jpg" };
+  const extensaoDe = (mime: string) => (mime === "image/png" ? "png" : "jpg");
+  const original = {
+    blob: arquivo as Blob,
+    mimeType: arquivo.type,
+    extensao: extensaoDe(arquivo.type),
+  };
 
   try {
     const bitmap = await createImageBitmap(arquivo);
@@ -26,11 +37,11 @@ export async function reduzirImagem(
     bitmap.close();
 
     const blob = await new Promise<Blob | null>((resolver) =>
-      canvas.toBlob(resolver, "image/jpeg", qualidade),
+      canvas.toBlob(resolver, saida, qualidade),
     );
     if (!blob) return original;
 
-    return { blob, mimeType: "image/jpeg", extensao: "jpg" };
+    return { blob, mimeType: saida, extensao: extensaoDe(saida) };
   } catch {
     // HEIC sem suporte de decode, por exemplo. Envia o original e deixa o
     // servidor recusar se for o caso — melhor que perder a foto em silêncio.

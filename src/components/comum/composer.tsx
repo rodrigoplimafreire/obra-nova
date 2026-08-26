@@ -9,6 +9,7 @@ import {
   type BlocoGravado,
 } from "@/lib/audio/recorder";
 import { escolherMime } from "@/lib/audio/mime";
+import { Dica } from "@/components/comum/dica";
 import { lerContexto, comoAbrirNoNavegador, type ContextoNavegador } from "@/lib/ua";
 
 /**
@@ -167,7 +168,7 @@ export function Composer({
     <div className="shrink-0 border-t border-nevoa/70 bg-papel px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-8 md:pb-5">
       <div className="mx-auto w-full max-w-2xl">
       {erro && (
-        <p className="mb-3 rounded-2xl bg-alerta/20 px-4 py-3 text-sm leading-relaxed text-alerta-tinta">
+        <p className="mb-3 aviso aviso-erro text-sm leading-relaxed text-tinta">
           {erro}
         </p>
       )}
@@ -208,19 +209,23 @@ export function Composer({
         <div className="flex items-end gap-2">
           {/* Um pill só: o campo cresce, o clipe e a câmera moram dentro dele,
               encostados na borda direita — a mesma composição do WhatsApp. */}
-          <div className="flex min-w-0 flex-1 items-end gap-0.5 rounded-3xl border border-nevoa bg-white py-1.5 pr-1.5 pl-4">
+          <div className="flex min-w-0 flex-1 items-end gap-0.5 rounded-lg border border-nevoa bg-white py-1.5 pr-1.5 pl-4">
             <textarea
               ref={taRef}
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
               rows={1}
+              // Curto porque **tem que caber em uma linha**: a altura do campo
+              // é calculada pelo `scrollHeight`, e o placeholder não entra
+              // nessa conta. Com o campo vazio o navegador reporta uma linha,
+              // e um texto que quebre em duas é cortado no meio — foi o que
+              // acontecia com "Prefira gravar, ou escreva aqui" no celular.
+              // O convite a gravar já está no microfone amarelo ao lado.
               placeholder={
-                destaque === "foto"
-                  ? microfonePossivel
-                    ? "Mande a foto, ou conte aqui"
-                    : "Escreva o que foi feito"
-                  : microfonePossivel
-                    ? "Prefira gravar, ou escreva aqui"
+                microfonePossivel
+                  ? "Ou escreva aqui"
+                  : destaque === "foto"
+                    ? "Escreva o que foi feito"
                     : "Escreva sua resposta"
               }
               // overflow-hidden é o estado inicial; o efeito acima troca para
@@ -242,12 +247,7 @@ export function Composer({
                   ? "Tirar uma foto do serviço agora"
                   : "Tirar uma foto"
               }
-              data-dica={
-                destaque === "foto"
-                  ? "A foto é a prova do serviço. É ela que o cliente vê no relatório."
-                  : undefined
-              }
-              className={`dica dica-cima flex h-9 w-9 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${
                 destaque === "foto" ? "text-amarelo-tinta" : "text-cinza"
               }`}
             >
@@ -301,18 +301,19 @@ export function Composer({
               <Seta className="h-5 w-5 stroke-tinta" />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => void comecarGravacao()}
-              disabled={ocupado || preparando}
-              aria-label="Gravar um áudio, a forma mais rápida de responder"
-              data-dica="Responder por áudio é mais rápido e ajuda a captar melhor o que você quer dizer."
-              // dica-cima: o botão fica no rodapé da tela, e a dica aberta para
-              // baixo era cortada pela borda da janela.
-              className="dica dica-cima dica-esq flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amarelo text-tinta disabled:opacity-50"
-            >
-              <Microfone />
-            </button>
+            // O botão fica no rodapé; a `Dica` mede a tela e vira o balão para
+            // cima sozinha, sem precisar declarar a direção aqui.
+            <Dica texto="Responder por áudio é mais rápido e ajuda a captar melhor o que você quer dizer.">
+              <button
+                type="button"
+                onClick={() => void comecarGravacao()}
+                disabled={ocupado || preparando}
+                aria-label="Gravar um áudio, a forma mais rápida de responder"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amarelo text-tinta disabled:opacity-50"
+              >
+                <Microfone />
+              </button>
+            </Dica>
           )}
         </div>
       )}

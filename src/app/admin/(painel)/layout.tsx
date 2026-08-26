@@ -11,5 +11,9 @@ export default async function LayoutDoPainel({
   children: React.ReactNode;
 }) {
   const admin = await exigirAdmin();
-  return <Casca email={admin.email}>{children}</Casca>;
+  return (
+    <Casca email={admin.email} avatar={admin.avatar}>
+      {children}
+    </Casca>
+  );
 }

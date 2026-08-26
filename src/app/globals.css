@@ -1,48 +1,86 @@
 @import "tailwindcss";
 
-/* Manual de marca Obra Nova · v1.0 · 2026
-   Duas cores mandam: amarelo de sinalização e grafite de estrutura. Os neutros
-   só sustentam interface e papel.
+/* Design System Obra Nova — do documento "Obra Nova Design System.dc.html",
+   projeto Identidade Obra Nova.
 
-   Grafite é a estrutura: superfícies escuras, botões redondos, texto.
-   Amarelo é o acento — um por tela, onde o olho precisa cair. Nunca como
-   texto sobre claro: aí entra `amarelo-tinta`, que passa em contraste. */
+   Amarelo é ação. Grafite é estrutura. Arroio é dado e progresso. Nunca
+   inverter esses papéis. Um único botão amarelo por tela: é ele que diz o que
+   fazer agora, e tudo mais é secundário por definição.
+
+   Archivo fala, IBM Plex Mono mede. Todo número que se compara — prazo,
+   medição, percentual, código, dinheiro — é mono tabular. */
 @theme {
-  --color-tinta: #14181a; /* Grafite */
-  --color-grafite: #2a2f31; /* Grafite 80 */
-  --color-fumaca: #5c6360;
+  /* --- Cor de marca --- */
+  --color-amarelo: #f7e407; /* brand-action */
+  --color-amarelo-hover: #e0cf06;
+  --color-amarelo-ativo: #c4b505;
+  /* O amarelo não se lê como texto sobre claro. Quando precisa ser texto,
+     é este. */
+  --color-amarelo-tinta: #8a7a05;
+  --color-amarelo-vazado: #fbf4c0;
+
+  --color-arroio: #2e7d74; /* accent: dado e progresso, nunca ação */
+  --color-arroio-tinta: #25635c;
+
+  /* --- Escala neutra grafite, do documento --- */
+  --color-papel: #f5f2ec; /* 050 · cal, superfície */
+  --color-cinza-100: #edeeec; /* sutil, desabilitado, divisória de linha */
+  --color-cinza-200: #dcdfdf;
+  --color-concreto: #c9c4ba; /* 300 · borda de campo */
+  --color-cinza-400: #8f9799; /* texto desabilitado, placeholder */
+  --color-cinza-500: #6b7376;
+  --color-cinza-600: #4c5457; /* borda sobre fundo escuro */
+  --color-grafite: #22282a; /* 800 · superfície escura secundária */
+  --color-tinta: #14181a; /* 900 · fg-strong */
+
+  /* Neutros quentes que o documento usa em texto e borda de seção. */
+  --color-fumaca: #5c6360; /* texto secundário sobre claro */
+  --color-nevoa: #dcd6cc; /* borda de card e seção */
+  --color-papel-fundo: #e7e2da;
   /* O #8A8378 do manual é cor de pôster: em micro-texto de 11px ele dá 2,9:1
      sobre cal e reprova na AA. Aqui ele desce até passar, sem sair da família
      quente do manual. */
   --color-cinza: #5f5a51;
-  --color-nevoa: #dcd6cc;
-  --color-papel: #f5f2ec; /* Cal */
-  --color-papel-fundo: #e7e2da;
-  --color-concreto: #c9c4ba;
 
-  --color-amarelo: #f7e407; /* Amarelo Obra */
-  --color-amarelo-tinta: #8a7a05; /* o amarelo que dá para ler sobre claro */
-  --color-amarelo-vazado: #fbf4c0;
+  /* --- Estados. Sempre com ícone ou rótulo, nunca só cor. --- */
+  --color-emdia: #245f58;
+  --color-emdia-fundo: #e4efed;
+  --color-atencao: #7a5800; /* texto do selo */
+  --color-atencao-forte: #946a00; /* faixa e marcador */
+  --color-atencao-fundo: #fbf3ce;
+  --color-atraso: #a8331f;
+  --color-atraso-forte: #8e2a19;
+  --color-atraso-ativo: #742214;
+  --color-atraso-fundo: #f8e3df;
+  --color-planejado: #31506b;
+  --color-planejado-fundo: #e5ecf3;
 
-  /* Arroio é a cor do dado que corre: progresso, medição, água. Entra em
-     barra e número de medida, nunca como cor de ação. O tom cheio reprova
-     em contraste como texto pequeno sobre cal (4,3:1) — para texto, usar
-     `arroio-tinta`. */
-  --color-arroio: #2e7d74;
-  --color-arroio-tinta: #25635c;
-
-  --color-alerta: #ff8a80;
-  --color-alerta-tinta: #5c2b2e;
+  /* Fundo do campo em erro, e a zebra da tabela de dados. */
+  --color-erro-campo: #fdf7f6;
+  --color-zebra: #fdfcf9;
 
   --font-sans: var(--font-archivo), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Raio curto: a marca é angular e a interface acompanha.
+     0 tabela e faixa · 4 botão e campo · 8 card e modal · pill só status. */
+  --radius-controle: 4px;
+  --radius-cartao: 8px;
 }
 
 @layer base {
   :root {
-    /* Altura do rodapé do painel. A mesma na barra lateral e na coluna de
-       conteúdo, para os dois traços se encontrarem numa linha só. */
-    --altura-rodape: 4.5rem;
+    /* Altura da barra de abas do celular (64px do documento de UI), incluindo
+       a faixa do indicador de início do iPhone. O conteúdo reserva este espaço
+       no fim; a barra é `fixed` e passaria por cima do rodapé sem ele. Zero no
+       desktop, onde a barra não existe. */
+    --altura-abas: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --altura-abas: 0px;
+    }
   }
 
   html {
@@ -86,42 +124,392 @@
     color: var(--color-concreto);
   }
 
-  /* Uma escala de botão para o painel inteiro. Antes cada tela tinha a sua e o
-     olho precisava procurar onde estava a ação. */
+  /* --- Ações -------------------------------------------------------------
+     Cinco variantes: primário, secundário, sutil, destrutivo e texto. Nada
+     além disso entra no sistema.
+
+     Três alturas: 32 compacto, 40 padrão, 52 campo. O de campo é o único
+     usado no mobile — no canteiro o alvo precisa ser grande.
+
+     Desabilitado não é opacidade: o documento dá cor própria para cada
+     variante, porque `opacity` sobre amarelo vira um bege que parece um
+     terceiro estado. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    border-radius: 9999px;
-    padding: 0.625rem 1.25rem;
+    gap: 0.625rem;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: var(--radius-controle);
     font-size: 0.875rem;
     font-weight: 600;
-    line-height: 1.25rem;
+    line-height: 1;
     white-space: nowrap;
-    transition: opacity 150ms;
+    transition:
+      background-color 150ms,
+      border-color 150ms,
+      color 150ms;
   }
-  .btn:disabled {
-    opacity: 0.45;
+  .btn-compacto {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
   }
-  /* A ação principal é amarela com texto grafite, como no manual. Amarelo
-     sobre claro só funciona como área cheia; como texto, nunca. */
-  .btn-principal {
+  .btn-campo {
+    height: 52px;
+    padding: 0 26px;
+    font-size: 1rem;
+  }
+  /* Botão só de ícone: quadrado da mesma altura. */
+  .btn-icone {
+    width: 40px;
+    padding: 0;
+  }
+  .btn-compacto.btn-icone {
+    width: 32px;
+  }
+
+  .btn-primario {
     background: var(--color-amarelo);
     color: var(--color-tinta);
   }
-  .btn-escuro {
-    background: var(--color-tinta);
-    color: var(--color-papel);
+  .btn-primario:hover:not(:disabled) {
+    background: var(--color-amarelo-hover);
   }
-  .btn-vazado {
-    border: 1px solid var(--color-nevoa);
+  .btn-primario:active:not(:disabled) {
+    background: var(--color-amarelo-ativo);
+  }
+  .btn-primario:disabled {
+    background: var(--color-cinza-100);
+    color: var(--color-cinza-400);
+  }
+
+  .btn-secundario {
     background: #fff;
-    color: var(--color-grafite);
+    color: var(--color-tinta);
+    border: 1px solid var(--color-tinta);
   }
+  .btn-secundario:hover:not(:disabled) {
+    background: var(--color-cinza-100);
+  }
+  .btn-secundario:active:not(:disabled) {
+    background: var(--color-cinza-200);
+  }
+  .btn-secundario:disabled {
+    color: var(--color-cinza-200);
+    border-color: var(--color-cinza-200);
+  }
+
+  .btn-sutil {
+    background: var(--color-cinza-100);
+    color: var(--color-tinta);
+  }
+  .btn-sutil:hover:not(:disabled) {
+    background: var(--color-cinza-200);
+  }
+  .btn-sutil:active:not(:disabled) {
+    background: var(--color-concreto);
+  }
+  .btn-sutil:disabled {
+    background: var(--color-papel);
+    color: var(--color-cinza-200);
+  }
+
   .btn-perigo {
-    background: var(--color-alerta-tinta);
+    background: var(--color-atraso);
     color: var(--color-papel);
+  }
+  .btn-perigo:hover:not(:disabled) {
+    background: var(--color-atraso-forte);
+  }
+  .btn-perigo:active:not(:disabled) {
+    background: var(--color-atraso-ativo);
+  }
+  .btn-perigo:disabled {
+    background: var(--color-cinza-100);
+    color: var(--color-cinza-400);
+  }
+
+  /* Botão trabalhando: o documento dá cor própria e um círculo girando. Sem
+     isso, "desabilitado" e "processando" ficam idênticos — e quem clicou não
+     sabe se o sistema entendeu. */
+  .btn-carregando,
+  .btn:disabled.btn-carregando {
+    background: var(--color-cinza-100);
+    color: var(--color-cinza-500);
+    border-color: transparent;
+    cursor: progress;
+  }
+  .girando {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border: 2px solid var(--color-cinza-200);
+    border-top-color: var(--color-cinza-500);
+    border-radius: 50%;
+    animation: girar 0.7s linear infinite;
+  }
+  @keyframes girar {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .girando {
+      animation-duration: 2.4s;
+    }
+  }
+
+  /* Texto: sem área, marcado pelo traço amarelo que só aparece no hover. */
+  .btn-texto {
+    height: auto;
+    padding: 0.6875rem 4px;
+    background: transparent;
+    color: var(--color-tinta);
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+  }
+  .btn-texto:hover:not(:disabled) {
+    border-bottom-color: var(--color-amarelo);
+  }
+  .btn-texto:active:not(:disabled) {
+    color: var(--color-cinza-600);
+    border-bottom-color: var(--color-amarelo-ativo);
+  }
+  .btn-texto:disabled {
+    color: var(--color-cinza-200);
+  }
+
+  /* Sobre barra escura o secundário perde o contorno grafite e ganha borda
+     neutra 600 — o contorno preto sumiria. */
+  .em-escuro .btn-secundario,
+  .btn-secundario.em-escuro {
+    background: transparent;
+    color: var(--color-papel);
+    border-color: var(--color-cinza-600);
+  }
+  .em-escuro .btn-secundario:hover:not(:disabled),
+  .btn-secundario.em-escuro:hover:not(:disabled) {
+    background: var(--color-grafite);
+  }
+  .em-escuro .btn-sutil,
+  .btn-sutil.em-escuro {
+    background: var(--color-grafite);
+    color: var(--color-papel);
+  }
+
+  /* --- Estados, em pílula. O único lugar onde a pílula existe. --- */
+  .selo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .selo-emdia {
+    background: var(--color-emdia-fundo);
+    color: var(--color-emdia);
+  }
+  .selo-atencao {
+    background: var(--color-atencao-fundo);
+    color: var(--color-atencao);
+  }
+  .selo-atraso {
+    background: var(--color-atraso-fundo);
+    color: var(--color-atraso-forte);
+  }
+  .selo-planejado {
+    background: var(--color-planejado-fundo);
+    color: var(--color-planejado);
+  }
+  .selo-neutro {
+    background: var(--color-cinza-100);
+    color: var(--color-cinza-500);
+  }
+
+  /* --- Diálogo -----------------------------------------------------------
+     Modal no desktop, folha de baixo no celular. É o mesmo componente: só a
+     ancoragem muda, porque no telefone a mão alcança a base da tela e não o
+     centro.
+
+     Elemento `<dialog>` nativo de propósito — foco preso, Esc, camada de topo
+     e fundo inerte vêm do navegador, corretos, sem 200 linhas de armadilha de
+     acessibilidade escritas à mão. */
+  .dialogo {
+    padding: 0;
+    border: none;
+    background: transparent;
+    max-width: none;
+    max-height: none;
+    width: 100%;
+    height: 100%;
+    /* O `<dialog>` centraliza sozinho por margem auto; aqui ele ocupa a tela
+       toda e quem centraliza é o flex, para o clique no vazio ter alvo. */
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .dialogo::backdrop {
+    background: rgba(20, 24, 26, 0.55);
+  }
+  .dialogo:not([open]) {
+    display: none;
+  }
+
+  .dialogo-painel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 92dvh;
+    background: #fff;
+    /* Folha de baixo: só as quinas de cima arredondam. */
+    border-radius: var(--radius-cartao) var(--radius-cartao) 0 0;
+    box-shadow: 0 16px 40px rgba(20, 24, 26, 0.2);
+    overflow: hidden;
+  }
+
+  @media (min-width: 768px) {
+    .dialogo {
+      align-items: center;
+      padding: 24px;
+    }
+    .dialogo-painel {
+      max-width: 44rem;
+      max-height: 86dvh;
+      border-radius: var(--radius-cartao);
+    }
+    .dialogo-estreito .dialogo-painel {
+      max-width: 30rem;
+    }
+  }
+
+  /* A alça só existe no celular: é o sinal de "isto sobe e desce". */
+  .dialogo-alca {
+    flex: none;
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+  }
+  .dialogo-alca span {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-cinza-200);
+  }
+  @media (min-width: 768px) {
+    .dialogo-alca {
+      display: none;
+    }
+  }
+
+  .dialogo-cabecalho {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 24px 18px;
+  }
+  .dialogo-titulo {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+  .dialogo-descricao {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-fumaca);
+  }
+
+  /* Corpo rola; cabeçalho e rodapé ficam. Num formulário longo no celular, o
+     botão de salvar não pode fugir para fora da tela. */
+  .dialogo-forma {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  .dialogo-corpo {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 24px 24px;
+  }
+  .dialogo-rodape {
+    flex: none;
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--color-papel);
+    border-top: 1px solid var(--color-nevoa);
+    /* No celular a barra encosta na borda inferior do aparelho. */
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  /* No celular as ações empilham e a principal sobe: ela é a última no DOM
+     (ordem de leitura e de tabulação corretas) e a primeira para o polegar. */
+  .dialogo-rodape {
+    flex-direction: column-reverse;
+  }
+  .dialogo-rodape > .btn {
+    width: 100%;
+    height: 52px;
+    font-size: 1rem;
+  }
+  @media (min-width: 768px) {
+    .dialogo-rodape {
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+    .dialogo-rodape > .btn {
+      width: auto;
+      height: 40px;
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Card e modal: raio 8, borda névoa, fundo branco. */
+  .cartao {
+    border: 1px solid var(--color-nevoa);
+    border-radius: var(--radius-cartao);
+    background: #fff;
+  }
+
+  /* Aviso: faixa lateral de 4px na cor do estado, o resto neutro. Sem raio e
+     sem fundo tingido — o documento é explícito, e a faixa lida melhor no sol
+     do que um bloco colorido claro. */
+  .aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid var(--color-nevoa);
+    border-left: 4px solid var(--color-cinza-400);
+    padding: 16px 18px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .aviso-ok {
+    border-left-color: var(--color-arroio);
+  }
+  .aviso-atencao {
+    border-left-color: var(--color-atencao-forte);
+  }
+  .aviso-erro {
+    border-left-color: var(--color-atraso);
+  }
+
+  /* Número que se compara é sempre mono tabular, alinhado à direita. */
+  .numero {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
   }
 
   /* Link discreto de ação secundária: sempre mono, sempre sublinhado. */
@@ -148,64 +536,174 @@
     animation: barra 1.1s ease-in-out infinite;
   }
 
+  /* Campo: 44 no desktop, 52 no mobile — no canteiro o dedo é o ponteiro.
+     O foco é contorno externo, não troca de borda: assim a altura não muda
+     e a linha não "pula" quando o campo recebe o cursor. */
   .campo {
     width: 100%;
-    border-radius: 1rem;
-    border: 1px solid var(--color-nevoa);
+    height: 44px;
+    border-radius: var(--radius-controle);
+    border: 1px solid var(--color-concreto);
     background: #fff;
-    padding: 0.75rem 1rem;
+    padding: 0 14px;
+    font-size: 0.9375rem;
     outline: none;
+  }
+  textarea.campo {
+    height: auto;
+    min-height: 88px;
+    padding: 12px 14px;
+    line-height: 1.55;
+  }
+  .campo::placeholder {
+    color: var(--color-cinza-400);
   }
   .campo:focus {
     border-color: var(--color-tinta);
+    outline: 2px solid var(--color-tinta);
+    outline-offset: 2px;
+  }
+  .campo:disabled {
+    background: var(--color-papel);
+    border-color: var(--color-cinza-200);
+    color: var(--color-cinza-400);
+  }
+  /* Erro é texto, não só borda vermelha — quem não distingue vermelho
+     precisa da frase. A borda é o reforço, nunca o recado. */
+  .campo-erro {
+    border-color: var(--color-atraso);
+    background: var(--color-erro-campo);
+  }
+  @media (max-width: 767px) {
+    .campo {
+      height: 52px;
+    }
   }
 
-  /* Dica em hover, só onde existe mouse de verdade: no toque ela ficaria
-     presa na tela depois do tap. O texto vem de data-dica. */
+  /* O mesmo campo, sobre grafite: a tela de entrada é a única superfície
+     escura do painel, e o branco sumiria de propósito errado ali. Só as cores
+     mudam — raio, respiro e altura continuam os mesmos. */
+  .campo-escuro {
+    border-color: var(--color-cinza-600);
+    background: var(--color-grafite);
+    color: var(--color-papel);
+  }
+  .campo-escuro:focus {
+    border-color: var(--color-amarelo);
+    outline-color: var(--color-amarelo);
+  }
+  .campo-escuro::placeholder {
+    color: var(--color-cinza-500);
+  }
+
+  /* Rótulo de campo: sempre acima, sempre visível. Placeholder não substitui
+     rótulo — no sol do canteiro, texto cinza claro desaparece. */
+  .rotulo-campo {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .ajuda-campo {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--color-fumaca);
+  }
+  .erro-campo {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-atraso);
+  }
+
+  /* --- Tabela de dados ---------------------------------------------------
+     Raio 0, como manda o documento: tabela e faixa não arredondam. Cabeçalho
+     em mono maiúsculo sobre cal, linhas separadas por 100, zebra discreta, e
+     todo número à direita em mono tabular. */
+  .tabela {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .tabela th {
+    padding: 12px 16px;
+    background: var(--color-papel);
+    border-bottom: 1px solid var(--color-nevoa);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-cinza);
+    text-align: left;
+  }
+  .tabela th.num {
+    text-align: right;
+  }
+  .tabela td {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-cinza-100);
+    font-size: 0.875rem;
+    vertical-align: top;
+  }
+  .tabela tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .tabela tbody tr:nth-child(even) {
+    background: var(--color-zebra);
+  }
+  .tabela td.num {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* --- Dica de ajuda ------------------------------------------------------
+     O balão é `position: fixed` num portal no `body` (ver `comum/dica.tsx`),
+     e não `::after` dentro do gatilho. A razão é estrutural: a casca do painel
+     usa `overflow-clip` nos containers e a tabela de custos rola na
+     horizontal — dica ancorada no próprio elemento era recortada em toda
+     borda, e as variantes manuais de direção só remendavam os casos que a
+     gente lembrava de marcar.
+
+     Só onde existe mouse: no toque o balão fica preso na tela depois do tap.
+     Nesses aparelhos a informação vive no texto de apoio do campo. */
+  .dica-gatilho {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .dica-balao {
+    display: none;
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .dica {
-      position: relative;
+    .dica-gatilho {
+      cursor: help;
     }
-    .dica::after {
-      content: attr(data-dica);
-      position: absolute;
-      top: calc(100% + 0.5rem);
-      left: 50%;
-      z-index: 60;
-      max-width: 16rem;
+    .dica-balao {
+      position: fixed;
+      display: block;
+      z-index: 80;
+      /* 230px e raio 4, como o documento especifica. O limite existe para a
+         dica caber em duas linhas: o que não cabe vira texto de apoio na
+         própria tela, não um parágrafo flutuante. */
       width: max-content;
-      transform: translateX(-50%);
-      border-radius: 0.75rem;
+      border-radius: var(--radius-controle);
       background: var(--color-tinta);
-      padding: 0.5rem 0.75rem;
+      padding: 8px 12px;
       font-family: var(--font-sans);
-      font-size: 0.75rem;
+      font-size: 0.8125rem;
       font-weight: 400;
-      line-height: 1.35;
+      line-height: 1.45;
       letter-spacing: 0;
       text-transform: none;
       text-decoration: none;
+      text-align: left;
       color: var(--color-papel);
-      opacity: 0;
+      box-shadow: 0 8px 24px rgba(20, 24, 26, 0.18);
       pointer-events: none;
-      transition: opacity 120ms ease 200ms;
-    }
-    .dica:hover::after,
-    .dica:focus-visible::after {
-      opacity: 1;
-    }
-    /* Perto da borda direita, ancora pela direita para não vazar da tela. */
-    .dica-esq::after {
-      left: auto;
-      right: 0;
-      transform: none;
-    }
-
-    /* Perto da borda de baixo (o Sair da barra lateral), abre pra cima —
-       embaixo ela seria cortada pelo overflow-clip do container. */
-    .dica-cima::after {
-      top: auto;
-      bottom: calc(100% + 0.5rem);
     }
   }
 

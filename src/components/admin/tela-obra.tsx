@@ -3,8 +3,19 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Cabecalho, Conteudo, Indicador, Secao } from "./cabecalho";
+import {
+  Cabecalho,
+  CartaoDeDados,
+  Conteudo,
+  Dado,
+  Indicador,
+  Secao,
+} from "./cabecalho";
 import { copiarTexto } from "@/lib/clipboard";
+import { CampoDeTelefone } from "@/components/comum/campos";
+import { Dialogo } from "@/components/comum/dialogo";
+import { Dica } from "@/components/comum/dica";
+import { Girando } from "@/components/comum/esqueleto";
 import {
   adicionarMestre,
   atualizarAtividade,
@@ -26,11 +37,14 @@ const ROTULO_STATUS = {
   nao_feita: "Não feita",
 } as const;
 
+/* Os selos de estado do documento: cor de fundo clara com o texto no tom
+   forte da mesma família, e sempre a palavra junto — a obra é lida no sol, por
+   gente com pressa, e cor sozinha não diz nada para quem não distingue. */
 const COR_STATUS = {
-  pendente: "bg-nevoa text-grafite",
-  feita: "bg-amarelo text-tinta",
-  parcial: "bg-amarelo-vazado text-tinta",
-  nao_feita: "bg-alerta/25 text-alerta-tinta",
+  pendente: "selo-neutro",
+  feita: "selo-emdia",
+  parcial: "selo-atencao",
+  nao_feita: "selo-atraso",
 } as const;
 
 const DIA_POR_EXTENSO = new Intl.DateTimeFormat("pt-BR", {
@@ -73,7 +87,6 @@ export function TelaDaObra({
 }) {
   const router = useRouter();
   const { obra, mestres, atividades } = detalhe;
-  const [configAberta, setConfigAberta] = useState(false);
 
   const confirmadas = atividades.filter((a) =>
     a.confirmacoes.some((c) => c.status !== "pendente"),
@@ -86,23 +99,16 @@ export function TelaDaObra({
         voltarRotulo="Obras"
         titulo={obra.nome}
         meta={`${obra.cliente}${obra.endereco ? ` · ${obra.endereco}` : ""}`}
-        acoes={
-          <button
-            type="button"
-            onClick={() => setConfigAberta((a) => !a)}
-            className="btn btn-vazado"
-          >
-            Configurações
-          </button>
-        }
       />
 
       <Conteudo>
-        {configAberta && (
-          <DadosDaObra obra={obra} aoFechar={() => setConfigAberta(false)} />
-        )}
+        {/* Cartão sempre à vista, com "Editar" dentro — o mesmo padrão do
+            orçamento. Antes era um botão "Configurações" no cabeçalho que
+            abria um formulário no meio da página, e os dados da obra só
+            existiam na tela enquanto o formulário estivesse aberto. */}
+        <DadosDaObra obra={obra} />
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           <Indicador rotulo="Atividades" valor={atividades.length} />
           <Indicador
             rotulo="Confirmadas"
@@ -180,7 +186,7 @@ export function TelaDaObra({
 
             <Secao titulo="Serviços deste dia">
               {atividades.length === 0 ? (
-                <p className="rounded-3xl border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm text-cinza">
+                <p className="rounded-lg border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm text-cinza">
                   Sem atividades lançadas para este dia.
                 </p>
               ) : (
@@ -213,7 +219,38 @@ export function TelaDaObra({
   );
 }
 
-function DadosDaObra({
+function DadosDaObra({ obra }: { obra: DetalheDaObra["obra"] }) {
+  const [editando, setEditando] = useState(false);
+
+  return (
+    <CartaoDeDados titulo="Dados da obra" aoEditar={() => setEditando(true)}>
+      <>
+        <Dado rotulo="Nome da obra" valor={obra.nome} />
+        <Dado rotulo="Cliente" valor={obra.cliente} />
+        <Dado rotulo="Endereço" valor={obra.endereco} />
+        <Dado
+          rotulo="Quem assina o relatório"
+          valor={obra.marcaNome}
+          vazio="usa o nome padrão da conta"
+          dica="Aparece no rodapé do relatório que o cliente recebe. Preencha com o nome da empreiteira quando o relatório sai em nome dela, não seu."
+        />
+
+        <Dialogo
+          aberto={editando}
+          aoFechar={() => setEditando(false)}
+          titulo="Dados da obra"
+          descricao="O nome e o cliente aparecem no relatório que o cliente abre toda semana."
+        >
+          {editando && (
+            <FormularioDaObra obra={obra} aoFechar={() => setEditando(false)} />
+          )}
+        </Dialogo>
+      </>
+    </CartaoDeDados>
+  );
+}
+
+function FormularioDaObra({
   obra,
   aoFechar,
 }: {
@@ -225,71 +262,77 @@ function DadosDaObra({
     null,
   );
 
+  useEffect(() => {
+    if (estado?.ok) aoFechar();
+  }, [estado, aoFechar]);
+
   return (
-    <form
-      action={acao}
-      className="mb-6 rounded-3xl border border-nevoa bg-white p-5"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="rotulo">Configurações da obra</p>
-        <button type="button" onClick={aoFechar} className="acao-texto text-cinza">
-          fechar
-        </button>
+    <form action={acao} className="dialogo-forma">
+      <div className="dialogo-corpo flex flex-col gap-4">
+        <input type="hidden" name="id" value={obra.id} />
+
+        <label className="flex flex-col gap-1.5">
+          <span className="rotulo-campo">Nome da obra *</span>
+          <input
+            name="nome"
+            defaultValue={obra.nome}
+            required
+            minLength={2}
+            className="campo"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="rotulo-campo">Cliente *</span>
+          <input
+            name="cliente"
+            defaultValue={obra.cliente}
+            required
+            minLength={2}
+            className="campo"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="rotulo-campo">Endereço</span>
+          <input
+            name="endereco"
+            defaultValue={obra.endereco ?? ""}
+            className="campo"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="rotulo-campo">Quem assina o relatório do cliente</span>
+          <input
+            name="marcaNome"
+            defaultValue={obra.marcaNome ?? ""}
+            placeholder="Ex.: RD Engenharia"
+            className="campo"
+          />
+          <span className="ajuda-campo">
+            Aparece no rodapé do relatório que o cliente recebe. Em branco, usa
+            o nome padrão da conta.
+          </span>
+        </label>
+
+        {estado?.erro && (
+          <p className="aviso aviso-erro text-sm">{estado.erro}</p>
+        )}
       </div>
 
-      <input type="hidden" name="id" value={obra.id} />
-
-      <label className="mt-4 block">
-        <span className="text-sm font-medium text-grafite">Nome da obra</span>
-        <input name="nome" defaultValue={obra.nome} required minLength={2} className="campo mt-1.5" />
-      </label>
-
-      <label className="mt-4 block">
-        <span className="text-sm font-medium text-grafite">Cliente</span>
-        <input
-          name="cliente"
-          defaultValue={obra.cliente}
-          required
-          minLength={2}
-          className="campo mt-1.5"
-        />
-      </label>
-
-      <label className="mt-4 block">
-        <span className="text-sm font-medium text-grafite">Endereço</span>
-        <input name="endereco" defaultValue={obra.endereco ?? ""} className="campo mt-1.5" />
-      </label>
-
-      <label className="mt-4 block">
-        <span className="text-sm font-medium text-grafite">
-          Quem assina o relatório do cliente
-        </span>
-        <span className="mt-0.5 block text-xs text-cinza">
-          Aparece no rodapé do relatório que o cliente recebe. Em branco, usa o
-          nome padrão da conta. Preencha com o nome da empreiteira quando o
-          relatório sai em nome dela, não seu.
-        </span>
-        <input
-          name="marcaNome"
-          defaultValue={obra.marcaNome ?? ""}
-          placeholder="Ex.: RD Engenharia"
-          className="campo mt-1.5"
-        />
-      </label>
-
-      {estado?.erro && (
-        <p className="mt-3 text-sm text-alerta-tinta">{estado.erro}</p>
-      )}
-
-      <div className="mt-5 flex items-center gap-3">
-        <button type="submit" disabled={pendente} className="btn btn-escuro">
+      <div className="dialogo-rodape">
+        <button type="button" onClick={aoFechar} className="btn btn-secundario">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={pendente}
+          className={`btn ${pendente ? "btn-carregando" : "btn-primario"}`}
+        >
+          {pendente && <Girando />}
           {pendente ? "Salvando…" : "Salvar"}
         </button>
-        {estado?.ok && (
-          <span className="font-mono text-[0.65rem] tracking-widest text-amarelo-tinta uppercase">
-            salvo
-          </span>
-        )}
       </div>
     </form>
   );
@@ -321,52 +364,50 @@ function ItemDeAtividade({
 
   if (editando) {
     return (
-      <li className="rounded-3xl border-2 border-tinta bg-white px-5 py-4">
+      <li className="rounded-lg border-2 border-tinta bg-white px-5 py-4">
         <form action={acao}>
           <p className="rotulo">Editando o serviço {numero}</p>
           <input type="hidden" name="id" value={atividade.id} />
           <input type="hidden" name="obraId" value={obraId} />
 
-          <label className="mt-3 block">
-            <span className="text-sm font-medium text-grafite">O que fazer</span>
+          <label className="mt-3 flex flex-col gap-1.5">
+            <span className="rotulo-campo">O que fazer *</span>
             <textarea
               name="titulo"
               rows={2}
               defaultValue={atividade.titulo}
               required
               minLength={3}
-              className="campo mt-1.5 resize-y"
+              className="campo resize-y"
             />
           </label>
 
-          <label className="mt-3 block">
-            <span className="text-sm font-medium text-grafite">
-              Texto de apoio (opcional)
-            </span>
-            <span className="mt-0.5 block text-xs text-cinza">
-              Aparece menor, embaixo do serviço, na tela do mestre. Use para a
-              medida, o cuidado, o horário: o que evita a dúvida no canteiro.
-            </span>
+          <label className="mt-3 flex flex-col gap-1.5">
+            <span className="rotulo-campo">Texto de apoio (opcional)</span>
             <textarea
               name="detalhe"
               rows={2}
               defaultValue={atividade.detalhe ?? ""}
-              className="campo mt-1.5 resize-y text-sm"
+              className="campo resize-y text-sm"
             />
+            <span className="ajuda-campo">
+              Aparece menor, embaixo do serviço, na tela do mestre. Use para a
+              medida, o cuidado, o horário: o que evita a dúvida no canteiro.
+            </span>
           </label>
 
           {estado?.erro && (
-            <p className="mt-2 text-sm text-alerta-tinta">{estado.erro}</p>
+            <p className="mt-2 aviso aviso-erro text-sm">{estado.erro}</p>
           )}
 
           <div className="mt-4 flex gap-2">
-            <button type="submit" disabled={salvando} className="btn btn-escuro">
+            <button type="submit" disabled={salvando} className="btn btn-primario">
               {salvando ? "Salvando…" : "Salvar"}
             </button>
             <button
               type="button"
               onClick={() => setEditando(false)}
-              className="btn btn-vazado"
+              className="btn btn-secundario"
             >
               Cancelar
             </button>
@@ -377,7 +418,7 @@ function ItemDeAtividade({
   }
 
   return (
-    <li className="rounded-3xl border border-nevoa bg-white px-5 py-4">
+    <li className="rounded-lg border border-nevoa bg-white px-5 py-4">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tinta font-mono text-[0.6rem] text-papel">
           {numero}
@@ -404,7 +445,7 @@ function ItemDeAtividade({
                 <li key={c.id} className="border-t border-nevoa/60 pt-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className={`rounded-full px-2.5 py-0.5 font-mono text-[0.6rem] tracking-widest uppercase ${COR_STATUS[c.status]}`}
+                      className={`selo ${COR_STATUS[c.status]}`}
                     >
                       {ROTULO_STATUS[c.status]}
                     </span>
@@ -497,7 +538,7 @@ function EditorDoDia({
           <form action={acaoCopiar}>
             <input type="hidden" name="obraId" value={obraId} />
             <input type="hidden" name="dia" value={dia} />
-            <button type="submit" disabled={copiando} className="btn btn-vazado">
+            <button type="submit" disabled={copiando} className="btn btn-secundario">
               {copiando ? "Copiando…" : "Repetir último dia"}
             </button>
           </form>
@@ -510,7 +551,7 @@ function EditorDoDia({
       {aTrazer.length > 0 && (
         <form
           action={acaoTrazer}
-          className="mb-4 rounded-3xl border-2 border-amarelo bg-amarelo/10 px-5 py-4"
+          className="mb-4 rounded-lg border-2 border-amarelo bg-amarelo/10 px-5 py-4"
         >
           <input type="hidden" name="obraId" value={obraId} />
           <input type="hidden" name="dia" value={dia} />
@@ -527,13 +568,13 @@ function EditorDoDia({
           </ul>
 
           {trazido?.erro && (
-            <p className="mt-3 text-sm text-alerta-tinta">{trazido.erro}</p>
+            <p className="mt-3 text-sm text-tinta">{trazido.erro}</p>
           )}
 
           <button
             type="submit"
             disabled={trazendo}
-            className="btn btn-escuro mt-4"
+            className="btn btn-primario mt-4"
           >
             {trazendo
               ? "Trazendo…"
@@ -560,24 +601,22 @@ function EditorDoDia({
         </p>
 
         {!temMestre && (
-          <p className="mt-3 rounded-2xl bg-alerta/20 px-4 py-3 text-sm leading-relaxed text-alerta-tinta">
+          <p className="mt-3 aviso aviso-erro text-sm leading-relaxed text-tinta">
             Esta obra ainda não tem mestre cadastrado. Sem isso não há para quem
             mandar o checklist. Cadastre um lá embaixo.
           </p>
         )}
 
         {copia?.erro && (
-          <p className="mt-3 rounded-2xl bg-alerta/20 px-4 py-3 text-sm text-alerta-tinta">
+          <p className="mt-3 aviso aviso-erro text-sm">
             {copia.erro}
           </p>
         )}
 
         {salvar?.erro && (
           <p
-            className={`mt-3 rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-              salvar.ok
-                ? "bg-amarelo-vazado text-tinta"
-                : "bg-alerta/20 text-alerta-tinta"
+            className={`mt-3 aviso text-sm leading-relaxed ${
+              salvar.ok ? "aviso-ok" : "aviso-erro"
             }`}
           >
             {salvar.erro}
@@ -587,7 +626,7 @@ function EditorDoDia({
         <button
           type="submit"
           disabled={salvando}
-          className="btn btn-principal mt-4"
+          className="btn btn-primario mt-4"
         >
           {salvando ? "Salvando…" : "Salvar o dia"}
         </button>
@@ -612,7 +651,7 @@ function Mestres({
         <button
           type="button"
           onClick={() => setAdicionando((v) => !v)}
-          className="btn btn-vazado"
+          className="btn btn-secundario"
         >
           {adicionando ? "Fechar" : "Adicionar mestre"}
         </button>
@@ -626,7 +665,7 @@ function Mestres({
       )}
 
       {mestres.length === 0 ? (
-        <p className="rounded-3xl border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm text-cinza">
+        <p className="rounded-lg border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm text-cinza">
           Nenhum mestre nesta obra ainda.
         </p>
       ) : (
@@ -655,39 +694,41 @@ function FormularioDeMestre({
   return (
     <form
       action={acao}
-      className="mb-3 rounded-3xl border border-nevoa bg-white px-5 py-4"
+      className="mb-3 rounded-lg border border-nevoa bg-white px-5 py-4"
     >
       <input type="hidden" name="obraId" value={obraId} />
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="block flex-1">
-          <span className="text-sm font-medium text-grafite">Nome</span>
-          <input name="nome" required minLength={2} className="campo mt-1.5" />
+        <label className="flex flex-1 flex-col gap-1.5">
+          <span className="rotulo-campo">Nome *</span>
+          <input name="nome" required minLength={2} className="campo" />
         </label>
-        <label className="block flex-1">
-          <span className="text-sm font-medium text-grafite">Celular</span>
-          <input name="telefone" inputMode="tel" className="campo mt-1.5" />
+        <label className="flex flex-1 flex-col gap-1.5">
+          <span className="rotulo-campo">Celular</span>
+          {/* Máscara de telefone, como em todo campo de telefone do app. Este
+              era o único que aceitava o número cru. */}
+          <CampoDeTelefone nome="telefone" placeholder="(85) 99999-0000" />
         </label>
       </div>
 
       {estado?.erro && (
-        <p className="mt-3 rounded-2xl bg-alerta/20 px-4 py-3 text-sm text-alerta-tinta">
+        <p className="mt-3 aviso aviso-erro text-sm">
           {estado.erro}
         </p>
       )}
 
       {estado?.ok && (
-        <p className="mt-3 rounded-2xl bg-amarelo/30 px-4 py-3 text-sm leading-relaxed text-tinta">
+        <p className="mt-3 aviso aviso-atencao text-sm leading-relaxed text-tinta">
           Mestre cadastrado. O link fixo dele já aparece na lista, é só mandar
           no WhatsApp uma vez.
         </p>
       )}
 
       <div className="mt-4 flex gap-2">
-        <button type="submit" disabled={pendente} className="btn btn-principal">
+        <button type="submit" disabled={pendente} className="btn btn-primario">
           {pendente ? "Salvando…" : "Cadastrar"}
         </button>
-        <button type="button" onClick={aoTerminar} className="btn btn-vazado">
+        <button type="button" onClick={aoTerminar} className="btn btn-secundario">
           Fechar
         </button>
       </div>
@@ -717,7 +758,7 @@ function LinhaDeMestre({
   }
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-nevoa bg-white px-5 py-4">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-nevoa bg-white px-5 py-4">
       <div className="min-w-0">
         <p className="font-semibold text-tinta">{mestre.nome}</p>
         {mestre.telefone && (
@@ -728,25 +769,27 @@ function LinhaDeMestre({
       </div>
 
       <div className="flex shrink-0 gap-2">
-        <button
-          type="button"
-          onClick={() => void copiarLink()}
-          data-dica="Link fixo do mestre. Ele usa o mesmo todo dia."
-          className="dica dica-esq btn btn-vazado"
-        >
-          {copiado ? "Copiado" : "Copiar link"}
-        </button>
+        <Dica texto="Link fixo do mestre. Ele usa o mesmo todo dia.">
+          <button
+            type="button"
+            onClick={() => void copiarLink()}
+            className="btn btn-secundario"
+          >
+            {copiado ? "Copiado" : "Copiar link"}
+          </button>
+        </Dica>
         <form action={acaoRemover}>
           <input type="hidden" name="obraId" value={obraId} />
           <input type="hidden" name="mestreId" value={mestre.id} />
-          <button
-            type="submit"
-            disabled={removendo}
-            data-dica="Tira o mestre da obra. O que ele já mandou continua no relatório."
-            className="dica dica-esq btn btn-vazado"
-          >
-            Remover
-          </button>
+          <Dica texto="Tira o mestre da obra. O que ele já mandou continua no relatório.">
+            <button
+              type="submit"
+              disabled={removendo}
+              className="btn btn-secundario"
+            >
+              Remover
+            </button>
+          </Dica>
         </form>
       </div>
     </li>

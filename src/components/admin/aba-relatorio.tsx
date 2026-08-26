@@ -66,7 +66,7 @@ export function AbaDeRelatorio({
             <button
               type="submit"
               disabled={gerando || !temServicos}
-              className="btn btn-principal"
+              className="btn btn-primario"
             >
               {gerando
                 ? "Escrevendo…"
@@ -78,26 +78,26 @@ export function AbaDeRelatorio({
         }
       >
         {!temServicos && (
-          <p className="rounded-3xl border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm leading-relaxed text-cinza">
+          <p className="rounded-lg border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm leading-relaxed text-cinza">
             Não há serviço lançado nesta semana. Use o seletor de data na aba
             Checklist para escolher outra.
           </p>
         )}
 
         {gerado?.erro && (
-          <p className="mb-4 rounded-2xl bg-alerta/20 px-4 py-3 text-sm leading-relaxed text-alerta-tinta">
+          <p className="mb-4 aviso aviso-erro text-sm leading-relaxed text-tinta">
             {gerado.erro}
           </p>
         )}
 
         {relatorio?.status === "falhou" && (
-          <p className="mb-4 rounded-2xl bg-alerta/20 px-4 py-3 text-sm leading-relaxed text-alerta-tinta">
+          <p className="mb-4 aviso aviso-erro text-sm leading-relaxed text-tinta">
             A última tentativa falhou. {relatorio.erro}
           </p>
         )}
 
         {temServicos && !relatorio && !gerado?.erro && (
-          <p className="rounded-3xl border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm leading-relaxed text-cinza">
+          <p className="rounded-lg border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm leading-relaxed text-cinza">
             Toque em Gerar relatório. A IA lê o que o mestre relatou na semana e
             escreve o texto para o cliente. As fotos entram sozinhas, sem passar
             por ela.
@@ -112,14 +112,14 @@ export function AbaDeRelatorio({
           <Secao titulo="Como o cliente vai ler">
             <div className="flex flex-col gap-4">
               {r.resumo && (
-                <div className="rounded-3xl border border-nevoa bg-white px-5 py-4">
+                <div className="rounded-lg border border-nevoa bg-white px-5 py-4">
                   <p className="rotulo">Como foi a semana</p>
                   <p className="mt-2 leading-relaxed text-grafite">{r.resumo}</p>
                 </div>
               )}
 
               {r.destaques.length > 0 && (
-                <div className="rounded-3xl border border-nevoa bg-white px-5 py-4">
+                <div className="rounded-lg border border-nevoa bg-white px-5 py-4">
                   <p className="rotulo mb-2">O que avançou</p>
                   <ul className="flex flex-col gap-1.5">
                     {r.destaques.map((d, i) => (
@@ -132,7 +132,7 @@ export function AbaDeRelatorio({
               )}
 
               {r.atencao.length > 0 && (
-                <div className="rounded-3xl border-2 border-amarelo bg-amarelo/10 px-5 py-4">
+                <div className="rounded-lg border-2 border-amarelo bg-amarelo/10 px-5 py-4">
                   <p className="rotulo !text-amarelo-tinta">Pontos de atenção</p>
                   <ul className="mt-2 flex flex-col gap-2">
                     {r.atencao.map((a, i) => (
@@ -157,7 +157,7 @@ export function AbaDeRelatorio({
               )}
 
               {r.pendencias.length > 0 && (
-                <div className="rounded-3xl border border-nevoa bg-white px-5 py-4">
+                <div className="rounded-lg border border-nevoa bg-white px-5 py-4">
                   <p className="rotulo mb-2">O que não fechou</p>
                   <ul className="flex flex-col gap-2">
                     {r.pendencias.map((p, i) => (
@@ -182,7 +182,7 @@ export function AbaDeRelatorio({
               )}
 
               {r.proximosPassos.length > 0 && (
-                <div className="rounded-3xl border border-nevoa bg-white px-5 py-4">
+                <div className="rounded-lg border border-nevoa bg-white px-5 py-4">
                   <p className="rotulo mb-2">O que vem na sequência</p>
                   <ul className="flex flex-col gap-1.5">
                     {r.proximosPassos.map((p, i) => (
@@ -195,7 +195,7 @@ export function AbaDeRelatorio({
               )}
 
               {r.lacunas.length > 0 && (
-                <div className="rounded-3xl border border-dashed border-nevoa px-5 py-4">
+                <div className="rounded-lg border border-dashed border-nevoa px-5 py-4">
                   <p className="rotulo mb-2">O relatório não afirma</p>
                   <ul className="flex flex-col gap-1.5">
                     {r.lacunas.map((l, i) => (
@@ -252,7 +252,7 @@ function Publicacao({
   return (
     <Secao titulo="Link do cliente">
       <div
-        className={`rounded-3xl border-2 px-5 py-4 ${
+        className={`rounded-lg border-2 px-5 py-4 ${
           noAr ? "border-amarelo bg-amarelo/10" : "border-nevoa bg-white"
         }`}
       >
@@ -269,7 +269,7 @@ function Publicacao({
         )}
 
         {publicado?.erro && (
-          <p className="mt-3 rounded-2xl bg-alerta/20 px-4 py-3 text-sm text-alerta-tinta">
+          <p className="mt-3 aviso aviso-erro text-sm">
             {publicado.erro}
           </p>
         )}
@@ -280,7 +280,7 @@ function Publicacao({
               <button
                 type="button"
                 onClick={() => void copiarLink()}
-                className="btn btn-principal"
+                className="btn btn-primario"
               >
                 {copiado ? "Copiado" : "Copiar link do cliente"}
               </button>
@@ -290,7 +290,7 @@ function Publicacao({
                 <button
                   type="submit"
                   disabled={despublicando}
-                  className="btn btn-vazado"
+                  className="btn btn-secundario"
                 >
                   {despublicando ? "Tirando…" : "Tirar do ar"}
                 </button>
@@ -303,7 +303,7 @@ function Publicacao({
               <button
                 type="submit"
                 disabled={publicando}
-                className="btn btn-principal"
+                className="btn btn-primario"
               >
                 {publicando ? "Publicando…" : "Publicar para o cliente"}
               </button>

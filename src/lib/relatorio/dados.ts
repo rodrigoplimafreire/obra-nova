@@ -1,5 +1,6 @@
 import "server-only";
 import { BUCKET, supabaseAdmin } from "@/lib/supabase/admin";
+import { empreiteiraDaOrg } from "@/lib/admin/empreiteira";
 import { normalizarRelatorio, type ResultadoDoRelatorio } from "./tipos";
 import type { Enums } from "@/lib/database.types";
 
@@ -34,6 +35,10 @@ export type RelatorioCompleto = {
     cliente: string;
     endereco: string | null;
     marcaNome: string | null;
+    /** Logotipo da empreiteira, do Perfil. Assina o rodapé quando existe. */
+    marcaLogo: string | null;
+    /** Telefone da empreiteira, para o cliente ter a quem ligar. */
+    contato: string | null;
   };
   inicio: string;
   fim: string;
@@ -64,10 +69,15 @@ async function montar(linha: {
 
   const { data: obra } = await sb
     .from("obras")
-    .select("nome, cliente_nome, endereco, marca_nome")
+    .select("nome, cliente_nome, endereco, marca_nome, org_id")
     .eq("id", linha.obra_id)
     .maybeSingle();
   if (!obra) return null;
+
+  // A identidade vem da org, não do relatório: trocar o logotipo no Perfil
+  // atualiza o rodapé de todos os relatórios, inclusive os já publicados. É
+  // papel timbrado, não conteúdo — e conteúdo é o que a publicação congela.
+  const empreiteira = await empreiteiraDaOrg(obra.org_id);
 
   const { data: atividades } = await sb
     .from("atividades")
@@ -172,7 +182,11 @@ async function montar(linha: {
       nome: obra.nome,
       cliente: obra.cliente_nome,
       endereco: obra.endereco,
-      marcaNome: obra.marca_nome,
+      // `marca_nome` da obra vence o nome da empreiteira: existe justamente
+      // para a obra entregue em nome de outra empresa.
+      marcaNome: obra.marca_nome ?? empreiteira.nome,
+      marcaLogo: obra.marca_nome ? null : empreiteira.logo,
+      contato: empreiteira.telefone,
     },
     inicio: linha.inicio,
     fim: linha.fim,

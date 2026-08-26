@@ -3,7 +3,9 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Cabecalho, Conteudo, Secao } from "./cabecalho";
+import { Cabecalho, Conteudo, Secao, Vazio } from "./cabecalho";
+import { Dialogo } from "@/components/comum/dialogo";
+import { Girando } from "@/components/comum/esqueleto";
 import { criarObra } from "@/lib/admin/acoes-obra";
 import type { Resultado } from "@/lib/admin/tipos";
 import type { ResumoDeObra } from "@/lib/admin/obras";
@@ -20,35 +22,43 @@ export function PainelDeObras({ obras }: { obras: ResumoDeObra[] }) {
           <button
             type="button"
             onClick={() => setCriando(true)}
-            className="btn btn-principal"
+            aria-label="Nova obra"
+            className="btn btn-primario btn-icone sm:w-auto sm:px-5"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current" strokeWidth={2.5} strokeLinecap="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            Nova obra
+            <span className="hidden sm:inline">Nova obra</span>
           </button>
         }
       />
 
       <Conteudo>
-        <p className="rounded-3xl border border-nevoa bg-white px-5 py-4 text-sm leading-relaxed text-fumaca">
-          Uma obra por cliente. Você lança as atividades do dia, o mestre
-          confirma no fim do expediente com foto e áudio, e na sexta sai o
-          relatório da semana.
-        </p>
-
         <Secao titulo="Obras ativas">
           {obras.length === 0 ? (
-            <p className="rounded-3xl border border-dashed border-nevoa bg-white px-5 py-10 text-center text-sm text-cinza">
-              Nenhuma obra ainda. Crie a primeira lá em cima.
-            </p>
+            <Vazio
+              titulo="Nenhuma obra ainda"
+              acao={
+                <button
+                  type="button"
+                  onClick={() => setCriando(true)}
+                  className="btn btn-primario"
+                >
+                  Criar a primeira obra
+                </button>
+              }
+            >
+              Uma obra por cliente. Você lança as atividades do dia, o mestre
+              confirma no fim do expediente com foto e áudio, e na sexta sai o
+              relatório da semana.
+            </Vazio>
           ) : (
             <ul className="flex flex-col gap-3">
               {obras.map((o) => (
                 <li key={o.id}>
                   <Link
                     href={`/admin/obras/${o.id}`}
-                    className="flex items-center justify-between gap-4 rounded-3xl border border-nevoa bg-white px-5 py-4 transition md:hover:border-tinta"
+                    className="flex items-center justify-between gap-4 rounded-lg border border-nevoa bg-white px-5 py-4 transition md:hover:border-tinta"
                   >
                     <span className="min-w-0">
                       <span className="block text-lg leading-tight font-semibold text-tinta">
@@ -79,12 +89,32 @@ export function PainelDeObras({ obras }: { obras: ResumoDeObra[] }) {
         </Secao>
       </Conteudo>
 
-      {criando && <JanelaDeObra aoFechar={() => setCriando(false)} />}
+      <JanelaDeObra aberto={criando} aoFechar={() => setCriando(false)} />
     </>
   );
 }
 
-function JanelaDeObra({ aoFechar }: { aoFechar: () => void }) {
+/**
+ * Criar obra, no mesmo diálogo de todo o resto do painel.
+ *
+ * Era o último modal feito à mão do app, e divergia do sistema em seis pontos
+ * ao mesmo tempo: `div` com `position: fixed` em vez do `<dialog>` nativo
+ * (sem foco preso, sem Esc, sem travar a rolagem do fundo), raio de 2rem,
+ * fundo cal em vez de branco, título em `extrabold` com um kicker que nenhum
+ * outro diálogo tem, rótulo de campo fora do `rotulo-campo`, e — o que mais
+ * confunde a mão — **os botões na ordem inversa**, com o primário à esquerda
+ * ocupando a largura sobrante.
+ *
+ * A ordem importa mais que a aparência: em todos os outros diálogos o botão
+ * que confirma é o último. Trocar de lugar num só treina o dedo a errar.
+ */
+function JanelaDeObra({
+  aberto,
+  aoFechar,
+}: {
+  aberto: boolean;
+  aoFechar: () => void;
+}) {
   const router = useRouter();
   const [estado, acao, pendente] = useActionState<Resultado | null, FormData>(
     criarObra,
@@ -96,55 +126,66 @@ function JanelaDeObra({ aoFechar }: { aoFechar: () => void }) {
   }, [estado, router]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-tinta/50 sm:items-center sm:p-6">
-      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-papel p-6 sm:rounded-[2rem]">
-        <form action={acao}>
-          <p className="rotulo">Nova obra</p>
-          <h2 className="mt-2 font-sans text-2xl leading-tight font-extrabold -tracking-[0.02em] text-tinta">
-            Começar uma obra
-          </h2>
-
-          <label className="mt-5 block">
-            <span className="text-sm font-medium text-grafite">Nome da obra</span>
-            <span className="mt-0.5 block text-xs text-cinza">
-              Como a equipe chama. Ex.: “Reforma da Rua Padre Valdevino”.
-            </span>
-            <input name="nome" required minLength={2} className="campo mt-1.5" />
+    <Dialogo
+      aberto={aberto}
+      aoFechar={aoFechar}
+      titulo="Começar uma obra"
+      descricao="O nome e o cliente aparecem no relatório que o cliente abre toda semana."
+      estreito
+    >
+      <form action={acao} className="dialogo-forma">
+        <div className="dialogo-corpo flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5">
+            <span className="rotulo-campo">Nome da obra *</span>
+            <input
+              name="nome"
+              required
+              minLength={2}
+              autoFocus
+              placeholder="Reforma da Rua Padre Valdevino"
+              className="campo"
+            />
+            <span className="ajuda-campo">Como a equipe chama.</span>
           </label>
 
-          <label className="mt-4 block">
-            <span className="text-sm font-medium text-grafite">Cliente</span>
-            <span className="mt-0.5 block text-xs text-cinza">
-              Quem paga a obra. É o nome que vai no relatório da semana.
+          <label className="flex flex-col gap-1.5">
+            <span className="rotulo-campo">Cliente *</span>
+            <input
+              name="cliente"
+              required
+              minLength={2}
+              placeholder="Quem paga a obra"
+              className="campo"
+            />
+            <span className="ajuda-campo">
+              É o nome que vai no relatório da semana.
             </span>
-            <input name="cliente" required minLength={2} className="campo mt-1.5" />
           </label>
 
-          <label className="mt-4 block">
-            <span className="text-sm font-medium text-grafite">Endereço</span>
-            <input name="endereco" className="campo mt-1.5" />
+          <label className="flex flex-col gap-1.5">
+            <span className="rotulo-campo">Endereço</span>
+            <input name="endereco" className="campo" />
           </label>
 
           {estado?.erro && (
-            <p className="mt-4 rounded-2xl bg-alerta/20 px-4 py-3 text-sm text-alerta-tinta">
-              {estado.erro}
-            </p>
+            <p className="aviso aviso-erro text-sm">{estado.erro}</p>
           )}
+        </div>
 
-          <div className="mt-6 flex gap-2">
-            <button
-              type="submit"
-              disabled={pendente}
-              className="btn btn-principal flex-1"
-            >
-              {pendente ? "Criando…" : "Criar obra"}
-            </button>
-            <button type="button" onClick={aoFechar} className="btn btn-vazado">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="dialogo-rodape">
+          <button type="button" onClick={aoFechar} className="btn btn-secundario">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={pendente}
+            className={`btn ${pendente ? "btn-carregando" : "btn-primario"}`}
+          >
+            {pendente && <Girando />}
+            {pendente ? "Criando…" : "Criar obra"}
+          </button>
+        </div>
+      </form>
+    </Dialogo>
   );
 }

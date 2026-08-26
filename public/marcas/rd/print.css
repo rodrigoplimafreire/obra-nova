@@ -1,0 +1,147 @@
+/* =========================================================
+   RD ENGENHARIA · Folha de impressão (A4) — compartilhada
+   Carregada com <link media="print"> em cada proposta.
+   Capa escura + conteúdo em papel timbrado claro.
+   ========================================================= */
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+
+  /* elementos que só fazem sentido na tela */
+  #gate, nav, .btn, [data-wa], .accept-row, .sign-solo,
+  header::before, #gate::before, footer, .media-video-wrap { display: none !important; }
+
+  /* fotos imprimem bem; grade vira 2 colunas pra economizar página */
+  .media-grid { grid-template-columns: repeat(2, 1fr) !important; break-inside: avoid; }
+  .media-item { border-color: #ccc !important; background: #fff !important; }
+  .media-cap { color: #666 !important; border-color: #ddd !important; }
+
+  /* opções de material: no papel mostra as duas, empilhadas — a aba não faz sentido impressa */
+  .opt-tabs { display: none !important; }
+  .opt-panel, .opt-panel[hidden] { display: block !important; break-inside: avoid; margin-top: 26px; }
+  .opt-panel + .opt-panel { margin-top: 40px; padding-top: 24px; border-top: 1px dashed #ccc; }
+  .opt-title {
+    display: block !important; font-family: var(--archivo); font-weight: 700;
+    font-size: 15px; color: #0a0a0a !important; margin-bottom: 12px;
+  }
+
+  * { animation: none !important; transition: none !important; box-shadow: none !important; }
+  [data-rv] { opacity: 1 !important; transform: none !important; }
+
+  html, body { background: #fff !important; color: #111 !important; }
+  /* respiro interno mínimo: protege o layout mesmo se o cliente
+     imprimir com "Margens: nenhuma" no diálogo do navegador */
+  body { padding: 6mm 7mm !important; }
+  .wrap { max-width: none; padding: 0; }
+
+  header#topo, section { border: none !important; padding: 0 0 20px; }
+  header#topo::before { display: none !important; }
+
+  /* escopado ao conteúdo timbrado — NÃO pode atingir a capa escura */
+  header#topo h1, section h2, section h3 { color: #0a0a0a !important; }
+  header#topo h1 em { color: #E8622C !important; }
+  .lede, .intro, p { color: #333 !important; }
+  .tag { border-color: #ccc !important; color: #333 !important; }
+  .hero-doc, .hero-doc b { color: #555 !important; }
+
+  .spec-card, .pcard, .obs-ic, .timeline .tl-n {
+    background: #f6f4ef !important; border-color: #ddd8c8 !important; color: #111 !important;
+  }
+  .sc-row, .obs-list li, .timeline li { border-color: #ddd !important; }
+  .obs-list h3, .timeline h3 { color: #0a0a0a !important; }
+  .obs-list p, .timeline p { color: #333 !important; }
+
+  /* tabela de custos: grade completa, cabeçalho repete a cada página */
+  .cost-wrap { overflow: visible !important; border-color: #999 !important; }
+  .cost-table { min-width: 0 !important; }
+  .cost-table thead { display: table-header-group; }
+  .cost-table th {
+    background: #e8e4d8 !important; color: #333 !important; border-color: #bbb !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .cost-table td { border-color: #bbb !important; color: #111 !important; }
+  .cost-table .ct-group td {
+    background: #eeeadf !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .cost-table tr { break-inside: avoid; }
+
+  .total-bar {
+    background: #E8622C !important; color: #0a0a0a !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+
+  .paper-note { transform: none !important; }
+
+  /* nunca cortar um item ao meio da página */
+  .total-bar, .pcard, .obs-list li, .timeline li, .spec-card { break-inside: avoid; }
+
+  /* respiro antes do bloco de custos, se couber melhor numa página nova */
+  section#custos { break-before: auto; }
+
+  .sign-solo, .sign { display: block !important; }
+  .sign { border: none !important; padding: 0 !important; background: none !important; text-align: left !important; }
+  .sign .sl { border-bottom: 1px solid #999; }
+  .sign .sl-placeholder { color: #333 !important; }
+  .sign .sname, .sign .srole { color: #111 !important; }
+  .sign .smotto { color: #E8622C !important; border-top-color: #ddd !important; }
+  .validade { color: #555 !important; }
+  .validade b { color: #E8622C !important; }
+
+  /* ---------- CAPA (página 1) ---------- */
+  .print-cover {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;   /* impede o flexbox de esticar a logo na largura */
+    width: 100%;
+    height: 240mm;
+    background: #0A0A0A !important;
+    color: #fff !important;
+    padding: 18mm;
+    border-radius: 2mm;
+    break-after: page;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .print-cover .pc-logo {
+    width: 58mm !important; height: auto !important;   /* proporção travada */
+    align-self: flex-start; flex: none;
+  }
+  .print-cover .pc-eyebrow {
+    font-family: var(--mono); font-size: 10pt; letter-spacing: .14em;
+    text-transform: uppercase; color: #E8622C !important;
+  }
+  .print-cover .pc-title {
+    font-family: var(--archivo); font-weight: 800; font-size: 30pt; line-height: 1.05;
+    letter-spacing: -.02em; margin-top: 6mm; color: #ffffff !important;
+  }
+  .print-cover .pc-meta {
+    font-family: var(--mono); font-size: 9pt; letter-spacing: .04em;
+    text-transform: uppercase; color: #cfcfcf !important; display: grid; gap: 2mm;
+  }
+
+  /* ---------- CABEÇALHO TIMBRADO (página 2 em diante) ---------- */
+  .print-letterhead {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #0a0a0a;
+    padding-bottom: 14px;
+    margin-bottom: 26px;
+  }
+  .print-letterhead .pl-logo { width: 40mm !important; height: auto !important; flex: none; }
+  .print-letterhead .pl-address {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .04em;
+    text-transform: uppercase; color: #555; text-align: right; line-height: 1.6;
+  }
+
+  /* ---------- RODAPÉ TIMBRADO (fim do documento) ---------- */
+  .print-footer {
+    display: block !important;
+    margin-top: 34px;
+    padding-top: 14px;
+    border-top: 1px solid #ddd;
+    font-family: var(--mono); font-size: 9px; letter-spacing: .04em;
+    text-transform: uppercase; color: #777; text-align: center;
+  }
+}
