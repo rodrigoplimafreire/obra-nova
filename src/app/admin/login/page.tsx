@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const MENSAGENS: Record<string, string> = {
   "sem-acesso": "Este e-mail não está na lista de acesso do painel.",
   "allowlist-vazia":
-    "ADMIN_EMAIL_ALLOWLIST não está configurada no ambiente. Sem ela o painel fica trancado.",
+    "Não há nenhum e-mail liberado — nem na tabela de acessos, nem em ADMIN_EMAIL_ALLOWLIST. Sem isso o painel fica trancado para todos.",
 };
 
 /**

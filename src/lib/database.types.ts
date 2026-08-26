@@ -45,6 +45,21 @@ type Tabelas = {
     Insert: { user_id: string; criado_em?: string };
     Update: { criado_em?: string };
   };
+  acessos: {
+    Row: {
+      email: string;
+      nota: string | null;
+      criado_em: string;
+      criado_por: string | null;
+    };
+    Insert: {
+      email: string;
+      nota?: string | null;
+      criado_em?: string;
+      criado_por?: string | null;
+    };
+    Update: { nota?: string | null };
+  };
   org_members: {
     Row: { org_id: string; user_id: string; created_at: string };
     Insert: { org_id: string; user_id: string; created_at?: string };

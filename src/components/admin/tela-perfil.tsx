@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Cabecalho, CartaoDeDados, Conteudo, Dado, Secao } from "./cabecalho";
+import { AcessosDoPainel } from "./acessos-do-painel";
 import {
   CampoDeDocumento,
   CampoDeTelefone,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/admin/acoes-perfil";
 import { reduzirImagem } from "@/lib/imagem";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
+import type { Acesso } from "@/lib/admin/acessos";
 import type { Empreiteira } from "@/lib/admin/empreiteira";
 import type { Resultado } from "@/lib/admin/tipos";
 
@@ -39,10 +41,13 @@ export function TelaDePerfil({
   email,
   avatar,
   empreiteira,
+  acessos,
 }: {
   email: string;
   avatar: string | null;
   empreiteira: Empreiteira;
+  /** Nulo para quem não é operador — e aí a seção inteira não existe. */
+  acessos: Acesso[] | null;
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
@@ -127,14 +132,20 @@ export function TelaDePerfil({
           </div>
         </Secao>
 
+        {acessos && <AcessosDoPainel acessos={acessos} euSou={email} />}
+
         <Secao titulo="Acesso">
           <div className="cartao px-5 py-5">
-            <p className="text-sm leading-relaxed text-fumaca">
-              Não existe cadastro público: quem entra no painel é incluído por
-              nós, na configuração da conta.
-            </p>
+            {/* Para o operador esta frase seria repetição: a seção acima já
+                mostra a lista e ainda deixa editá-la. */}
+            {!acessos && (
+              <p className="mb-4 border-b border-cinza-100 pb-4 text-sm leading-relaxed text-fumaca">
+                Não existe cadastro público: quem entra no painel é incluído por
+                nós, na configuração da conta.
+              </p>
+            )}
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-cinza-100 pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="min-w-0 text-sm leading-relaxed text-fumaca">
                 Sair encerra a sessão neste aparelho. Nada do que já foi salvo
                 se perde.

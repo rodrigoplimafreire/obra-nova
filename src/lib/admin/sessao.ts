@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServidor } from "@/lib/supabase/servidor";
+import { conferirAcesso } from "./acessos";
 
 /**
  * Porta de entrada do painel.
@@ -28,12 +29,6 @@ import { supabaseServidor } from "@/lib/supabase/servidor";
 /** Onde a escolha do operador fica entre requisições. */
 export const COOKIE_ORG = "obranova_org";
 
-function allowlist(): string[] {
-  return (process.env.ADMIN_EMAIL_ALLOWLIST ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 /** Uma empreiteira que este usuário pode atender, com o nome para a barra. */
 export type OrgAcessivel = {
@@ -80,20 +75,24 @@ export const exigirAdmin = cache(async function exigirAdmin(): Promise<Admin> {
   if (!user?.email) redirect("/admin/login");
 
   const email = user.email.toLowerCase();
-  const permitidos = allowlist();
 
-  if (permitidos.length === 0) {
-    // Allowlist vazia trancaria o painel para sempre sem dizer por quê.
-    redirect("/admin/login?erro=allowlist-vazia");
-  }
-  if (!permitidos.includes(email)) {
-    redirect("/admin/login?erro=sem-acesso");
-  }
-
-  const [orgs, ehOperador] = await Promise.all([
+  // As três vão junto: são independentes, e cada ida a São Paulo custa. A
+  // decisão sobre o acesso vem antes de qualquer escrita — `garantirOrg`, mais
+  // abaixo, não pode criar org para quem não entra.
+  const [veredito, orgs, ehOperador] = await Promise.all([
+    conferirAcesso(email),
     orgsDoUsuario(user.id),
     conferirOperador(user.id),
   ]);
+
+  if (veredito === "sem-lista") {
+    // Nem tabela nem variável: o painel está trancado para todo mundo, e isso é
+    // erro de configuração, não falta de permissão desta pessoa.
+    redirect("/admin/login?erro=allowlist-vazia");
+  }
+  if (veredito === "fora") {
+    redirect("/admin/login?erro=sem-acesso");
+  }
 
   // Sem vínculo nenhum é primeira entrada: cria a org da pessoa. Operador já
   // tem várias e nunca cai aqui — org nova para ele seria dado órfão.

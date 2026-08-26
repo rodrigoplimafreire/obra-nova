@@ -1,13 +1,7 @@
 "use server";
 
 import { supabaseServidor } from "@/lib/supabase/servidor";
-
-function allowlist(): string[] {
-  return (process.env.ADMIN_EMAIL_ALLOWLIST ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
+import { conferirAcesso } from "./acessos";
 
 /**
  * O e-mail está liberado para o painel, sem exigir que já exista sessão.
@@ -18,7 +12,7 @@ function allowlist(): string[] {
  * conta.
  */
 export async function emailNaAllowlist(email: string): Promise<boolean> {
-  return allowlist().includes(email.trim().toLowerCase());
+  return (await conferirAcesso(email)) === "liberado";
 }
 
 /**
@@ -46,6 +40,6 @@ export async function sessaoVisivelNoServidor(): Promise<{
   return {
     visivel: Boolean(user),
     email,
-    naAllowlist: Boolean(email && allowlist().includes(email)),
+    naAllowlist: email ? (await conferirAcesso(email)) === "liberado" : false,
   };
 }
