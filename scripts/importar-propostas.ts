@@ -59,6 +59,25 @@ const PASTAS = [
   "shopping-meirelles",
 ];
 
+/**
+ * Propostas que a conferência reprovou e que o Rodrigo resolveu na mão.
+ *
+ * Fica aqui, e não numa correção silenciosa no parser, porque a diferença é do
+ * documento e não da leitura: quem reabrir isto em seis meses precisa saber que
+ * a conta não fechava e quem decidiu o que valia.
+ */
+const DECISOES: Record<string, { valorCombinado: number; porque: string }> = {
+  rafael: {
+    valorCombinado: 17323.25,
+    porque:
+      "Os seis itens somam R$ 17.323,57, mas a barra de total do documento " +
+      "entregue diz R$ 17.323,25 — parece dígito trocado. Rodrigo escolheu o " +
+      "valor que o cliente recebeu (27/08/2026). Os itens entram como estão: " +
+      "nenhum preço de linha foi mexido para fechar a conta, e o valor " +
+      "combinado fica em `valor_fechado`.",
+  },
+};
+
 type Item = {
   grupo: string | null;
   descricao: string;
@@ -229,7 +248,15 @@ function lerProposta(pasta: string): Proposta {
  * `origem: "humano"` em tudo: nada disto veio da IA, e a distinção existe para
  * o painel poder mostrar o que precisa de conferência.
  */
-async function gravar(p: Proposta, orgId: string, valor: number | null) {
+async function gravar(
+  p: Proposta,
+  orgId: string,
+  /** O que a soma dos itens tem de dar no banco. Não é o valor cobrado. */
+  somaEsperada: number | null,
+  /** O valor combinado, quando difere da soma. Vem de `DECISOES`. */
+  valorCombinado: number | null,
+) {
+  const decisao = DECISOES[p.pasta];
   const { data: orc, error } = await sb
     .from("orc_orcamentos")
     .insert({
@@ -241,10 +268,13 @@ async function gravar(p: Proposta, orgId: string, valor: number | null) {
       status: "conferindo",
       marca: "rd",
       senha: p.senha,
-      // Preço fechado é o caso das propostas de escopo, que não têm valor por
-      // item: sem isto o orçamento entraria valendo zero.
-      valor_fechado: p.itens.some((i) => i.total !== null) ? null : valor,
-      observacoes: `Importado de rd-propostas/${p.pasta} em ${new Date().toLocaleDateString("pt-BR")}.`,
+      // Preço fechado cobre dois casos: a proposta de escopo, que não tem
+      // valor por item e entraria valendo zero; e a proposta cujo total
+      // combinado difere da soma das linhas, onde ele guarda o que vale.
+      valor_fechado: valorCombinado,
+      observacoes:
+        `Importado de rd-propostas/${p.pasta} em ${new Date().toLocaleDateString("pt-BR")}.` +
+        (decisao ? `\n\n${decisao.porque}` : ""),
     })
     .select("id")
     .single();
@@ -326,7 +356,7 @@ async function gravar(p: Proposta, orgId: string, valor: number | null) {
     if (erroItens) throw new Error(`${p.pasta} itens: ${erroItens.message}`);
   }
 
-  if (valor !== null && p.itens.some((i) => i.total !== null)) {
+  if (somaEsperada !== null && p.itens.some((i) => i.total !== null)) {
     const { data: gravados } = await sb
       .from("orc_itens")
       .select("total")
@@ -337,12 +367,12 @@ async function gravar(p: Proposta, orgId: string, valor: number | null) {
       0,
     );
 
-    if (Math.abs(somaNoBanco - valor) > 0.01) {
+    if (Math.abs(somaNoBanco - somaEsperada) > 0.01) {
       // Derrubar o que acabou de entrar é melhor que deixar um orçamento que
       // parece certo e soma errado. Ninguém confere de novo depois.
       await sb.from("orc_orcamentos").delete().eq("id", orc.id);
       throw new Error(
-        `${p.pasta}: depois de gravar, a soma no banco deu ${moeda(somaNoBanco)} para um esperado de ${moeda(valor)}. Nada foi mantido.`,
+        `${p.pasta}: depois de gravar, a soma no banco deu ${moeda(somaNoBanco)} para um esperado de ${moeda(somaEsperada)}. Nada foi mantido.`,
       );
     }
   }
@@ -416,6 +446,8 @@ async function main() {
       veredito = "REPROVADA — itens com valor, mas sem total para conferir";
     } else if (Math.abs(soma - p.totalDeclarado) <= 0.01) {
       veredito = "ok — soma bate com o total";
+    } else if (DECISOES[p.pasta]) {
+      veredito = `ok — diferença de ${moeda(Math.abs(soma - p.totalDeclarado))} resolvida à mão, vale ${moeda(DECISOES[p.pasta].valorCombinado)}`;
     } else {
       veredito = `REPROVADA — diferença de ${moeda(Math.abs(soma - p.totalDeclarado))}`;
     }
@@ -429,7 +461,14 @@ async function main() {
     }
 
     if (GRAVAR && !veredito.startsWith("REPROVADA") && !existente) {
-      await gravar(p, org.id, soma || p.totalDeclarado);
+      const temValores = p.itens.some((i) => i.total !== null);
+      await gravar(
+        p,
+        org.id,
+        temValores ? soma : null,
+        DECISOES[p.pasta]?.valorCombinado ??
+          (temValores ? null : p.totalDeclarado),
+      );
       console.log("  gravado.");
     } else if (GRAVAR && existente) {
       console.log("  pulado: já existe.");
