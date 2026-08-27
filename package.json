@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "verificar:falas": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-falas-sequenciais.ts",
-    "verificar:org": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-org-ativa.ts"
+    "verificar:org": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-org-ativa.ts",
+    "importar:propostas": "tsx --tsconfig scripts/tsconfig.json scripts/importar-propostas.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
@@ -27,6 +28,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
+    "node-html-parser": "^9.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5"
