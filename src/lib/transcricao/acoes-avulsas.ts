@@ -305,7 +305,7 @@ export async function apagarTranscricao(
 }
 
 export type SaidaDoOrcamento =
-  | { ok: true; link: string; criados: number }
+  | { ok: true; link: string; criados: number; valorFechado: number | null }
   | { ok: false; erro: string };
 
 /**
@@ -391,11 +391,18 @@ export async function criarOrcamentoDaTranscricao(
     ok: true,
     link: `/admin/orcamentos/${orcamento.id}`,
     criados: saida.ok ? saida.criados : 0,
+    valorFechado: saida.ok ? saida.valorFechado : null,
   };
 }
 
 export type SaidaDoUso =
-  | { ok: true; criados: number; entendido: string; faltando: string[] }
+  | {
+      ok: true;
+      criados: number;
+      valorFechado: number | null;
+      entendido: string;
+      faltando: string[];
+    }
   | { ok: false; erro: string };
 
 /**
@@ -480,6 +487,7 @@ export async function usarTranscricaoNoOrcamento(
   return {
     ok: true,
     criados: saida.criados,
+    valorFechado: saida.valorFechado,
     entendido: saida.entendido,
     faltando: saida.faltando,
   };

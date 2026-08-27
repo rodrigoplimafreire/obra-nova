@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { transcreverBlocoDeOrcamento } from "@/lib/transcricao/pipeline";
-import { montarItensDaFala } from "./itens-da-fala";
+import { montarItensDaFala, type SaidaDaMontagem } from "./itens-da-fala";
 import type { Resultado } from "@/lib/admin/tipos";
 
 /**
@@ -154,9 +154,7 @@ export async function transcreverDaFala(dados: {
   return { ok: true, texto: data.text };
 }
 
-export type SaidaDaTabela =
-  | { ok: true; criados: number; entendido: string; faltando: string[] }
-  | { ok: false; erro: string };
+export type SaidaDaTabela = SaidaDaMontagem;
 
 /**
  * Passo 3: a IA quebra o que foi dito em linhas da tabela.

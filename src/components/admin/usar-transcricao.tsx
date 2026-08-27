@@ -56,6 +56,7 @@ function Miolo({
   const [erro, setErro] = useState<string | null>(null);
   const [resultado, setResultado] = useState<{
     criados: number;
+    valorFechado: number | null;
     entendido: string;
     faltando: string[];
   } | null>(null);
@@ -90,6 +91,7 @@ function Miolo({
       }
       setResultado({
         criados: saida.criados,
+        valorFechado: saida.valorFechado,
         entendido: saida.entendido,
         faltando: saida.faltando,
       });
@@ -112,13 +114,30 @@ function Miolo({
         <div className="dialogo-corpo flex flex-col gap-4">
           <p className="aviso aviso-ok text-sm">
             <span>
-              <strong className="block">
-                {resultado.criados}{" "}
-                {resultado.criados === 1
-                  ? "item entrou na tabela"
-                  : "itens entraram na tabela"}
-              </strong>
-              Confira e ajuste o que precisar — tudo é editável.
+              {resultado.valorFechado !== null ? (
+                <>
+                  <strong className="block">
+                    Valor fechado de{" "}
+                    {resultado.valorFechado.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}{" "}
+                    registrado
+                  </strong>
+                  Sem tabela de itens — a transcrição só trouxe o total.
+                  Confira em &quot;Valor fechado&quot;.
+                </>
+              ) : (
+                <>
+                  <strong className="block">
+                    {resultado.criados}{" "}
+                    {resultado.criados === 1
+                      ? "item entrou na tabela"
+                      : "itens entraram na tabela"}
+                  </strong>
+                  Confira e ajuste o que precisar — tudo é editável.
+                </>
+              )}
             </span>
           </p>
 

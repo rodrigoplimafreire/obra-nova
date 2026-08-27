@@ -11,7 +11,9 @@ import { normalizarRelatorio, type ResultadoDoRelatorio } from "./tipos";
  * explícito para ela nunca escrever "conforme a foto mostra".
  */
 
-const MODELO = process.env.ANALYSIS_MODEL ?? "llama-3.3-70b-versatile";
+// Ver o comentário em itens-da-fala.ts: a Groq removeu este modelo do
+// catálogo (27/08/2026). openai/gpt-oss-120b é o substituto.
+const MODELO = process.env.ANALYSIS_MODEL ?? "openai/gpt-oss-120b";
 
 const INSTRUCOES = `Você escreve o relatório semanal de uma obra, endereçado ao cliente que está pagando por ela. Português do Brasil.
 

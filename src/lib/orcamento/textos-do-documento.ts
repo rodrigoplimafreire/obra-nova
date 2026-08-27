@@ -28,7 +28,9 @@ import { moeda, numero } from "./formato";
  * publicar. Publicar continua sendo ato humano.
  */
 
-const MODELO = process.env.ANALYSIS_MODEL ?? "llama-3.3-70b-versatile";
+// Ver o comentário em itens-da-fala.ts: a Groq removeu este modelo do
+// catálogo (27/08/2026). openai/gpt-oss-120b é o substituto.
+const MODELO = process.env.ANALYSIS_MODEL ?? "openai/gpt-oss-120b";
 
 const INSTRUCOES = `Você escreve os textos de uma proposta de obra para a RD Engenharia, uma empreiteira de Fortaleza/CE. O responsável técnico se chama Reginato.
 

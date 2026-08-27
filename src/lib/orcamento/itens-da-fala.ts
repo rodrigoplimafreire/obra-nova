@@ -20,7 +20,15 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
  *   item guarda de qual composição veio.
  */
 
-const MODELO = process.env.ANALYSIS_MODEL ?? "llama-3.3-70b-versatile";
+/**
+ * A Groq removeu `llama-3.3-70b-versatile` do catálogo (descoberto em
+ * 27/08/2026, ao investigar um bug relatado como "deu erro com valor
+ * fechado" — na verdade o modelo inteiro tinha parado de existir, para toda
+ * fala, não só para essa). `openai/gpt-oss-120b` é o mais próximo em
+ * capacidade que a Groq ainda serve; devolve raciocínio num campo à parte de
+ * `content`, então não estraga o `JSON.parse`.
+ */
+const MODELO = process.env.ANALYSIS_MODEL ?? "openai/gpt-oss-120b";
 
 /**
  * Teto da chamada à IA. Medido: geração normal leva de 2 a 4 segundos.
@@ -35,6 +43,15 @@ const INSTRUCOES = `Você transforma a fala de um empreiteiro brasileiro em linh
 Ele descreveu o serviço falando, e a fala foi transcrita automaticamente. A transcrição erra números, unidades de medida e termos técnicos de construção.
 
 Sua tarefa: quebrar o que ele contou em ITENS de orçamento, um por linha de serviço ou material.
+
+**Exceção que vem antes de tudo**: se ele só passou um valor total fechado —
+"o total é R$ 24.325", "fica R$ 10 mil a mão de obra toda" — sem descrever os
+serviços item por item, NÃO invente itens para caber essa regra. Isso é
+metade dos orçamentos reais desta empreiteira: proposta de escopo fechado,
+sem tabela detalhada. Devolva "itens": [] e o valor em "valorFechado". Só use
+"valorFechado" quando não houver detalhamento nenhum — se ele descreveu ao
+menos um serviço com alguma medida ou preço próprio, isso vira item normal, e
+"valorFechado" fica null.
 
 REGRAS ABSOLUTAS — quebrar qualquer uma destas estraga o orçamento:
 
@@ -58,6 +75,7 @@ Responda SOMENTE com um objeto JSON válido, sem markdown:
   "itens": [
     { "grupo": "1. Cobertura", "descricao": "...", "quantidade": 120, "unidade": "m²", "valorUnitario": null, "custoUnitario": null, "observacao": null }
   ],
+  "valorFechado": null,
   "entendido": "2 a 4 frases resumindo o serviço como você entendeu, para ele conferir se a transcrição não distorceu nada",
   "faltando": ["o que ficou sem número ou sem preço, uma linha cada, para ele saber o que completar"]
 }`;
@@ -73,7 +91,14 @@ export type ItemGerado = {
 };
 
 export type SaidaDaMontagem =
-  | { ok: true; criados: number; entendido: string; faltando: string[] }
+  | {
+      ok: true;
+      criados: number;
+      /** Valor gravado em `valor_fechado` quando a fala não tinha itens, só um total. */
+      valorFechado: number | null;
+      entendido: string;
+      faltando: string[];
+    }
   | { ok: false; erro: string };
 
 /**
@@ -297,8 +322,30 @@ export async function montarItensDaFala(
       return { ok: false, erro: "A IA devolveu um formato inesperado." };
     }
 
-    const { itens, entendido, faltando } = normalizar(bruto);
+    const { itens, valorFechado, entendido, faltando } = normalizar(bruto);
+
     if (itens.length === 0) {
+      // Sem item nenhum, mas com um valor total: não é falha, é a metade dos
+      // orçamentos reais desta empreiteira — proposta de escopo fechado, sem
+      // tabela detalhada. Ver PLANO-PORTAL-CLIENTE.md, Fase 0.
+      if (valorFechado !== null) {
+        const { error: erroValor } = await sb
+          .from("orc_orcamentos")
+          .update({ valor_fechado: valorFechado, status: "conferindo" })
+          .eq("id", orcamentoId);
+
+        if (erroValor) {
+          await encerrar({ status: "falhou", error: erroValor.message });
+          return { ok: false, erro: erroValor.message };
+        }
+
+        await encerrar({
+          status: "pronto",
+          resultado: { itens: [], valorFechado, entendido, faltando },
+        });
+        return { ok: true, criados: 0, valorFechado, entendido, faltando };
+      }
+
       await encerrar({ status: "falhou", error: "Nenhum item utilizável." });
       return {
         ok: false,
@@ -349,7 +396,7 @@ export async function montarItensDaFala(
       .eq("id", orcamentoId);
 
     await encerrar({ status: "pronto", resultado: { itens, entendido, faltando } });
-    return { ok: true, criados: itens.length, entendido, faltando };
+    return { ok: true, criados: itens.length, valorFechado: null, entendido, faltando };
   } catch (e) {
     // `TimeoutError` vem do AbortSignal. A mensagem crua ("The operation was
     // aborted due to timeout") não diz nada para quem está no canteiro, e o
@@ -372,11 +419,12 @@ export async function montarItensDaFala(
 /** O JSON do modelo é `unknown`, e modelo erra formato. */
 function normalizar(bruto: unknown): {
   itens: ItemGerado[];
+  valorFechado: number | null;
   entendido: string;
   faltando: string[];
 } {
   if (!bruto || typeof bruto !== "object") {
-    return { itens: [], entendido: "", faltando: [] };
+    return { itens: [], valorFechado: null, entendido: "", faltando: [] };
   }
   const d = bruto as Record<string, unknown>;
 
@@ -409,6 +457,9 @@ function normalizar(bruto: unknown): {
     // Teto de 40 linhas: acima disso o modelo está fatiando demais, e uma
     // tabela assim não se confere no celular.
     itens: itens.slice(0, 40),
+    // Só conta quando não veio item nenhum: itens.length > 0 e valorFechado
+    // juntos seria a IA tentando responder as duas perguntas ao mesmo tempo.
+    valorFechado: itens.length === 0 ? numeroOuNulo(d.valorFechado) : null,
     entendido: typeof d.entendido === "string" ? d.entendido.trim() : "",
     faltando: Array.isArray(d.faltando)
       ? d.faltando
