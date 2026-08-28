@@ -19,9 +19,18 @@ import { lerMarca } from "@/lib/orcamento/marcas";
 export function GateDoOrcamento({
   token,
   marca,
+  cliente,
 }: {
   token: string;
   marca: string;
+  /**
+   * Aparece no título, antes da senha — igual às propostas em HTML da RD.
+   *
+   * É divulgação consciente: quem já tem o link fica sabendo para quem é o
+   * orçamento. O Reginato já fazia assim, e o ganho é que a pessoa reconhece
+   * o próprio nome e sabe que o link não veio trocado.
+   */
+  cliente: string;
 }) {
   const tema = lerMarca(marca);
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -37,11 +46,12 @@ export function GateDoOrcamento({
       <div id="gate" className={estado?.erro ? "shake" : undefined}>
         <div className="gate-box">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="gate-logo" src={tema.logo} alt={tema.nome} />
-          <p className="gate-eyebrow">Orçamento</p>
-          <h1 className="gate-title">Documento protegido</h1>
+          <img className="gate-logo" src={tema.logoEmpilhado} alt={tema.nome} />
+          <p className="gate-eyebrow">Proposta confidencial</p>
+          <h1 className="gate-title">Orçamento para {cliente}</h1>
           <p className="gate-sub">
-            Digite a senha que {tema.nome} enviou junto com este link.
+            Este documento é privado. Digite a senha que você recebeu para
+            acessar a proposta.
           </p>
 
           <form action={entrar} id="gate-form">
@@ -51,7 +61,8 @@ export function GateDoOrcamento({
                 id="gate-input"
                 name="senha"
                 type={mostrarSenha ? "text" : "password"}
-                placeholder="Senha"
+                placeholder="Senha de acesso"
+                aria-label="Senha de acesso"
                 autoComplete="off"
                 autoFocus
                 required
@@ -74,7 +85,7 @@ export function GateDoOrcamento({
             </div>
 
             <button type="submit" disabled={entrando} className="btn solid gate-btn">
-              {entrando ? "Abrindo…" : "Abrir orçamento"}
+              {entrando ? "Abrindo…" : "Acessar proposta"}
             </button>
           </form>
 

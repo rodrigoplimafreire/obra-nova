@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarraDeContexto } from "./barra-de-contexto";
+import { SeletorDeEmpreiteira } from "./seletor-de-empreiteira";
 import { ProvedorDaTrilha } from "./trilha";
 import { Logotipo } from "@/components/marca";
 import type { OrgAcessivel } from "@/lib/admin/sessao";
@@ -117,19 +117,20 @@ export function Casca({
     <ProvedorDaTrilha>
       {(migalha) => (
         <div className="flex min-h-dvh flex-col bg-papel">
-          {/* Acima de tudo, inclusive da barra lateral: a empreiteira ativa
-              atravessa a tela inteira porque publicar na marca errada é erro
-              que nada mais na interface denuncia. */}
-          <BarraDeContexto orgs={orgs} ativa={orgAtiva} />
-
           <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           {/* ---------- Celular: barra fina no topo ---------- */}
           <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-tinta px-4 py-3 md:hidden">
-            <Link href="/admin" aria-label="Painel">
+            <Link href="/admin" aria-label="Painel" className="shrink-0">
               <Logotipo altura={24} className="text-papel" />
             </Link>
 
-            <Avatar email={email} avatar={avatar} destacado={noPerfil} />
+            {/* Entre o logo e o avatar: é o lugar onde a atenção já passa ao
+                conferir onde está, sem virar uma faixa própria. */}
+            <SeletorDeEmpreiteira orgs={orgs} ativa={orgAtiva} variante="topo" />
+
+            <div className="ml-auto shrink-0">
+              <Avatar email={email} avatar={avatar} destacado={noPerfil} />
+            </div>
           </header>
 
           {/* ---------- Desktop: barra lateral ---------- */}
@@ -167,6 +168,15 @@ export function Casca({
                 })}
               </ul>
             </nav>
+
+            {/* No rodapé, fora do `nav`: não é destino, é contexto de tudo que
+                está acima. Fica colado no fim da coluna porque o `nav` é
+                flex-1. */}
+            <SeletorDeEmpreiteira
+              orgs={orgs}
+              ativa={orgAtiva}
+              variante="lateral"
+            />
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col overflow-clip pb-[var(--altura-abas)] md:pb-0">

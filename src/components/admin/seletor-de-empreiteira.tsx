@@ -10,22 +10,32 @@ import type { OrgAcessivel } from "@/lib/admin/sessao";
 /**
  * Por qual empreiteira o operador está atuando agora.
  *
- * **O erro que esta barra existe para impedir** é publicar um orçamento na
- * marca errada. É erro silencioso: nada na tela avisa, nada falha, e quem
- * descobre é o cliente final do outro cliente. Por isso a barra é fixa, larga,
- * e leva a cor de acento da empreiteira — precisa ser impossível de não ver,
- * não discreta e elegante.
+ * **O erro que isto existe para impedir** é publicar um orçamento na marca
+ * errada. É erro silencioso: nada na tela avisa, nada falha, e quem descobre é
+ * o cliente final do outro cliente.
  *
- * Só aparece para operador com mais de uma empreiteira. Usuário comum tem uma
- * org e não pode trocar; para ele esta faixa seria enfeite sem função, tomando
- * altura de tela em cima do conteúdo.
+ * A primeira versão era uma faixa amarela fixa atravessando o topo da tela.
+ * Resolvia a visibilidade e criou outro problema: uma tarja gritante presente
+ * em todas as telas o tempo todo, roubando altura e atenção de quem já sabe
+ * onde está. Aviso que nunca sai de cena vira paisagem — deixa de ser lido e
+ * continua cobrando o espaço.
+ *
+ * Agora mora onde a navegação mora: rodapé da barra lateral no desktop, linha
+ * no cabeçalho do celular. Continua sempre visível e sempre legível, mas como
+ * parte do mobiliário em vez de alarme.
+ *
+ * Só aparece para quem tem mais de uma empreiteira. Para usuário comum seria
+ * enfeite sem função.
  */
-export function BarraDeContexto({
+export function SeletorDeEmpreiteira({
   orgs,
   ativa,
+  variante,
 }: {
   orgs: OrgAcessivel[];
   ativa: string;
+  /** `lateral` é o rodapé do menu do desktop; `topo` é o cabeçalho do celular. */
+  variante: "lateral" | "topo";
 }) {
   const [escolhendo, setEscolhendo] = useState(false);
   const atual = orgs.find((o) => o.id === ativa);
@@ -34,32 +44,34 @@ export function BarraDeContexto({
 
   return (
     <>
-      <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-amarelo-ativo bg-amarelo px-4 py-2 md:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          {atual.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={atual.logo}
-              alt=""
-              className="h-6 w-auto max-w-[6rem] shrink-0 object-contain"
-            />
-          ) : null}
-          <p className="min-w-0 truncate text-sm text-tinta">
-            <span className="font-mono text-[0.65rem] tracking-widest uppercase opacity-70">
-              Atuando por
-            </span>{" "}
-            <strong className="font-semibold">{atual.nome}</strong>
-          </p>
-        </div>
-
+      {variante === "lateral" ? (
         <button
           type="button"
           onClick={() => setEscolhendo(true)}
-          className="btn btn-secundario btn-compacto shrink-0"
+          className="flex w-full items-center gap-3 border-t border-cinza-600 px-5 py-4 text-left transition hover:bg-grafite"
         >
-          Trocar
+          <span className="min-w-0 flex-1">
+            <span className="block font-mono text-[0.6rem] tracking-widest text-cinza-400 uppercase">
+              Atuando por
+            </span>
+            <span className="mt-0.5 block truncate text-sm font-semibold text-papel">
+              {atual.nome}
+            </span>
+          </span>
+          <Trocar />
         </button>
-      </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEscolhendo(true)}
+          className="flex min-w-0 items-center gap-1.5 rounded-sm px-2 py-1 text-left transition hover:bg-grafite"
+        >
+          <span className="min-w-0 truncate text-[0.8125rem] font-semibold text-papel">
+            {atual.nome}
+          </span>
+          <Trocar />
+        </button>
+      )}
 
       <Dialogo
         aberto={escolhendo}
@@ -77,6 +89,22 @@ export function BarraDeContexto({
         )}
       </Dialogo>
     </>
+  );
+}
+
+/** Duas setas trocando de lugar. Diz "alternar" sem precisar da palavra. */
+function Trocar() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 shrink-0 fill-none stroke-cinza-400"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 8h13m0 0-3-3m3 3-3 3M20 16H7m0 0 3-3m-3 3 3 3" />
+    </svg>
   );
 }
 

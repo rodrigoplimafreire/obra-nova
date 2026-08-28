@@ -28,6 +28,13 @@ export type Marca = {
   /** Logo sobre fundo escuro. */
   logo: string;
   /**
+   * Versão empilhada, para a tela de senha.
+   *
+   * Ali o logo é o elemento principal e tem espaço vertical de sobra; o
+   * horizontal do cabeçalho fica pequeno e tímido no meio da tela escura.
+   */
+  logoEmpilhado: string;
+  /**
    * Ícone da aba do navegador, servido de `public/`.
    *
    * Não é o mesmo arquivo de `logo`: aquele é horizontal, pensado para o
@@ -49,6 +56,7 @@ export const MARCAS: Record<string, Marca> = {
     estilo: "/marcas/rd/brand.css",
     impressao: "/marcas/rd/print.css",
     logo: "/marcas/rd/logo-hor-laranja.png",
+    logoEmpilhado: "/marcas/rd/logo-vertical-laranja.png",
     favicon: "/marcas/rd/logo-vertical-laranja.png",
     acento: "#E8622C",
   },
@@ -61,6 +69,8 @@ export const MARCAS: Record<string, Marca> = {
     // `currentColor` resolve preto — invisível na capa de tinta. Esta cópia
     // vem com a cal pintada no arquivo; o timbrado claro inverte.
     logo: "/marcas/obra-nova/logo-cal.svg",
+    // Não há versão empilhada do lockup; o horizontal serve.
+    logoEmpilhado: "/marcas/obra-nova/logo-cal.svg",
     favicon: "/icon.svg",
     acento: "#F7E407",
   },
