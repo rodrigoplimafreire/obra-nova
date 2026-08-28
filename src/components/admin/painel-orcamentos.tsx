@@ -10,6 +10,7 @@ import { CampoDeTelefone } from "@/components/comum/campos";
 import { Girando } from "@/components/comum/esqueleto";
 import { criarOrcamento } from "@/lib/orcamento/acoes";
 import { moeda } from "@/lib/orcamento/formato";
+import { ColarOrcamento } from "./colar-orcamento";
 import {
   COR_SITUACAO,
   ROTULO_SITUACAO,
@@ -32,6 +33,7 @@ export function PainelDeOrcamentos({
   orcamentos: ResumoDeOrcamento[];
 }) {
   const [criando, setCriando] = useState(false);
+  const [colando, setColando] = useState(false);
 
   const aguardandoPreco = orcamentos.reduce((acc, o) => acc + o.semPreco, 0);
   const naRua = orcamentos.filter((o) =>
@@ -52,27 +54,40 @@ export function PainelDeOrcamentos({
         // lista é um quadrado de 36px ao lado do título, não uma faixa amarela
         // ocupando a largura da tela.
         acoes={
-          <button
-            type="button"
-            onClick={() => setCriando(true)}
-            aria-label="Novo orçamento"
-            className="btn btn-primario btn-icone sm:w-auto sm:px-5"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4 fill-none stroke-current"
-              strokeWidth={2.5}
-              strokeLinecap="round"
+          <div className="flex items-center gap-2">
+            {/* Colar é o caminho de todo dia — o material chega pronto no
+                WhatsApp. O formulário em branco fica ao lado, para quando
+                não há o que colar. */}
+            <button
+              type="button"
+              onClick={() => setColando(true)}
+              className="btn btn-primario"
             >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            <span className="hidden sm:inline">Novo orçamento</span>
-          </button>
+              <Colar />
+              <span className="hidden sm:inline">Colar material</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCriando(true)}
+              aria-label="Novo orçamento em branco"
+              className="btn btn-secundario btn-icone"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4 fill-none stroke-current"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
+          </div>
         }
       />
 
       <Conteudo>
         <NovoOrcamento aberto={criando} aoFechar={() => setCriando(false)} />
+        <ColarOrcamento aberto={colando} aoFechar={() => setColando(false)} />
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Indicador
@@ -246,5 +261,23 @@ function NovoOrcamento({
         </div>
       </form>
     </Dialogo>
+  );
+}
+
+/** Prancheta com folha: "trazer de fora o que já está escrito". */
+function Colar() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 fill-none stroke-current"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 4H7a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2" />
+      <rect x="9" y="2.5" width="6" height="3.5" rx="1" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
   );
 }
