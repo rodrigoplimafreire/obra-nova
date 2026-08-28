@@ -57,7 +57,9 @@ export const MARCAS: Record<string, Marca> = {
     impressao: "/marcas/rd/print.css",
     logo: "/marcas/rd/logo-hor-laranja.png",
     logoEmpilhado: "/marcas/rd/logo-vertical-laranja.png",
-    favicon: "/marcas/rd/logo-vertical-laranja.png",
+    // Marca sozinha, sem o texto "RD ENGENHARIA" — a 16px na aba a palavra
+    // vira borrão e come o espaço do símbolo.
+    favicon: "/marcas/rd/favicon.png",
     acento: "#E8622C",
   },
   obra_nova: {

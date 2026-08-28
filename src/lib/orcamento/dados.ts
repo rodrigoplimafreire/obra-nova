@@ -264,9 +264,18 @@ function custoDoItem(item: ItemDoOrcamento): number {
 
 export async function carregarOrcamento(
   id: string,
+  /**
+   * A org, quando não há sessão de onde tirá-la.
+   *
+   * Mesma dupla de `empreiteiraAtual` / `empreiteiraDaOrg`: o caminho normal
+   * é o painel, que tem sessão, e o parâmetro existe para quem chega de fora
+   * dela — hoje o `scripts/publicar.ts`. O filtro por `org_id` continua
+   * acontecendo dos dois jeitos; o que muda é só de onde vem o valor.
+   */
+  orgId?: string,
 ): Promise<OrcamentoCompleto | null> {
   const sb = supabaseAdmin();
-  const org = await orgAtual();
+  const org = orgId ?? (await orgAtual());
 
   const { data: o } = await sb
     .from("orc_orcamentos")

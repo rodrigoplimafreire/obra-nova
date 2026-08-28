@@ -10,7 +10,8 @@
     "verificar:falas": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-falas-sequenciais.ts",
     "verificar:org": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-org-ativa.ts",
     "importar:propostas": "tsx --tsconfig scripts/tsconfig.json scripts/importar-propostas.ts",
-    "verificar:valor-fechado": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-valor-fechado.ts"
+    "verificar:valor-fechado": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-valor-fechado.ts",
+    "publicar": "tsx --tsconfig scripts/tsconfig.json scripts/publicar.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
