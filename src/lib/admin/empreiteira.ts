@@ -24,7 +24,26 @@ export type Empreiteira = {
   logo: string | null;
   /** O caminho no bucket, para poder apagar o anterior ao trocar. */
   logoCaminho: string | null;
+  /**
+   * A conta que recebe. Fica aqui, e não no orçamento, porque é o mesmo dado
+   * em toda proposta da mesma empreiteira — e é lida ao vivo pelo mesmo motivo
+   * do logotipo: trocar de banco não pode obrigar a republicar tudo que já foi
+   * enviado.
+   */
+  banco: {
+    titular: string | null;
+    documento: string | null;
+    nome: string | null;
+    agencia: string | null;
+    conta: string | null;
+    pix: string | null;
+  };
 };
+
+/** Tem o mínimo para o cliente conseguir pagar? */
+export function contaPreenchida(e: Empreiteira): boolean {
+  return Boolean(e.banco.pix || (e.banco.agencia && e.banco.conta));
+}
 
 const BUCKET = "marca";
 
@@ -42,6 +61,12 @@ function montar(linha: {
   telefone: string | null;
   email_contato: string | null;
   logo_caminho: string | null;
+  banco_titular: string | null;
+  banco_documento: string | null;
+  banco_nome: string | null;
+  banco_agencia: string | null;
+  banco_conta: string | null;
+  banco_pix: string | null;
 }): Empreiteira {
   // `name` só entra como nome se não parecer o e-mail que o `garantirOrg`
   // usou para criar a org — senão o cliente veria um gmail no cabeçalho.
@@ -55,8 +80,25 @@ function montar(linha: {
     email: linha.email_contato,
     logo: urlDaMarca(linha.logo_caminho),
     logoCaminho: linha.logo_caminho,
+    banco: {
+      titular: linha.banco_titular,
+      documento: linha.banco_documento,
+      nome: linha.banco_nome,
+      agencia: linha.banco_agencia,
+      conta: linha.banco_conta,
+      pix: linha.banco_pix,
+    },
   };
 }
+
+const SEM_BANCO = {
+  titular: null,
+  documento: null,
+  nome: null,
+  agencia: null,
+  conta: null,
+  pix: null,
+};
 
 /** Para o painel: a empreiteira de quem está logado. */
 export async function empreiteiraAtual(): Promise<Empreiteira> {
@@ -68,7 +110,9 @@ export async function empreiteiraAtual(): Promise<Empreiteira> {
 export async function empreiteiraDaOrg(orgId: string): Promise<Empreiteira> {
   const { data } = await supabaseAdmin()
     .from("orgs")
-    .select("name, nome_exibicao, documento, telefone, email_contato, logo_caminho")
+    .select(
+      "name, nome_exibicao, documento, telefone, email_contato, logo_caminho, banco_titular, banco_documento, banco_nome, banco_agencia, banco_conta, banco_pix",
+    )
     .eq("id", orgId)
     .maybeSingle();
 
@@ -80,6 +124,7 @@ export async function empreiteiraDaOrg(orgId: string): Promise<Empreiteira> {
       email: null,
       logo: null,
       logoCaminho: null,
+      banco: SEM_BANCO,
     };
   }
 

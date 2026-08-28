@@ -22,6 +22,13 @@ type Tabelas = {
       email_contato: string | null;
       /** Caminho no bucket público `marca`. */
       logo_caminho: string | null;
+      /** Conta que recebe o pagamento. Aparece no documento do cliente. */
+      banco_titular: string | null;
+      banco_documento: string | null;
+      banco_nome: string | null;
+      banco_agencia: string | null;
+      banco_conta: string | null;
+      banco_pix: string | null;
     };
     Insert: {
       id?: string;
@@ -36,6 +43,12 @@ type Tabelas = {
       telefone?: string | null;
       email_contato?: string | null;
       logo_caminho?: string | null;
+      banco_titular?: string | null;
+      banco_documento?: string | null;
+      banco_nome?: string | null;
+      banco_agencia?: string | null;
+      banco_conta?: string | null;
+      banco_pix?: string | null;
     };
   };
   /**
@@ -331,6 +344,8 @@ type TabelasDeOrcamento = {
       objeto: string | null;
       status: OrcStatus;
       prazo: string | null;
+      /** Percentual pago no início. O resto na entrega. Nulo = à vista. */
+      entrada_percentual: number | null;
       pagamento: string | null;
       validade_dias: number;
       observacoes: string | null;
@@ -374,6 +389,7 @@ type TabelasDeOrcamento = {
       objeto?: string | null;
       status?: OrcStatus;
       prazo?: string | null;
+      entrada_percentual?: number | null;
       pagamento?: string | null;
       validade_dias?: number;
       observacoes?: string | null;
@@ -400,6 +416,7 @@ type TabelasDeOrcamento = {
       objeto?: string | null;
       status?: OrcStatus;
       prazo?: string | null;
+      entrada_percentual?: number | null;
       pagamento?: string | null;
       validade_dias?: number;
       observacoes?: string | null;

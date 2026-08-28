@@ -163,6 +163,7 @@ export type OrcamentoCompleto = {
   objeto: string | null;
   status: StatusDoOrcamento;
   prazo: string | null;
+  entradaPercentual: number | null;
   pagamento: string | null;
   validadeDias: number;
   observacoes: string | null;
@@ -318,6 +319,7 @@ export async function carregarOrcamento(
     objeto: o.objeto,
     status: o.status,
     prazo: o.prazo,
+    entradaPercentual: o.entrada_percentual,
     pagamento: o.pagamento,
     validadeDias: o.validade_dias,
     observacoes: o.observacoes,

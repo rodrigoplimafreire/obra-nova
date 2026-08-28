@@ -2,7 +2,7 @@ import { moeda, numero } from "@/lib/orcamento/formato";
 import { lerMarca } from "@/lib/orcamento/marcas";
 import { AceiteDoCliente } from "./aceite-do-cliente";
 import { BotaoImprimir } from "./botao-imprimir";
-import type { Empreiteira } from "@/lib/admin/empreiteira";
+import { contaPreenchida, type Empreiteira } from "@/lib/admin/empreiteira";
 import type { DocumentoPublicado } from "@/lib/orcamento/publicacao";
 
 /**
@@ -62,6 +62,20 @@ export function DocumentoDoCliente({
   const itemizado = documento.valorFechado === null;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
+  // A entrada é arredondada e a segunda parcela é o **resto** — nunca o outro
+  // percentual calculado à parte. Com 70% de R$ 17.323,25 as duas contas
+  // separadas somariam um centavo a mais ou a menos que o total, e o cliente
+  // conferiria na calculadora.
+  const entrada =
+    documento.entradaPercentual === null
+      ? 0
+      : Math.round(documento.total * documento.entradaPercentual) / 100;
+
+  // Sem conta cadastrada não há como pagar, e uma seção "Forma de pagamento"
+  // sem para onde mandar o dinheiro é pior que seção nenhuma.
+  const banco =
+    empreiteira && contaPreenchida(empreiteira) ? empreiteira.banco : null;
+
   const projeto = documento.secoes.filter((s) => s.tipo === "projeto");
   const observacoes = documento.secoes.filter((s) => s.tipo === "observacao");
   const etapas = documento.secoes.filter((s) => s.tipo === "etapa");
@@ -110,6 +124,37 @@ export function DocumentoDoCliente({
           .proj-grid[data-cards="2"],
           .proj-grid[data-cards="4"] { grid-template-columns: repeat(2, 1fr) }
         }
+      `}</style>
+
+      {/* A seção de pagamento existia nas propostas feitas à mão mas nunca
+          chegou à cópia da folha que o Obra Nova serve. Vai aqui, e não dentro
+          do `brand.css`, por dois motivos: a folha da marca é canônica e não se
+          edita, e assim a seção funciona para qualquer empreiteira — todas as
+          variáveis usadas abaixo existem nas duas folhas.
+
+          O `.pag-grid` original é de três colunas, porque as propostas antigas
+          tinham três cards. Aqui são sempre duas parcelas, e num grid de três
+          a segunda ficaria com um buraco à direita. Mesmo conserto do
+          `.proj-grid`, pelo mesmo motivo. */}
+      <style href="forma-de-pagamento" precedence="marca">{`
+        .pag-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
+        @media(min-width:720px){.pag-grid{grid-template-columns:repeat(2,1fr)}}
+        .pag{border:1px solid var(--line);border-radius:5px;background:var(--ink-2);padding:24px 22px;position:relative}
+        .pag.first{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+        .pag .pn{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+        .pag .pv{font-family:var(--archivo);font-weight:800;font-size:clamp(22px,3.4vw,27px);letter-spacing:-.02em;line-height:1;color:#fff}
+        .pag .pq{font-family:var(--mono);font-size:10.5px;color:var(--fog-2);margin-top:6px;letter-spacing:.04em;text-transform:uppercase}
+        .pag .pw{font-size:14px;color:var(--fog);line-height:1.5;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+        .pag .pw b{color:#fff;font-weight:600}
+        .bank-card{border:1px solid var(--accent);border-radius:5px;background:var(--ink-2);padding:26px 24px;margin-top:20px}
+        .bank-card .bk-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+        .bank-rows{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px}
+        @media(max-width:520px){.bank-rows{grid-template-columns:1fr}}
+        .bank-rows .bk-row{border-bottom:1px solid var(--line-soft);padding-bottom:10px}
+        .bank-rows .bk-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fog-2);margin-bottom:4px}
+        .bank-rows .bk-v{font-size:14.5px;font-weight:600;color:#fff;letter-spacing:-.005em}
+        .bank-rows .bk-row.bk-pix{grid-column:1 / -1;border-bottom:none;background:rgba(232,98,44,.08);border:1px dashed var(--accent);border-radius:4px;padding:14px 16px;margin-top:4px}
+        .bank-rows .bk-pix .bk-v{font-family:var(--mono);font-size:15px;color:var(--accent)}
       `}</style>
 
       {/* ---------- Capa, só na impressão ---------- */}
@@ -313,6 +358,66 @@ export function DocumentoDoCliente({
         </div>
       </section>
 
+      {/* ---------- Forma de pagamento ---------- */}
+      {/* Depois do total e antes das observações: a pergunta "como eu pago"
+          nasce no instante em que o número aparece. */}
+      {documento.entradaPercentual !== null && banco && (
+        <section id="pagamento">
+          <div className="wrap">
+            <p className="kicker">
+              <span className="s-num">{proximoNumero()}</span> Forma de
+              pagamento
+            </p>
+            <h2>
+              {documento.entradaPercentual}% no início,{" "}
+              {100 - documento.entradaPercentual}% no final
+            </h2>
+            <p className="intro">
+              O valor é dividido em duas parcelas, pagas via PIX.
+            </p>
+
+            <div className="pag-grid">
+              <div className="pag first">
+                <div className="pn">1ª parcela</div>
+                <div className="pv">{moeda(entrada)}</div>
+                <div className="pq">{documento.entradaPercentual}% do total</div>
+                <div className="pw">
+                  No <b>início da obra</b>, na aprovação e mobilização da
+                  equipe.
+                </div>
+              </div>
+              <div className="pag">
+                <div className="pn">2ª parcela</div>
+                <div className="pv">{moeda(documento.total - entrada)}</div>
+                <div className="pq">
+                  {100 - documento.entradaPercentual}% do total
+                </div>
+                <div className="pw">
+                  No <b>final da obra</b>, na entrega e vistoria com você.
+                </div>
+              </div>
+            </div>
+
+            <div className="bank-card">
+              <div className="bk-tag">Dados para pagamento</div>
+              <div className="bank-rows">
+                <LinhaDoBanco rotulo="Titular" valor={banco.titular} />
+                <LinhaDoBanco rotulo="CPF/CNPJ" valor={banco.documento} />
+                <LinhaDoBanco rotulo="Banco" valor={banco.nome} />
+                <LinhaDoBanco rotulo="Agência" valor={banco.agencia} />
+                <LinhaDoBanco rotulo="Conta" valor={banco.conta} />
+                {banco.pix && (
+                  <div className="bk-row bk-pix">
+                    <div className="bk-k">Chave PIX</div>
+                    <div className="bk-v">{banco.pix}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ---------- Observações técnicas, depois dos números ---------- */}
       {(observacoes.length > 0 || documento.observacoes) && (
         <section id="observacoes">
@@ -444,3 +549,20 @@ export function DocumentoDoCliente({
   );
 }
 
+
+/** Uma linha do cartão bancário. Some quando o campo não foi preenchido. */
+function LinhaDoBanco({
+  rotulo,
+  valor,
+}: {
+  rotulo: string;
+  valor: string | null;
+}) {
+  if (!valor) return null;
+  return (
+    <div className="bk-row">
+      <div className="bk-k">{rotulo}</div>
+      <div className="bk-v">{valor}</div>
+    </div>
+  );
+}

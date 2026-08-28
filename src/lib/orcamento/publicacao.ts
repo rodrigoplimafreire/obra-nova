@@ -53,6 +53,8 @@ export type DocumentoPublicado = {
   endereco: string | null;
   objeto: string | null;
   prazo: string | null;
+  /** Percentual pago no início. Nulo = à vista, sem seção de pagamento. */
+  entradaPercentual: number | null;
   pagamento: string | null;
   validadeDias: number;
   observacoes: string | null;
@@ -84,6 +86,8 @@ type OrcamentoDeOrigem = {
   endereco: string | null;
   objeto: string | null;
   prazo: string | null;
+  /** Percentual pago no início. Nulo = à vista, sem seção de pagamento. */
+  entradaPercentual: number | null;
   pagamento: string | null;
   validadeDias: number;
   observacoes: string | null;
@@ -131,6 +135,7 @@ export function montarDocumento(
     endereco: orcamento.endereco,
     objeto: orcamento.objeto,
     prazo: orcamento.prazo,
+    entradaPercentual: orcamento.entradaPercentual,
     pagamento: orcamento.pagamento,
     validadeDias: orcamento.validadeDias,
     observacoes: orcamento.observacoes,
@@ -217,6 +222,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     endereco: texto(d.endereco),
     objeto: texto(d.objeto),
     prazo: texto(d.prazo),
+    entradaPercentual: numero(d.entradaPercentual),
     pagamento: texto(d.pagamento),
     validadeDias: numero(d.validadeDias) ?? 15,
     observacoes: texto(d.observacoes),
