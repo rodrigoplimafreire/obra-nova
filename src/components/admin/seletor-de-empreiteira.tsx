@@ -132,6 +132,14 @@ function Escolha({
         setIndo(null);
         return;
       }
+      // **Fechar vem antes de navegar, e é o conserto de um travamento.**
+      // Só o caminho de erro limpava o estado; no sucesso, `indo` continuava
+      // apontando para a org escolhida e o diálogo seguia montado. Como
+      // `router.push` para a rota em que já se está não repinta nada por si,
+      // não havia nenhum evento que apagasse o giro — a tela ficava carregando
+      // para sempre, com a troca já feita no servidor.
+      aoFechar();
+
       // Volta para a raiz do painel: continuar na mesma URL levaria a um
       // orçamento que pertence à empreiteira anterior, e a tela responderia
       // 404 sem explicar por quê.
