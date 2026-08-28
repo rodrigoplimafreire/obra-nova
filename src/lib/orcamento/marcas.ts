@@ -27,6 +27,16 @@ export type Marca = {
   impressao: string;
   /** Logo sobre fundo escuro. */
   logo: string;
+  /**
+   * Ícone da aba do navegador, servido de `public/`.
+   *
+   * Não é o mesmo arquivo de `logo`: aquele é horizontal, pensado para o
+   * cabeçalho do documento; favicon precisa de algo que sobrevive a 16px
+   * quadrados. Confundir os dois é o erro que fez o cliente ver o ícone do
+   * Obra Nova na aba de um orçamento assinado pela empreiteira dele — o
+   * link é dela, a marca na aba tinha que ser dela também.
+   */
+  favicon: string;
   /** Cor de acento, para o que a folha não cobre (favicon, theme-color). */
   acento: string;
 };
@@ -39,6 +49,7 @@ export const MARCAS: Record<string, Marca> = {
     estilo: "/marcas/rd/brand.css",
     impressao: "/marcas/rd/print.css",
     logo: "/marcas/rd/logo-hor-laranja.png",
+    favicon: "/marcas/rd/logo-vertical-laranja.png",
     acento: "#E8622C",
   },
   obra_nova: {
@@ -50,6 +61,7 @@ export const MARCAS: Record<string, Marca> = {
     // `currentColor` resolve preto — invisível na capa de tinta. Esta cópia
     // vem com a cal pintada no arquivo; o timbrado claro inverte.
     logo: "/marcas/obra-nova/logo-cal.svg",
+    favicon: "/icon.svg",
     acento: "#F7E407",
   },
 };
