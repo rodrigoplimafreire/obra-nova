@@ -740,3 +740,142 @@
     background-color: var(--color-cinza);
   }
 }
+
+/* ==========================================================================
+   Impressão do painel
+   ==========================================================================
+   O painel não é feito para sair no papel: tem barra lateral, abas fixas no
+   rodapé do celular, filtros e botão em cada linha. Imprimir a tela levaria
+   tudo isso junto.
+
+   Então a impressão troca de conteúdo em vez de tentar arrumar o existente:
+   some com a interface inteira e mostra um bloco que só existe para isto,
+   marcado com `data-so-impressao`. É o mesmo princípio da capa e do timbrado
+   do documento do cliente — o que se imprime é um documento, não uma captura
+   de tela. */
+
+[data-so-impressao] {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 14mm;
+  }
+
+  /* `body > *` e não `.casca`: pega qualquer coisa que o Next ou uma extensão
+     tenham pendurado na raiz, sem depender de eu ter lembrado da classe. */
+  body > *:not([data-imprimindo]) {
+    display: none !important;
+  }
+
+  [data-imprimindo] {
+    display: block !important;
+  }
+
+  [data-so-impressao] {
+    display: block !important;
+  }
+
+  /* Sem isto o Chrome descarta o fundo e a barra do cabeçalho some. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .impressao-lista {
+    font-family: var(--font-sans);
+    color: #14181a;
+  }
+
+  .impressao-lista header {
+    border-bottom: 2px solid #14181a;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .impressao-lista header h1 {
+    font-size: 20pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .impressao-lista header p {
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f5a51;
+    margin: 6px 0 0;
+  }
+
+  .impressao-lista table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  .impressao-lista thead th {
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f5a51;
+    text-align: left;
+    border-bottom: 1px solid #14181a;
+    padding: 0 8px 6px 0;
+  }
+  .impressao-lista tbody td {
+    border-bottom: 1px solid #dcd6cc;
+    padding: 7px 8px 7px 0;
+    vertical-align: top;
+  }
+  /* Linha da tabela não pode partir entre páginas: metade de um orçamento no
+     fim da folha é o tipo de coisa que faz o cliente ligar perguntando. */
+  .impressao-lista tbody tr {
+    break-inside: avoid;
+  }
+  .impressao-lista .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .impressao-lista .numero {
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    color: #5f5a51;
+  }
+
+  .impressao-lista .resumo {
+    display: flex;
+    gap: 28px;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 2px solid #14181a;
+    break-inside: avoid;
+  }
+  .impressao-lista .resumo .k {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f5a51;
+  }
+  .impressao-lista .resumo .v {
+    display: block;
+    font-size: 14pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-top: 3px;
+  }
+
+  .impressao-lista footer {
+    margin-top: 22px;
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8f9799;
+  }
+}

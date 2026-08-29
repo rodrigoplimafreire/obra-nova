@@ -12,6 +12,7 @@ import { criarOrcamento } from "@/lib/orcamento/acoes";
 import { moeda } from "@/lib/orcamento/formato";
 import { ColarOrcamento } from "./colar-orcamento";
 import { AcoesDaLinha, type AcaoDeLinha } from "./acoes-da-linha";
+import { ListaParaImprimir } from "./lista-para-imprimir";
 import {
   excluir,
   mudarSituacao,
@@ -36,8 +37,10 @@ import type { ResumoDeOrcamento } from "@/lib/orcamento/dados";
 
 export function PainelDeOrcamentos({
   orcamentos,
+  empreiteira,
 }: {
   orcamentos: ResumoDeOrcamento[];
+  empreiteira: string;
 }) {
   const [criando, setCriando] = useState(false);
   const [colando, setColando] = useState(false);
@@ -160,7 +163,28 @@ export function PainelDeOrcamentos({
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </button>
+            {/* Imprime o que está à vista, com filtro e busca aplicados —
+                é o recorte que a pessoa acabou de montar olhando a tela. */}
+            {orcamentos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                aria-label="Imprimir a lista"
+                className="btn btn-secundario btn-icone"
+              >
+                <Impressora />
+              </button>
+            )}
           </div>
+        }
+      />
+
+      <ListaParaImprimir
+        orcamentos={visiveis}
+        empreiteira={empreiteira}
+        filtro={
+          (FILTROS.find((f) => f.chave === filtro)?.rotulo ?? "Todos") +
+          (termo ? ` · busca "${busca.trim()}"` : "")
         }
       />
 
@@ -436,4 +460,21 @@ function pertence(o: ResumoDeOrcamento, filtro: Filtro): boolean {
 
 function contarPor(lista: ResumoDeOrcamento[], filtro: Filtro): number {
   return lista.filter((o) => pertence(o, filtro)).length;
+}
+
+function Impressora() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 fill-none stroke-current"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 9V3h12v6" />
+      <rect x="4" y="9" width="16" height="8" rx="1.5" />
+      <path d="M6 14h12v7H6Z" />
+    </svg>
+  );
 }
