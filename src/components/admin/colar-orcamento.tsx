@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialogo } from "@/components/comum/dialogo";
 import { Girando } from "@/components/comum/esqueleto";
-import { criarDaColagem, entenderColagem } from "@/lib/orcamento/acoes-colagem";
+import {
+  acrescentarDaColagem,
+  criarDaColagem,
+  entenderColagem,
+  type AudioColado,
+} from "@/lib/orcamento/acoes-colagem";
 import type { Colagem, ImagemColada } from "@/lib/orcamento/colagem";
 
 /**
@@ -20,58 +25,122 @@ import type { Colagem, ImagemColada } from "@/lib/orcamento/colagem";
  * disponíveis: num teste ele chamou o logotipo da RD de "ícone do React".
  */
 
-const LIMITE_IMAGEM = 8 * 1024 * 1024;
+const LIMITE_ARQUIVO = 20 * 1024 * 1024;
 
 export function ColarOrcamento({
   aberto,
   aoFechar,
+  /**
+   * Quando vem preenchido, a colagem **acrescenta** itens a este orçamento em
+   * vez de criar um novo. É o ajuste que o cliente manda depois: trocou a
+   * metragem, incluiu um serviço, mandou o preço que faltava.
+   */
+  orcamentoId,
 }: {
   aberto: boolean;
   aoFechar: () => void;
+  orcamentoId?: string;
 }) {
+  const acrescentando = Boolean(orcamentoId);
+
   return (
     <Dialogo
       aberto={aberto}
       aoFechar={aoFechar}
-      titulo="Colar o material do cliente"
-      descricao="Cole o texto que ele mandou, com print de tabela se houver. A IA monta o orçamento e você confere antes de gravar."
+      titulo={
+        acrescentando
+          ? "Colar material neste orçamento"
+          : "Colar o material do cliente"
+      }
+      descricao={
+        acrescentando
+          ? "O que a IA entender entra como itens novos, no fim da tabela. Cliente, endereço e objeto ficam como estão."
+          : "Cole o texto que ele mandou, com print de tabela se houver. A IA monta o orçamento e você confere antes de gravar."
+      }
     >
-      {aberto && <Miolo aoFechar={aoFechar} />}
+      {aberto && <Miolo aoFechar={aoFechar} orcamentoId={orcamentoId} />}
     </Dialogo>
   );
 }
 
-function Miolo({ aoFechar }: { aoFechar: () => void }) {
+function Miolo({
+  aoFechar,
+  orcamentoId,
+}: {
+  aoFechar: () => void;
+  orcamentoId?: string;
+}) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
   const [imagens, setImagens] = useState<Array<ImagemColada & { nome: string }>>([]);
+  const [audios, setAudios] = useState<AudioColado[]>([]);
   const [lendo, setLendo] = useState(false);
   const [gravando, setGravando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [colagem, setColagem] = useState<Colagem | null>(null);
   const [senha, setSenha] = useState("");
 
+  /**
+   * Um caminho só para os três tipos que o cliente manda.
+   *
+   * Imagem vai para o modelo de visão, áudio para o Whisper, e arquivo de
+   * texto é lido aqui mesmo e emendado no campo — não faz sentido gastar
+   * chamada de IA para abrir um `.txt`.
+   */
   async function anexar(arquivos: FileList | File[]) {
-    const novas: Array<ImagemColada & { nome: string }> = [];
+    const novasImagens: Array<ImagemColada & { nome: string }> = [];
+    const novosAudios: AudioColado[] = [];
+    const novosTextos: string[] = [];
+
     for (const arquivo of Array.from(arquivos)) {
-      if (!arquivo.type.startsWith("image/")) continue;
-      if (arquivo.size > LIMITE_IMAGEM) {
-        setErro(`${arquivo.name || "imagem"} passa de 8 MB.`);
+      const ehTexto =
+        arquivo.type.startsWith("text/") ||
+        /\.(txt|csv|md)$/i.test(arquivo.name);
+
+      if (arquivo.size > LIMITE_ARQUIVO) {
+        setErro(`${arquivo.name || "arquivo"} passa de 20 MB.`);
         continue;
       }
+
+      if (ehTexto) {
+        novosTextos.push(`--- ${arquivo.name} ---\n${await arquivo.text()}`);
+        continue;
+      }
+
+      if (!arquivo.type.startsWith("image/") && !arquivo.type.startsWith("audio/")) {
+        setErro(
+          `${arquivo.name || "arquivo"}: só imagem, áudio ou texto. PDF e Word ainda não.`,
+        );
+        continue;
+      }
+
       const base64 = await new Promise<string>((resolve) => {
         const leitor = new FileReader();
         leitor.onload = () =>
           resolve(String(leitor.result).split(",")[1] ?? "");
         leitor.readAsDataURL(arquivo);
       });
-      novas.push({
-        mimeType: arquivo.type,
-        base64,
-        nome: arquivo.name || `print ${imagens.length + novas.length + 1}`,
-      });
+
+      if (arquivo.type.startsWith("audio/")) {
+        novosAudios.push({
+          mimeType: arquivo.type,
+          base64,
+          nome: arquivo.name || `áudio ${audios.length + novosAudios.length + 1}`,
+        });
+      } else {
+        novasImagens.push({
+          mimeType: arquivo.type,
+          base64,
+          nome: arquivo.name || `print ${imagens.length + novasImagens.length + 1}`,
+        });
+      }
     }
-    if (novas.length) setImagens((atuais) => [...atuais, ...novas].slice(0, 6));
+
+    if (novasImagens.length)
+      setImagens((a) => [...a, ...novasImagens].slice(0, 6));
+    if (novosAudios.length) setAudios((a) => [...a, ...novosAudios].slice(0, 4));
+    if (novosTextos.length)
+      setTexto((t) => [t.trim(), ...novosTextos].filter(Boolean).join("\n\n"));
   }
 
   /**
@@ -94,6 +163,7 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
       const saida = await entenderColagem(
         texto,
         imagens.map(({ mimeType, base64 }) => ({ mimeType, base64 })),
+        audios,
       );
       if (!saida.ok) {
         setErro(saida.erro);
@@ -115,6 +185,18 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
     setErro(null);
     setGravando(true);
     try {
+      if (orcamentoId) {
+        const saida = await acrescentarDaColagem(orcamentoId, colagem);
+        if (!saida.ok) {
+          setErro(saida.erro ?? "Não consegui acrescentar.");
+          setGravando(false);
+          return;
+        }
+        aoFechar();
+        router.refresh();
+        return;
+      }
+
       const saida = await criarDaColagem(colagem, senha);
       if (!saida.ok) {
         setErro(saida.erro);
@@ -146,36 +228,43 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
             </p>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Campo
-              rotulo="Cliente *"
-              valor={colagem.cliente ?? ""}
-              aoMudar={(v) => setColagem({ ...colagem, cliente: v || null })}
-            />
-            <Campo
-              rotulo="Objeto"
-              valor={colagem.objeto ?? ""}
-              aoMudar={(v) => setColagem({ ...colagem, objeto: v || null })}
-            />
-          </div>
-          <Campo
-            rotulo="Endereço"
-            valor={colagem.endereco ?? ""}
-            aoMudar={(v) => setColagem({ ...colagem, endereco: v || null })}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Campo
-              rotulo="Prazo"
-              valor={colagem.prazo ?? ""}
-              aoMudar={(v) => setColagem({ ...colagem, prazo: v || null })}
-            />
-            <Campo
-              rotulo="Senha do link *"
-              valor={senha}
-              aoMudar={setSenha}
-              dica="O cliente digita para abrir."
-            />
-          </div>
+          {/* Acrescentando, o cabeçalho não aparece: quem já conferiu cliente
+              e endereço uma vez não quer que uma mensagem de ajuste os
+              reescreva por baixo. */}
+          {!orcamentoId && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo
+                  rotulo="Cliente *"
+                  valor={colagem.cliente ?? ""}
+                  aoMudar={(v) => setColagem({ ...colagem, cliente: v || null })}
+                />
+                <Campo
+                  rotulo="Objeto"
+                  valor={colagem.objeto ?? ""}
+                  aoMudar={(v) => setColagem({ ...colagem, objeto: v || null })}
+                />
+              </div>
+              <Campo
+                rotulo="Endereço"
+                valor={colagem.endereco ?? ""}
+                aoMudar={(v) => setColagem({ ...colagem, endereco: v || null })}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo
+                  rotulo="Prazo"
+                  valor={colagem.prazo ?? ""}
+                  aoMudar={(v) => setColagem({ ...colagem, prazo: v || null })}
+                />
+                <Campo
+                  rotulo="Senha do link *"
+                  valor={senha}
+                  aoMudar={setSenha}
+                  dica="O cliente digita para abrir."
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <p className="rotulo mb-2">
@@ -243,7 +332,9 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
             className={`btn ${gravando ? "btn-carregando" : "btn-primario"}`}
           >
             {gravando && <Girando />}
-            {gravando ? "Criando…" : "Criar orçamento"}
+            {gravando
+              ? orcamentoId ? "Acrescentando…" : "Criando…"
+              : orcamentoId ? "Acrescentar à tabela" : "Criar orçamento"}
           </button>
         </div>
       </>
@@ -270,6 +361,32 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
           }
           className="campo resize-y font-mono text-[0.8125rem] leading-relaxed"
         />
+
+        {/* O `Ctrl+V` resolve o print, mas não o áudio do WhatsApp: aquilo é
+            arquivo salvo no aparelho, e o clipboard nunca vê. Sem este botão
+            não havia caminho nenhum para áudio nem para arquivo baixado. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="btn btn-secundario cursor-pointer">
+            <Clipe />
+            Anexar arquivo
+            <input
+              type="file"
+              multiple
+              accept="image/*,audio/*,text/plain,text/csv,.txt,.csv,.md"
+              onChange={(e) => {
+                if (e.target.files) void anexar(e.target.files);
+                // Zera para o mesmo arquivo poder ser escolhido de novo depois
+                // de removido — sem isto o `change` não dispara na segunda vez.
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+          </label>
+          <p className="min-w-0 flex-1 text-xs leading-relaxed text-cinza">
+            Imagem, áudio de WhatsApp ou arquivo de texto. PDF e Word ainda
+            não — por enquanto, copie o conteúdo e cole acima.
+          </p>
+        </div>
 
         {imagens.length > 0 && (
           <div>
@@ -309,6 +426,37 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
           </div>
         )}
 
+        {audios.length > 0 && (
+          <div>
+            <p className="rotulo mb-2">{audios.length} áudio(s)</p>
+            <ul className="flex flex-col gap-1.5">
+              {audios.map((a, n) => (
+                <li
+                  key={n}
+                  className="flex items-center gap-2 rounded-sm border border-nevoa bg-papel px-3 py-2"
+                >
+                  <Onda />
+                  <span className="min-w-0 flex-1 truncate text-xs text-fumaca">
+                    {a.nome}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAudios((l) => l.filter((_, i) => i !== n))}
+                    aria-label={`Tirar ${a.nome}`}
+                    className="text-cinza transition hover:text-tinta"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs leading-relaxed text-cinza">
+              Transcritos antes de a IA montar a tabela. Leva alguns segundos
+              cada um.
+            </p>
+          </div>
+        )}
+
         {erro && <p className="aviso aviso-erro text-sm">{erro}</p>}
       </div>
 
@@ -324,7 +472,10 @@ function Miolo({ aoFechar }: { aoFechar: () => void }) {
         <button
           type="button"
           onClick={() => void ler()}
-          disabled={lendo || (!texto.trim() && imagens.length === 0)}
+          disabled={
+            lendo ||
+            (!texto.trim() && imagens.length === 0 && audios.length === 0)
+          }
           className={`btn ${lendo ? "btn-carregando" : "btn-primario"}`}
         >
           {lendo && <Girando />}
@@ -370,4 +521,33 @@ function moeda(n: number) {
 function sugerirSenha(slug: string): string {
   if (!slug) return "";
   return slug.charAt(0).toUpperCase() + slug.slice(1) + new Date().getFullYear();
+}
+
+function Clipe() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 fill-none stroke-current"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7.5-7.5" />
+    </svg>
+  );
+}
+
+function Onda() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 shrink-0 fill-none stroke-arroio"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    >
+      <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" />
+    </svg>
+  );
 }

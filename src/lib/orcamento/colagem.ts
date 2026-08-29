@@ -104,12 +104,55 @@ export type ImagemColada = { mimeType: string; base64: string };
  * parte que não pode errar. Assim cada um faz o que sabe — um transcreve o que
  * está na foto, o outro organiza.
  */
+/**
+ * A instrução que o Rodrigo descobriu na prática.
+ *
+ * A primeira versão pedia "transcreva tudo mantendo a estrutura", e o
+ * resultado com tabela era irregular. Ele então jogou os prints no Gemini
+ * pedindo **Markdown**, colou o `.md` na tela, e o orçamento saiu perfeito.
+ *
+ * Faz sentido: tabela em Markdown tem uma linha por item e colunas separadas
+ * por `|`, o que remove a ambiguidade que "mantenha a estrutura" deixava em
+ * aberto — onde acaba a descrição e começa a quantidade. E o modelo que
+ * estrutura depois já lê Markdown nativamente.
+ */
+const INSTRUCAO_DA_IMAGEM = `Transcreva o conteúdo desta imagem em Markdown, em português.
+
+- Tabela vira tabela Markdown, com cabeçalho e uma linha por item. Mantenha as colunas separadas por |.
+- Lista numerada vira lista numerada, com a mesma numeração da imagem.
+- Copie os números exatamente como estão escritos, com a mesma pontuação (27,90 continua 27,90; R$ 4.530,00 continua R$ 4.530,00).
+- Não interprete, não resuma, não complete o que faltou, não corrija o que parece errado.
+- Se algo estiver ilegível, escreva [ilegível] no lugar daquele campo.
+
+Responda só com o Markdown, sem comentário antes nem depois.`;
+
+const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Uma imagem por vez, com repetição.
+ *
+ * A versão anterior mandava todas de uma vez num `Promise.all`. É o instinto
+ * certo para chamadas independentes e o errado aqui: o modelo de visão desta
+ * conta aceita **duas chamadas** antes de responder 429, então bastavam duas
+ * tabelas para o import quebrar. Medido: tentativas 1 e 2 passam em ~1s, a 3ª
+ * e a 4ª voltam "Rate limit reached".
+ *
+ * Pior que quebrar, quebrava calado: a falha virava um `[imagem N: não
+ * consegui ler]` que seguia adiante como se fosse texto do cliente, e o erro
+ * só aparecia lá na frente como "não identifiquei nenhum serviço".
+ */
 async function lerImagens(
   imagens: ImagemColada[],
   chave: string,
-): Promise<string> {
-  const partes = await Promise.all(
-    imagens.map(async (img, i) => {
+): Promise<{ ok: true; texto: string } | { ok: false; erro: string }> {
+  const partes: string[] = [];
+
+  for (const [i, img] of imagens.entries()) {
+    let ultimoErro = "";
+
+    for (let tentativa = 0; tentativa < 4; tentativa++) {
+      if (tentativa > 0) await espera(2000 * tentativa);
+
       const resposta = await fetch(
         "https://api.groq.com/openai/v1/chat/completions",
         {
@@ -125,10 +168,7 @@ async function lerImagens(
               {
                 role: "user",
                 content: [
-                  {
-                    type: "text",
-                    text: "Transcreva TUDO que está escrito nesta imagem, em português, mantendo a estrutura (listas viram listas, tabela vira linhas com os valores alinhados). Não interprete, não resuma, não complete: só transcreva o que dá para ler. Se algo estiver ilegível, escreva [ilegível] no lugar.",
-                  },
+                  { type: "text", text: INSTRUCAO_DA_IMAGEM },
                   {
                     type: "image_url",
                     image_url: {
@@ -138,24 +178,51 @@ async function lerImagens(
                 ],
               },
             ],
-            max_tokens: 1500,
+            max_tokens: 2000,
           }),
           signal: AbortSignal.timeout(TETO),
         },
       );
 
-      if (!resposta.ok) return `[imagem ${i + 1}: não consegui ler]`;
-      const dados = await resposta.json();
-      const texto: string = dados?.choices?.[0]?.message?.content ?? "";
-      // O qwen devolve o raciocínio dentro de <think>…</think> no próprio
-      // conteúdo. Sem tirar, isso entraria no orçamento como se fosse texto do
-      // cliente.
-      const limpo = texto.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-      return `--- transcrição da imagem ${i + 1} ---\n${limpo}`;
-    }),
-  );
+      if (resposta.ok) {
+        const dados = await resposta.json();
+        const texto: string = dados?.choices?.[0]?.message?.content ?? "";
+        // O qwen devolve o raciocínio dentro de <think>…</think> no próprio
+        // conteúdo. Sem tirar, isso entraria no orçamento como se fosse texto
+        // do cliente.
+        const limpo = texto.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        partes.push(`--- imagem ${i + 1} ---\n${limpo}`);
+        ultimoErro = "";
+        break;
+      }
 
-  return partes.join("\n\n");
+      const detalhe = (await resposta.text()).slice(0, 200);
+      ultimoErro = `HTTP ${resposta.status}`;
+
+      // 429 e 5xx passam; o resto é erro de pedido e repetir não conserta.
+      if (resposta.status !== 429 && resposta.status < 500) {
+        return {
+          ok: false,
+          erro: `Não consegui ler a imagem ${i + 1}: ${detalhe}`,
+        };
+      }
+    }
+
+    if (ultimoErro) {
+      return {
+        ok: false,
+        erro:
+          `A leitura de imagem bateu no limite da Groq (${ultimoErro}) na imagem ${i + 1}. ` +
+          "Tente com menos imagens de uma vez, ou converta o print em texto e cole aqui — funciona igual.",
+      };
+    }
+
+    // Espaço entre imagens: a cota é por minuto, e emendar uma na outra
+    // reproduz o 429 que acabamos de evitar.
+    if (i < imagens.length - 1) await espera(1500);
+  }
+
+  return { ok: true, texto: partes.join("\n\n") };
 }
 
 export async function lerColagem(
@@ -171,12 +238,25 @@ export async function lerColagem(
   }
 
   try {
-    const daImagem = imagens.length ? await lerImagens(imagens, chave) : "";
+    let daImagem = "";
+    if (imagens.length) {
+      const lidas = await lerImagens(imagens, chave);
+      if (!lidas.ok) return { ok: false, erro: lidas.erro };
+      daImagem = lidas.texto;
+    }
+
     const material = [limpo, daImagem].filter(Boolean).join("\n\n");
 
-    const resposta = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
+    // A conta Groq desta empreiteira é de 8.000 tokens por minuto. Um
+    // orçamento grande com o prompt junto chega perto disso, e dois seguidos
+    // passam — medido ao rodar três casos em sequência: o primeiro passa, o
+    // segundo e o terceiro voltam "Rate limit reached". Sem esta espera, o
+    // segundo orçamento do dia falharia sem explicação útil.
+    let resposta: Response | null = null;
+    for (let tentativa = 0; tentativa < 4; tentativa++) {
+      if (tentativa > 0) await espera(4000 * tentativa);
+
+      resposta = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${chave}`,
@@ -192,11 +272,20 @@ export async function lerColagem(
           ],
         }),
         signal: AbortSignal.timeout(TETO),
-      },
-    );
+      });
 
-    if (!resposta.ok) {
-      const detalhe = (await resposta.text()).slice(0, 200);
+      if (resposta.ok) break;
+      if (resposta.status !== 429 && resposta.status < 500) break;
+    }
+
+    if (!resposta || !resposta.ok) {
+      const detalhe = resposta ? (await resposta.text()).slice(0, 200) : "";
+      if (resposta?.status === 429) {
+        return {
+          ok: false,
+          erro: "A cota da IA por minuto estourou. Espere um minuto e tente de novo — o que você colou continua aqui.",
+        };
+      }
       return { ok: false, erro: `A IA recusou: ${detalhe}` };
     }
 

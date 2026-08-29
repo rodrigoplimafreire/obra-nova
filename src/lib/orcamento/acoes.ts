@@ -172,7 +172,9 @@ export async function gerarObraDoOrcamento(
 
   const { data: orcamento } = await sb
     .from("orc_orcamentos")
-    .select("id, obra_id, cliente_nome, objeto, endereco")
+    .select(
+      "id, obra_id, cliente_nome, objeto, endereco, situacao, valor_fechado, aprovado_em",
+    )
     .eq("id", id)
     .eq("org_id", orgId)
     .maybeSingle();
@@ -201,15 +203,65 @@ export async function gerarObraDoOrcamento(
     .from("mestres")
     .insert({ obra_id: obra.id, nome: "Escritório", escritorio: true });
 
+  // **Virar obra é aprovar.** Ninguém abre canteiro num orçamento que o
+  // cliente não fechou. Antes daqui isto só gravava `obra_id`, e a situação
+  // continuava "enviado": os três primeiros orçamentos que a RD transformou em
+  // obra ficaram fora do "Aprovados" e do "Valor aprovado" do painel, que
+  // mostrava zero com três obras andando.
+  //
+  // Só marca quem ainda não tem desfecho registrado: se a data do aceite já
+  // existe, ela é o fato — e reescrevê-la com a data de hoje moveria a base de
+  // qualquer cálculo de comissão para trás.
+  const jaAprovado = orcamento.aprovado_em !== null;
+  const agora = new Date().toISOString();
+
+  const total = await totalDoOrcamento(sb, id, orcamento.valor_fechado);
+
   await sb
     .from("orc_orcamentos")
-    .update({ obra_id: obra.id })
+    .update({
+      obra_id: obra.id,
+      updated_at: agora,
+      ...(jaAprovado
+        ? {}
+        : {
+            situacao: "aprovado" as const,
+            aprovado_em: agora,
+            valor_aprovado: total,
+            recusado_em: null,
+            motivo_recusa: null,
+          }),
+    })
     .eq("id", id)
     .eq("org_id", orgId);
 
   revalidatePath("/admin/obras");
+  revalidatePath("/admin/orcamentos");
   revalidatePath(`/admin/orcamentos/${id}`);
   return { ok: true, link: `/admin/obras/${obra.id}` };
+}
+
+/**
+ * O valor que fica congelado no aceite.
+ *
+ * `valor_fechado` quando existe — é o caso das propostas de escopo, em que os
+ * itens não têm preço próprio. Senão, a soma dos itens vivos.
+ */
+async function totalDoOrcamento(
+  sb: ReturnType<typeof supabaseAdmin>,
+  orcamentoId: string,
+  valorFechado: number | null,
+): Promise<number | null> {
+  if (valorFechado !== null) return valorFechado;
+
+  const { data } = await sb
+    .from("orc_itens")
+    .select("total")
+    .eq("orcamento_id", orcamentoId)
+    .is("removido_em", null);
+
+  if (!data || data.length === 0) return null;
+  return data.reduce((s, i) => s + Number(i.total ?? 0), 0);
 }
 
 /**

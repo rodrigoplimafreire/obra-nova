@@ -7,6 +7,8 @@ import { Cabecalho, Conteudo, Secao, Vazio } from "./cabecalho";
 import { Dialogo } from "@/components/comum/dialogo";
 import { Girando } from "@/components/comum/esqueleto";
 import { criarObra } from "@/lib/admin/acoes-obra";
+import { excluirObra } from "@/lib/orcamento/acoes-lista";
+import { AcoesDaLinha } from "./acoes-da-linha";
 import type { Resultado } from "@/lib/admin/tipos";
 import type { ResumoDeObra } from "@/lib/admin/obras";
 
@@ -55,17 +57,25 @@ export function PainelDeObras({ obras }: { obras: ResumoDeObra[] }) {
           ) : (
             <ul className="flex flex-col gap-3">
               {obras.map((o) => (
-                <li key={o.id}>
+                <li
+                  key={o.id}
+                  className="flex items-center gap-2 rounded-lg border border-nevoa bg-white pr-3 transition md:hover:border-tinta"
+                >
                   <Link
                     href={`/admin/obras/${o.id}`}
-                    className="flex items-center justify-between gap-4 rounded-lg border border-nevoa bg-white px-5 py-4 transition md:hover:border-tinta"
+                    className="flex min-w-0 flex-1 items-center justify-between gap-4 px-5 py-4"
                   >
+                    {/* O cliente na frente, o nome da obra abaixo. O contrário
+                        era o que estava aqui, e virou ilegível quando as obras
+                        passaram a nascer de orçamento: o nome herda o `objeto`,
+                        e três obras diferentes apareciam como "Proposta
+                        técnica". Quem procura na lista procura por pessoa. */}
                     <span className="min-w-0">
                       <span className="block text-lg leading-tight font-semibold text-tinta">
-                        {o.nome}
+                        {o.cliente}
                       </span>
                       <span className="mt-1.5 block font-mono text-[0.65rem] tracking-widest text-cinza uppercase">
-                        {o.cliente} · {o.mestres}{" "}
+                        {o.nome} · {o.mestres}{" "}
                         {o.mestres === 1 ? "mestre" : "mestres"}
                       </span>
                     </span>
@@ -82,6 +92,23 @@ export function PainelDeObras({ obras }: { obras: ResumoDeObra[] }) {
                       </svg>
                     </span>
                   </Link>
+
+                  <AcoesDaLinha
+                    acoes={[
+                      {
+                        rotulo: "Apagar obra",
+                        perigo: true,
+                        executar: async () =>
+                          (await excluirObra(o.id)).erro ?? null,
+                        confirmar: {
+                          titulo: `Apagar a obra de ${o.cliente}?`,
+                          aviso:
+                            "Some com as atividades, as confirmações do mestre, as fotos e os relatórios. Não dá para desfazer.",
+                          palavra: "APAGAR",
+                        },
+                      },
+                    ]}
+                  />
                 </li>
               ))}
             </ul>

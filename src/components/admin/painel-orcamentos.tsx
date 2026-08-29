@@ -11,6 +11,13 @@ import { Girando } from "@/components/comum/esqueleto";
 import { criarOrcamento } from "@/lib/orcamento/acoes";
 import { moeda } from "@/lib/orcamento/formato";
 import { ColarOrcamento } from "./colar-orcamento";
+import { AcoesDaLinha, type AcaoDeLinha } from "./acoes-da-linha";
+import {
+  excluir,
+  mudarSituacao,
+  republicar,
+  virarObra,
+} from "@/lib/orcamento/acoes-lista";
 import {
   COR_SITUACAO,
   ROTULO_SITUACAO,
@@ -34,16 +41,88 @@ export function PainelDeOrcamentos({
 }) {
   const [criando, setCriando] = useState(false);
   const [colando, setColando] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState<Filtro>("todos");
 
-  const aguardandoPreco = orcamentos.reduce((acc, o) => acc + o.semPreco, 0);
   const naRua = orcamentos.filter((o) =>
     ["enviado", "visto", "negociando"].includes(o.situacao),
   );
   const aprovados = orcamentos.filter((o) => o.situacao === "aprovado");
+  const viraramObra = orcamentos.filter((o) => o.obraId).length;
   const totalAprovado = aprovados.reduce(
     (acc, o) => acc + (o.valorAprovado ?? 0),
     0,
   );
+
+  const termo = busca.trim().toLowerCase();
+  const visiveis = orcamentos.filter((o) => {
+    if (!pertence(o, filtro)) return false;
+    if (!termo) return true;
+    return [o.cliente, o.numero, o.objeto]
+      .filter(Boolean)
+      .some((c) => c!.toLowerCase().includes(termo));
+  });
+
+  /**
+   * O que dá para fazer com este orçamento sem abrir a tela dele.
+   *
+   * A lista muda com o estado: republicar não existe antes da primeira
+   * publicação, virar obra some quando a obra já existe, e apagar sai de cena
+   * assim que o cliente pode estar com o link na mão.
+   */
+  function acoesDoOrcamento(o: ResumoDeOrcamento): AcaoDeLinha[] {
+    const lista: AcaoDeLinha[] = [];
+
+    if (o.situacao !== "aprovado") {
+      lista.push({
+        rotulo: "Marcar como aprovado",
+        executar: async () => (await mudarSituacao(o.id, "aprovado")).erro ?? null,
+      });
+    }
+    if (o.situacao !== "negociando") {
+      lista.push({
+        rotulo: "Marcar como negociando",
+        executar: async () =>
+          (await mudarSituacao(o.id, "negociando")).erro ?? null,
+      });
+    }
+    if (o.situacao !== "recusado") {
+      lista.push({
+        rotulo: "Marcar como recusado",
+        executar: async () => (await mudarSituacao(o.id, "recusado")).erro ?? null,
+      });
+    }
+
+    if (!o.obraId) {
+      lista.push({
+        rotulo: "Virar obra",
+        nota: "Abre o canteiro e marca como aprovado",
+        executar: async () => (await virarObra(o.id)).erro ?? null,
+      });
+    }
+
+    if (o.versaoPublicada !== null) {
+      lista.push({
+        rotulo: "Republicar",
+        nota: `Publica a v${o.versaoPublicada + 1}, mesmo link`,
+        executar: async () => (await republicar(o.id)).erro ?? null,
+      });
+    }
+
+    lista.push({
+      rotulo: "Apagar",
+      perigo: true,
+      executar: async () => (await excluir(o.id)).erro ?? null,
+      confirmar: {
+        titulo: `Apagar o orçamento de ${o.cliente}?`,
+        aviso:
+          "Some com os itens, os áudios e o histórico. Não dá para desfazer.",
+        palavra: "APAGAR",
+      },
+    });
+
+    return lista;
+  }
 
   return (
     <>
@@ -107,20 +186,60 @@ export function PainelDeOrcamentos({
             detalhe="congelado no aceite"
             dica="Soma dos orçamentos aceitos, pelo valor que valia no dia do aceite."
           />
+          {/* Saiu o "Itens sem preço". Ele nasceu quando todo orçamento era
+              item a item; hoje a maioria é de escopo fechado, e "60 itens sem
+              preço" é o normal, não um alerta. Indicador que acende sempre
+              deixa de ser lido. Quem precisa da informação é a publicação, e
+              ela já barra na hora certa. */}
           <Indicador
-            rotulo="Itens sem preço"
-            valor={aguardandoPreco}
-            destaque={aguardandoPreco > 0 ? "amarelo" : undefined}
-            detalhe={
-              aguardandoPreco > 0
-                ? "impede publicar"
-                : "nenhum item em branco"
-            }
-            dica="A IA nunca chuta preço. Item sem valor de venda bloqueia a publicação."
+            rotulo="Viraram obra"
+            valor={viraramObra}
+            detalhe={viraramObra === 1 ? "no canteiro" : "nos canteiros"}
+            dica="Orçamentos aprovados que já têm obra aberta."
           />
         </div>
 
-        <Secao titulo="Todos">
+        {/* Busca e filtro no cliente: a lista inteira já está aqui, e ir ao
+            servidor para filtrar dez linhas daria latência sem devolver nada.
+            Quando passar de algumas centenas, isto vira consulta. */}
+        {orcamentos.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por cliente, número ou serviço"
+              aria-label="Buscar orçamento"
+              className="campo min-w-0 flex-1 sm:max-w-80"
+            />
+            <div className="flex flex-wrap gap-1.5">
+              {FILTROS.map((f) => (
+                <button
+                  key={f.chave}
+                  type="button"
+                  onClick={() => setFiltro(f.chave)}
+                  className={`btn btn-compacto ${
+                    filtro === f.chave ? "btn-primario" : "btn-secundario"
+                  }`}
+                >
+                  {f.rotulo}
+                  {f.chave !== "todos" && (
+                    <span className="ml-1.5 opacity-60">
+                      {contarPor(orcamentos, f.chave)}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Secao
+          titulo={
+            visiveis.length === orcamentos.length
+              ? "Todos"
+              : `${visiveis.length} de ${orcamentos.length}`
+          }
+        >
           {orcamentos.length === 0 ? (
             <Vazio
               titulo="Nenhum orçamento ainda"
@@ -139,11 +258,16 @@ export function PainelDeOrcamentos({
             </Vazio>
           ) : (
             <ul className="flex flex-col gap-3">
-              {orcamentos.map((o) => (
-                <li key={o.id}>
+              {visiveis.map((o) => (
+                <li
+                  key={o.id}
+                  className="relative flex items-center gap-2 rounded-lg border border-nevoa bg-white pr-3 transition md:hover:border-tinta"
+                >
+                  {/* O link é o conteúdo, e o menu fica fora dele. Menu dentro
+                      de âncora navega antes de abrir. */}
                   <Link
                     href={`/admin/orcamentos/${o.id}`}
-                    className="flex flex-col gap-3 rounded-lg border border-nevoa bg-white px-5 py-4 transition md:flex-row md:items-center md:justify-between md:hover:border-tinta"
+                    className="flex min-w-0 flex-1 flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between"
                   >
                     <span className="min-w-0">
                       <span className="block text-lg leading-tight font-semibold text-tinta">
@@ -156,10 +280,8 @@ export function PainelDeOrcamentos({
                     </span>
 
                     <span className="flex shrink-0 items-center gap-3">
-                      {o.semPreco > 0 && (
-                        <span className="selo selo-atraso">
-                          {o.semPreco} sem preço
-                        </span>
+                      {o.obraId && (
+                        <span className="selo selo-neutro">obra aberta</span>
                       )}
                       {o.situacao === "visto" && o.aberturas > 1 && (
                         <Dica texto="Quantas vezes o cliente abriu a página. Muitas aberturas sem resposta costumam ser hora de ligar.">
@@ -177,9 +299,17 @@ export function PainelDeOrcamentos({
                       </span>
                     </span>
                   </Link>
+
+                  <AcoesDaLinha acoes={acoesDoOrcamento(o)} />
                 </li>
               ))}
             </ul>
+          )}
+
+          {orcamentos.length > 0 && visiveis.length === 0 && (
+            <p className="py-8 text-center text-sm text-fumaca">
+              Nenhum orçamento com esse filtro.
+            </p>
           )}
         </Secao>
       </Conteudo>
@@ -280,4 +410,30 @@ function Colar() {
       <path d="M9 12h6M9 16h4" />
     </svg>
   );
+}
+
+/**
+ * Os filtros são os quatro estados em que se olha a lista: tudo, o que está
+ * na rua esperando resposta, o que fechou, e o que já virou canteiro. Um por
+ * pergunta que a pessoa faz de manhã.
+ */
+type Filtro = "todos" | "na-rua" | "aprovados" | "obra";
+
+const FILTROS: Array<{ chave: Filtro; rotulo: string }> = [
+  { chave: "todos", rotulo: "Todos" },
+  { chave: "na-rua", rotulo: "Na rua" },
+  { chave: "aprovados", rotulo: "Aprovados" },
+  { chave: "obra", rotulo: "Viraram obra" },
+];
+
+function pertence(o: ResumoDeOrcamento, filtro: Filtro): boolean {
+  if (filtro === "todos") return true;
+  if (filtro === "na-rua")
+    return ["enviado", "visto", "negociando"].includes(o.situacao);
+  if (filtro === "aprovados") return o.situacao === "aprovado";
+  return o.obraId !== null;
+}
+
+function contarPor(lista: ResumoDeOrcamento[], filtro: Filtro): number {
+  return lista.filter((o) => pertence(o, filtro)).length;
 }

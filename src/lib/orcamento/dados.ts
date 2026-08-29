@@ -35,6 +35,8 @@ export type ResumoDeOrcamento = {
   vistoEm: string | null;
   valorAprovado: number | null;
   versaoPublicada: number | null;
+  /** Obra aberta a partir dele. Nulo = ainda não virou obra. */
+  obraId: string | null;
   criadoEm: string;
 };
 
@@ -47,7 +49,7 @@ export async function listarOrcamentos(
   let consulta = sb
     .from("orc_orcamentos")
     .select(
-      "id, numero, cliente_nome, objeto, status, situacao, aberturas, visto_em, valor_aprovado, valor_fechado, created_at",
+      "id, numero, cliente_nome, objeto, status, situacao, aberturas, visto_em, valor_aprovado, valor_fechado, obra_id, created_at",
     )
     .eq("org_id", org)
     .order("created_at", { ascending: false });
@@ -93,6 +95,7 @@ export async function listarOrcamentos(
       vistoEm: o.visto_em,
       valorAprovado: o.valor_aprovado,
       versaoPublicada: versoes.length ? Math.max(...versoes) : null,
+      obraId: o.obra_id,
       criadoEm: o.created_at,
     };
   });

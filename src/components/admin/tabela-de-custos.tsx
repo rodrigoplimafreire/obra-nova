@@ -8,6 +8,7 @@ import { Girando } from "@/components/comum/esqueleto";
 import { ItemDeMenu, Menu, SeparadorDeMenu } from "@/components/comum/menu";
 import { FalarOrcamento } from "./falar-orcamento";
 import { UsarTranscricao } from "./usar-transcricao";
+import { ColarOrcamento } from "./colar-orcamento";
 import { ImportarItens } from "./importar-itens";
 import {
   adicionarItem,
@@ -68,6 +69,7 @@ export function TabelaDeCustos({
   const [falando, setFalando] = useState(false);
   const [importando, setImportando] = useState(false);
   const [usandoTranscricao, setUsandoTranscricao] = useState(false);
+  const [colando, setColando] = useState(false);
   const [verRemovidos, setVerRemovidos] = useState(false);
 
   const semPreco = itens.filter((i) => i.valorUnitario === null).length;
@@ -104,6 +106,13 @@ export function TabelaDeCustos({
             Incluir item
           </button>
           <Menu>
+            <ItemDeMenu
+              icone={<IconeColar />}
+              aoClicar={() => setColando(true)}
+              nota="o ajuste que ele mandou no WhatsApp"
+            >
+              Colar material
+            </ItemDeMenu>
             <ItemDeMenu
               icone={<IconeOnda />}
               aoClicar={() => setUsandoTranscricao(true)}
@@ -144,6 +153,12 @@ export function TabelaDeCustos({
             Falar
           </button>
           <Menu>
+            <ItemDeMenu
+              icone={<IconeColar />}
+              aoClicar={() => setColando(true)}
+            >
+              Colar material
+            </ItemDeMenu>
             <ItemDeMenu
               icone={<IconeOnda />}
               aoClicar={() => setUsandoTranscricao(true)}
@@ -343,7 +358,31 @@ export function TabelaDeCustos({
         aberto={importando}
         aoFechar={() => setImportando(false)}
       />
+
+      <ColarOrcamento
+        orcamentoId={orcamentoId}
+        aberto={colando}
+        aoFechar={() => setColando(false)}
+      />
     </section>
+  );
+}
+
+/** Prancheta com folha, igual à da lista de orçamentos. */
+function IconeColar() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 fill-none stroke-current"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 4H7a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-2" />
+      <rect x="9" y="2.5" width="6" height="3.5" rx="1" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
   );
 }
 

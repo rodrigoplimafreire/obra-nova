@@ -90,6 +90,22 @@ Obs: gesso incluso material e mão de obra.
 
 Pintura: R$ 5.572,00`,
   },
+  {
+    nome: "Tabela em Markdown (o caminho do Gemini)",
+    esperado: { cliente: /marcos/i, slug: "marcosvieira", total: 6800 },
+    texto: `Cliente: Marcos Vieira
+Endereço: Rua das Flores, 88 - Aldeota, Fortaleza
+
+## Mão de obra
+
+| Item | Descrição | Qtd | Unid. |
+|---|---|---|---|
+| 1.1 | Demolição de piso cerâmico | 45,00 | m² |
+| 1.2 | Regularização de contrapiso | 45,00 | m² |
+| 1.3 | Assentamento de porcelanato | 45,00 | m² |
+
+**Valor total da mão de obra: R$ 6.800,00**`,
+  },
 ];
 
 function moeda(n: number) {
@@ -99,7 +115,16 @@ function moeda(n: number) {
 async function main() {
   let falhas = 0;
 
+  // A conta Groq e de 8.000 tokens/minuto: tres casos seguidos estouram.
+  // O app tem repeticao com espera; aqui a pausa e explicita para o teste
+  // medir a extracao, e nao a cota.
+  const esperaEntreCasos = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  let primeiro = true;
+
   for (const caso of CASOS) {
+    if (!primeiro) await esperaEntreCasos(65_000);
+    primeiro = false;
+
     console.log(`\n${"=".repeat(60)}\n${caso.nome}\n${"=".repeat(60)}`);
 
     const saida = await lerColagem(caso.texto);
