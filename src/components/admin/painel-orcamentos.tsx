@@ -56,6 +56,7 @@ export function PainelDeOrcamentos({
     (acc, o) => acc + (o.valorAprovado ?? 0),
     0,
   );
+  const totalLancado = orcamentos.reduce((acc, o) => acc + (o.total ?? 0), 0);
 
   const termo = busca.trim().toLowerCase();
   const visiveis = orcamentos.filter((o) => {
@@ -192,7 +193,7 @@ export function PainelDeOrcamentos({
         <NovoOrcamento aberto={criando} aoFechar={() => setCriando(false)} />
         <ColarOrcamento aberto={colando} aoFechar={() => setColando(false)} />
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
           <Indicador
             rotulo="Na rua"
             valor={naRua.length}
@@ -221,13 +222,24 @@ export function PainelDeOrcamentos({
             detalhe={viraramObra === 1 ? "no canteiro" : "nos canteiros"}
             dica="Orçamentos aprovados que já têm obra aberta."
           />
+          {/* O tamanho da carteira: tudo que já foi orçado, fechado ou não.
+              Fica ao lado do "Valor aprovado" de propósito — um é o que
+              entrou, o outro é o que passou pela mesa, e ver os dois juntos
+              é o que diz se o problema é falta de orçamento ou falta de
+              fechamento. */}
+          <Indicador
+            rotulo="Valor lançado"
+            valor={moeda(totalLancado)}
+            detalhe="tudo que já foi orçado"
+            dica="Soma de todos os orçamentos da lista, aprovados ou não. Não é dinheiro em caixa — é o volume que passou pela mesa."
+          />
         </div>
 
         {/* Busca e filtro no cliente: a lista inteira já está aqui, e ir ao
             servidor para filtrar dez linhas daria latência sem devolver nada.
             Quando passar de algumas centenas, isto vira consulta. */}
         {orcamentos.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-nevoa pt-5">
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}

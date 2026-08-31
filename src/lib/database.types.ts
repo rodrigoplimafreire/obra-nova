@@ -346,6 +346,8 @@ type TabelasDeOrcamento = {
       prazo: string | null;
       /** Percentual pago no início. O resto na entrega. Nulo = à vista. */
       entrada_percentual: number | null;
+      /** Quantas parcelas. 2 = entrada + final; mais que isso, iguais. */
+      parcelas: number;
       pagamento: string | null;
       validade_dias: number;
       observacoes: string | null;
@@ -390,6 +392,7 @@ type TabelasDeOrcamento = {
       status?: OrcStatus;
       prazo?: string | null;
       entrada_percentual?: number | null;
+      parcelas?: number;
       pagamento?: string | null;
       validade_dias?: number;
       observacoes?: string | null;
@@ -417,6 +420,7 @@ type TabelasDeOrcamento = {
       status?: OrcStatus;
       prazo?: string | null;
       entrada_percentual?: number | null;
+      parcelas?: number;
       pagamento?: string | null;
       validade_dias?: number;
       observacoes?: string | null;

@@ -55,6 +55,8 @@ export type DocumentoPublicado = {
   prazo: string | null;
   /** Percentual pago no início. Nulo = à vista, sem seção de pagamento. */
   entradaPercentual: number | null;
+  /** Em quantas parcelas. 2 = entrada + final; acima disso, iguais. */
+  parcelas: number;
   pagamento: string | null;
   validadeDias: number;
   observacoes: string | null;
@@ -88,6 +90,8 @@ type OrcamentoDeOrigem = {
   prazo: string | null;
   /** Percentual pago no início. Nulo = à vista, sem seção de pagamento. */
   entradaPercentual: number | null;
+  /** Em quantas parcelas. 2 = entrada + final; acima disso, iguais. */
+  parcelas: number;
   pagamento: string | null;
   validadeDias: number;
   observacoes: string | null;
@@ -136,6 +140,7 @@ export function montarDocumento(
     objeto: orcamento.objeto,
     prazo: orcamento.prazo,
     entradaPercentual: orcamento.entradaPercentual,
+    parcelas: orcamento.parcelas,
     pagamento: orcamento.pagamento,
     validadeDias: orcamento.validadeDias,
     observacoes: orcamento.observacoes,
@@ -223,6 +228,8 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     objeto: texto(d.objeto),
     prazo: texto(d.prazo),
     entradaPercentual: numero(d.entradaPercentual),
+    // Publicação antiga não tem o campo, e o que ela combinou foi duas.
+    parcelas: numero(d.parcelas) ?? 2,
     pagamento: texto(d.pagamento),
     validadeDias: numero(d.validadeDias) ?? 15,
     observacoes: texto(d.observacoes),

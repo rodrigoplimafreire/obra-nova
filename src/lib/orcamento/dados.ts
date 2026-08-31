@@ -167,6 +167,8 @@ export type OrcamentoCompleto = {
   status: StatusDoOrcamento;
   prazo: string | null;
   entradaPercentual: number | null;
+  /** Em quantas parcelas o pagamento foi combinado. Padrão 2. */
+  parcelas: number;
   pagamento: string | null;
   validadeDias: number;
   observacoes: string | null;
@@ -332,6 +334,7 @@ export async function carregarOrcamento(
     status: o.status,
     prazo: o.prazo,
     entradaPercentual: o.entrada_percentual,
+    parcelas: o.parcelas,
     pagamento: o.pagamento,
     validadeDias: o.validade_dias,
     observacoes: o.observacoes,

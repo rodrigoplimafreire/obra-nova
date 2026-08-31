@@ -36,6 +36,66 @@ function validoAte(iso: string, dias: number) {
   return DATA_BR.format(d);
 }
 
+const NOMES = ["", "uma", "duas", "três", "quatro", "cinco", "seis"];
+function porNome(n: number) {
+  return NOMES[n] ?? String(n);
+}
+
+type Parcela = { valor: number; percentual: number; quando: React.ReactNode };
+
+/**
+ * As parcelas do pagamento, em dinheiro.
+ *
+ * Com duas, quem manda é o `entradaPercentual` — é o combinado de sempre, 50/50
+ * ou 70/30. Acima disso são iguais, porque foi assim que o Rodrigo fechou com o
+ * Bismarck: quatro partes iguais, uma no início e as outras a cada quinze dias.
+ *
+ * **A última parcela é o resto da subtração, não o seu próprio percentual.**
+ * Calcular cada uma por fora deixa o total um ou dois centavos diferente da
+ * tabela logo acima, e o cliente confere na calculadora.
+ */
+function montarParcelas(
+  total: number,
+  entradaPercentual: number | null,
+  quantas: number,
+): Parcela[] {
+  const inicio = (
+    <>
+      No <b>início da obra</b>, na aprovação e mobilização da equipe.
+    </>
+  );
+  const fim = (
+    <>
+      No <b>final da obra</b>, na entrega e vistoria com você.
+    </>
+  );
+
+  if (quantas <= 2) {
+    const pct = entradaPercentual ?? 50;
+    const entrada = Math.round(total * pct) / 100;
+    return [
+      { valor: entrada, percentual: pct, quando: inicio },
+      { valor: total - entrada, percentual: 100 - pct, quando: fim },
+    ];
+  }
+
+  const cada = Math.round((total / quantas) * 100) / 100;
+  const pct = Math.round((100 / quantas) * 100) / 100;
+  return Array.from({ length: quantas }, (_, i) => {
+    const ultima = i === quantas - 1;
+    return {
+      valor: ultima ? Math.round((total - cada * i) * 100) / 100 : cada,
+      percentual: pct,
+      quando:
+        i === 0 ? inicio : ultima ? fim : (
+          <>
+            <b>Durante a obra</b>, conforme o combinado.
+          </>
+        ),
+    };
+  });
+}
+
 export function DocumentoDoCliente({
   documento,
   token,
@@ -62,14 +122,15 @@ export function DocumentoDoCliente({
   const itemizado = documento.valorFechado === null;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
-  // A entrada é arredondada e a segunda parcela é o **resto** — nunca o outro
-  // percentual calculado à parte. Com 70% de R$ 17.323,25 as duas contas
-  // separadas somariam um centavo a mais ou a menos que o total, e o cliente
-  // conferiria na calculadora.
-  const entrada =
-    documento.entradaPercentual === null
-      ? 0
-      : Math.round(documento.total * documento.entradaPercentual) / 100;
+  // As parcelas são calculadas e a **última leva o resto** — nunca cada uma
+  // pelo seu percentual. Com 70% de R$ 17.323,25, ou com um total dividido em
+  // quatro, as contas separadas somariam um centavo a mais ou a menos que o
+  // total, e o cliente conferiria na calculadora.
+  const parcelas = montarParcelas(
+    documento.total,
+    documento.entradaPercentual,
+    documento.parcelas,
+  );
 
   // Sem conta cadastrada não há como pagar, e uma seção "Forma de pagamento"
   // sem para onde mandar o dinheiro é pior que seção nenhuma.
@@ -133,12 +194,19 @@ export function DocumentoDoCliente({
           variáveis usadas abaixo existem nas duas folhas.
 
           O `.pag-grid` original é de três colunas, porque as propostas antigas
-          tinham três cards. Aqui são sempre duas parcelas, e num grid de três
-          a segunda ficaria com um buraco à direita. Mesmo conserto do
-          `.proj-grid`, pelo mesmo motivo. */}
+          tinham três cards. Aqui a quantidade varia com o combinado: em duas
+          parcelas, num grid de três, a segunda ficaria com um buraco à
+          direita. Mesmo conserto do `.proj-grid`, pelo mesmo motivo, e o
+          número de colunas acompanha o número de parcelas. */}
       <style href="forma-de-pagamento" precedence="marca">{`
         .pag-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
-        @media(min-width:720px){.pag-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(min-width:720px){
+          .pag-grid{grid-template-columns:repeat(2,1fr)}
+          .pag-grid[data-parcelas="3"]{grid-template-columns:repeat(3,1fr)}
+        }
+        @media(min-width:980px){
+          .pag-grid[data-parcelas="4"]{grid-template-columns:repeat(4,1fr)}
+        }
         .pag{border:1px solid var(--line);border-radius:5px;background:var(--ink-2);padding:24px 22px;position:relative}
         .pag.first{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
         .pag .pn{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
@@ -369,33 +437,25 @@ export function DocumentoDoCliente({
               pagamento
             </p>
             <h2>
-              {documento.entradaPercentual}% no início,{" "}
-              {100 - documento.entradaPercentual}% no final
+              {parcelas.length === 2
+                ? `${documento.entradaPercentual}% no início, ${100 - documento.entradaPercentual}% no final`
+                : `${parcelas.length} parcelas iguais`}
             </h2>
             <p className="intro">
-              O valor é dividido em duas parcelas, pagas via PIX.
+              O valor é dividido em {porNome(parcelas.length)} parcelas, pagas
+              via PIX
+              {documento.pagamento ? ` — ${documento.pagamento}` : ""}.
             </p>
 
-            <div className="pag-grid">
-              <div className="pag first">
-                <div className="pn">1ª parcela</div>
-                <div className="pv">{moeda(entrada)}</div>
-                <div className="pq">{documento.entradaPercentual}% do total</div>
-                <div className="pw">
-                  No <b>início da obra</b>, na aprovação e mobilização da
-                  equipe.
+            <div className="pag-grid" data-parcelas={parcelas.length}>
+              {parcelas.map((p, i) => (
+                <div key={i} className={`pag${i === 0 ? " first" : ""}`}>
+                  <div className="pn">{i + 1}ª parcela</div>
+                  <div className="pv">{moeda(p.valor)}</div>
+                  <div className="pq">{p.percentual}% do total</div>
+                  <div className="pw">{p.quando}</div>
                 </div>
-              </div>
-              <div className="pag">
-                <div className="pn">2ª parcela</div>
-                <div className="pv">{moeda(documento.total - entrada)}</div>
-                <div className="pq">
-                  {100 - documento.entradaPercentual}% do total
-                </div>
-                <div className="pw">
-                  No <b>final da obra</b>, na entrega e vistoria com você.
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="bank-card">
