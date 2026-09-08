@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Cabecalho, Conteudo, Indicador, Secao } from "./cabecalho";
@@ -10,6 +10,10 @@ import { salvarPremissas } from "@/lib/pipeline/acoes";
 import { horas } from "./painel-pipeline";
 import { ETAPAS, ROTULO_ETAPA, PORTES } from "@/lib/pipeline/constantes";
 import { pesoNaObra, type Carga } from "@/lib/pipeline/precificacao";
+import {
+  CalculadoraDeHora,
+  CalculadoraDeKm,
+} from "./calculadoras-de-custo";
 import type { PremissasComerciais } from "@/lib/pipeline/dados";
 
 /**
@@ -199,32 +203,49 @@ function Formulario({
     if (estado?.ok) router.refresh();
   }, [estado, router]);
 
+  // Controlados, para as calculadoras poderem escrever neles.
+  const [custoHora, setCustoHora] = useState(paraCampo(premissas.custoHora));
+  const [custoKm, setCustoKm] = useState(paraCampo(premissas.custoKm));
+
   const totalPadrao = premissas.padrao.reduce((s, p) => s + p.minutos, 0);
 
   return (
     <form action={acao} className="flex flex-col gap-6">
-      <Secao titulo="O que custa a sua hora">
-        <div className="grid gap-3 md:grid-cols-2">
-          <Campo
-            nome="custoHora"
-            rotulo="Custo por hora"
-            valor={paraCampo(premissas.custoHora)}
-            ajuda="O que você precisa tirar por hora trabalhada, contando o mês inteiro."
-          />
-          <Campo
-            nome="custoKm"
-            rotulo="Custo por km"
-            valor={paraCampo(premissas.custoKm)}
-            ajuda="Combustível, desgaste e manutenção, por quilômetro."
-          />
+      <Secao titulo="O que custa o seu tempo e o seu carro">
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="flex flex-col gap-3">
+            <Campo
+              nome="custoHora"
+              rotulo="Custo por hora"
+              valor={custoHora}
+              aoMudar={setCustoHora}
+              ajuda="O que uma hora sua custa ao negócio — não o que você cobra do cliente."
+            />
+            <CalculadoraDeHora aoCalcular={setCustoHora} />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Campo
+              nome="custoKm"
+              rotulo="Custo por km"
+              valor={custoKm}
+              aoMudar={setCustoKm}
+              ajuda="Quanto custa UM quilômetro. A distância de cada cliente você lança no pedido dele."
+            />
+            <CalculadoraDeKm aoCalcular={setCustoKm} />
+          </div>
         </div>
       </Secao>
 
       <Secao titulo="O orçamento típico">
         <p className="mb-3 text-sm text-fumaca">
-          Quanto tempo costuma levar cada etapa, num orçamento comum. É a base
-          da conta enquanto não houver orçamentos medidos — e o app troca
-          sozinho para o medido quando houver.
+          <b>Pense num orçamento comum, do começo ao fim, e diga quanto tempo
+          cada parte costuma levar.</b> Sair de casa e voltar, medir no local,
+          desenhar e estudar, montar a planilha de custos, escrever a proposta.
+          Se ainda não sabe, chute pela última visita que fez — é melhor um
+          número aproximado agora que campo vazio.
+          {" "}É a base da conta enquanto não houver orçamentos medidos — e o
+          app troca sozinho para o medido quando houver.
           {carga.fonteDoCusto === "medido" && (
             <> Hoje ele já está usando o medido; isto fica de reserva.</>
           )}
@@ -278,7 +299,7 @@ function Formulario({
             nome="conversaoEstimada"
             rotulo="Conversão estimada (%)"
             valor={paraCampo(premissas.conversaoEstimada)}
-            ajuda="De cada 100 orçamentos, quantos fecham. Um em três é 33."
+            ajuda="De cada 10 orçamentos que você entrega, quantos viram obra? Se são 3, escreva 30. É só até haver 6 desfechos registrados — daí o app mede sozinho."
           />
         </div>
 
@@ -351,11 +372,15 @@ function Campo({
   rotulo,
   valor,
   ajuda,
+  aoMudar,
 }: {
   nome: string;
   rotulo: string;
   valor: string;
   ajuda?: string;
+  /** Quando passado, o campo é controlado — é o que deixa a calculadora
+   *  escrever nele. Sem isso, `defaultValue` e o botão brigariam. */
+  aoMudar?: (v: string) => void;
 }) {
   return (
     <label className="flex flex-col gap-1.5">
@@ -363,7 +388,9 @@ function Campo({
       <input
         name={nome}
         inputMode="decimal"
-        defaultValue={valor}
+        {...(aoMudar
+          ? { value: valor, onChange: (e) => aoMudar(e.target.value) }
+          : { defaultValue: valor })}
         placeholder="0,00"
         className="campo"
       />
