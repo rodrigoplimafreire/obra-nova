@@ -55,6 +55,14 @@ const ITENS = [
     icone: Capacete,
     prefixos: ["/admin/obras"],
   },
+  // Antes de Orçamentos porque é antes na vida: o pedido chega, entra no
+  // funil, e só depois vira documento.
+  {
+    href: "/admin/pipeline",
+    rotulo: "Pipeline",
+    icone: Funil,
+    prefixos: ["/admin/pipeline"],
+  },
   {
     href: "/admin/orcamentos",
     rotulo: "Orçamentos",
@@ -332,6 +340,15 @@ function Prancheta() {
   return (
     <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 3h6v3H9zM6 5h1.5M16.5 5H18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1M9 11h6M9 15h4" />
+    </svg>
+  );
+}
+
+/** Funil: entra muito pedido em cima, sai obra fechada embaixo. */
+function Funil() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />
     </svg>
   );
 }

@@ -868,16 +868,226 @@ export type LinhaDeBusca = {
 };
 
 /**
+ * Pipeline de pedidos de orçamento e tempo por etapa.
+ *
+ * Os estados e as etapas são `text` com `check` no banco, e não enum: o PRD
+ * ainda vai mexer nessa lista conforme o funil real aparecer, e trocar um
+ * `check` é uma migração, trocar um enum é um ritual.
+ */
+type PipeEstado =
+  | "novo_pedido"
+  | "em_estudo"
+  | "estudo_entregue"
+  | "orcamento_em_producao"
+  | "orcamento_enviado"
+  | "fechado"
+  | "perdido"
+  | "congelado";
+
+type PipeEtapa =
+  | "deslocamento"
+  | "visita_tecnica"
+  | "estudo_projeto"
+  | "planilha_custos"
+  | "formatacao_proposta"
+  | "outro";
+
+type PipeTipoDeObra =
+  | "reforma"
+  | "construcao_zero"
+  | "projeto_estrutural"
+  | "gestao_obra";
+
+type PipeOrigem =
+  | "indicacao"
+  | "google"
+  | "meta"
+  | "instagram"
+  | "site"
+  | "outro";
+
+type TabelasDePipeline = {
+  pipe_pedidos: {
+    Row: {
+      id: string;
+      org_id: string;
+      /** Documento gerado a partir deste pedido. Nulo até existir. */
+      orcamento_id: string | null;
+      /** Número curto por empreiteira (#42), atribuído por trigger. */
+      codigo: number;
+      cliente_nome: string;
+      cliente_telefone: string | null;
+      tipo_obra: PipeTipoDeObra | null;
+      bairro: string | null;
+      origem_lead: PipeOrigem | null;
+      porte: "P" | "M" | "G" | null;
+      status: PipeEstado;
+      data_pedido: string;
+      estudo_cobrado: boolean;
+      estudo_valor: number | null;
+      estudo_abatido: boolean;
+      data_entrega_estudo: string | null;
+      data_envio_orcamento: string | null;
+      valor_orcado: number | null;
+      valor_fechado: number | null;
+      motivo_perda: string | null;
+      observacoes: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      org_id: string;
+      orcamento_id?: string | null;
+      codigo?: number;
+      cliente_nome: string;
+      cliente_telefone?: string | null;
+      tipo_obra?: PipeTipoDeObra | null;
+      bairro?: string | null;
+      origem_lead?: PipeOrigem | null;
+      porte?: "P" | "M" | "G" | null;
+      status?: PipeEstado;
+      data_pedido?: string;
+      estudo_cobrado?: boolean;
+      estudo_valor?: number | null;
+      estudo_abatido?: boolean;
+      data_entrega_estudo?: string | null;
+      data_envio_orcamento?: string | null;
+      valor_orcado?: number | null;
+      valor_fechado?: number | null;
+      motivo_perda?: string | null;
+      observacoes?: string | null;
+    };
+    Update: {
+      orcamento_id?: string | null;
+      cliente_nome?: string;
+      cliente_telefone?: string | null;
+      tipo_obra?: PipeTipoDeObra | null;
+      bairro?: string | null;
+      origem_lead?: PipeOrigem | null;
+      porte?: "P" | "M" | "G" | null;
+      status?: PipeEstado;
+      estudo_cobrado?: boolean;
+      estudo_valor?: number | null;
+      estudo_abatido?: boolean;
+      data_entrega_estudo?: string | null;
+      data_envio_orcamento?: string | null;
+      valor_orcado?: number | null;
+      valor_fechado?: number | null;
+      motivo_perda?: string | null;
+      observacoes?: string | null;
+      updated_at?: string;
+    };
+  };
+
+  pipe_eventos: {
+    Row: {
+      id: string;
+      pedido_id: string;
+      status_anterior: PipeEstado | null;
+      status_novo: PipeEstado;
+      changed_by: string | null;
+      changed_at: string;
+    };
+    Insert: {
+      pedido_id: string;
+      status_anterior?: PipeEstado | null;
+      status_novo: PipeEstado;
+      changed_by?: string | null;
+    };
+    Update: { changed_by?: string | null };
+  };
+
+  pipe_tempos: {
+    Row: {
+      id: string;
+      org_id: string;
+      pedido_id: string;
+      etapa: PipeEtapa;
+      minutos: number;
+      km: number | null;
+      fonte: "cronometro" | "manual";
+      nota: string | null;
+      registrado_por: string | null;
+      data: string;
+      created_at: string;
+    };
+    Insert: {
+      org_id: string;
+      pedido_id: string;
+      etapa: PipeEtapa;
+      minutos: number;
+      km?: number | null;
+      fonte?: "cronometro" | "manual";
+      nota?: string | null;
+      registrado_por?: string | null;
+      data?: string;
+    };
+    Update: {
+      etapa?: PipeEtapa;
+      minutos?: number;
+      km?: number | null;
+      nota?: string | null;
+    };
+  };
+
+  /** Premissas de custo da empreiteira. Nulo = ainda não calculado. */
+  org_ajustes: {
+    Row: {
+      org_id: string;
+      custo_hora: number | null;
+      custo_km: number | null;
+      dias_para_parado: number;
+      updated_at: string;
+    };
+    Insert: {
+      org_id: string;
+      custo_hora?: number | null;
+      custo_km?: number | null;
+      dias_para_parado?: number;
+      updated_at?: string;
+    };
+    Update: {
+      custo_hora?: number | null;
+      custo_km?: number | null;
+      dias_para_parado?: number;
+      updated_at?: string;
+    };
+  };
+};
+
+/**
  * O supabase-js exige `Relationships` em cada tabela para resolver os tipos de
  * select. Como aqui não há select aninhado, um array vazio basta.
  */
 export type Database = {
   public: {
     Tables: {
-      [K in keyof (Tabelas & TabelasDeOrcamento)]: (Tabelas &
-        TabelasDeOrcamento)[K] & { Relationships: [] };
+      [K in keyof (Tabelas & TabelasDeOrcamento & TabelasDePipeline)]: (Tabelas &
+        TabelasDeOrcamento &
+        TabelasDePipeline)[K] & { Relationships: [] };
     };
-    Views: Record<never, never>;
+    Views: {
+      /**
+       * Pedido com o esforço somado, o custo estimado e o sinal de parado.
+       * `security_invoker`: a RLS de `pipe_pedidos` continua valendo.
+       */
+      pipe_pedidos_resumo: {
+        Row: TabelasDePipeline["pipe_pedidos"]["Row"] & {
+          total_minutos: number;
+          total_horas: number;
+          km_total: number;
+          etapas_registradas: number | null;
+          custo_hora: number | null;
+          custo_km: number | null;
+          /** Nulo quando falta `custo_hora`: melhor sem número que com zero. */
+          custo_estimado: number | null;
+          ultimo_evento_em: string | null;
+          parado: boolean;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       gerar_token: { Args: never; Returns: string };
       orc_buscar_composicoes: {

@@ -105,9 +105,52 @@ export async function publicarOrcamento(
     usuarioId,
   );
 
+  // Se este orçamento nasceu de um pedido do pipeline, o pedido anda sozinho.
+  // Nada de digitação dupla: publicar **é** enviar, e obrigar a marcar de novo
+  // no funil é pedir um clique que só existe para o sistema, não para a obra.
+  await avancarPedidoVinculado(id, orgId);
+
   revalidatePath(`/admin/orcamentos/${id}`);
   revalidatePath("/admin/orcamentos");
   return { ok: true, link: `/p/${orcamento.token}` };
+}
+
+/**
+ * Leva o pedido do pipeline para "orçamento enviado" quando o documento sai.
+ *
+ * Só avança quem ainda não passou desse ponto: um pedido já fechado não volta
+ * a "enviado" porque alguém republicou uma correção de vírgula.
+ */
+async function avancarPedidoVinculado(orcamentoId: string, orgId: string) {
+  const sb = supabaseAdmin();
+
+  const { data: pedido } = await sb
+    .from("pipe_pedidos")
+    .select("id, status")
+    .eq("orcamento_id", orcamentoId)
+    .eq("org_id", orgId)
+    .maybeSingle();
+
+  if (!pedido) return;
+
+  const antesDoEnvio = [
+    "novo_pedido",
+    "em_estudo",
+    "estudo_entregue",
+    "orcamento_em_producao",
+  ];
+  if (!antesDoEnvio.includes(pedido.status)) return;
+
+  await sb
+    .from("pipe_pedidos")
+    .update({
+      status: "orcamento_enviado",
+      data_envio_orcamento: new Date().toISOString().slice(0, 10),
+    })
+    .eq("id", pedido.id);
+
+  revalidatePath("/admin/pipeline");
+  revalidatePath(`/admin/pipeline/${pedido.id}`);
 }
 
 /** Tira o link do ar. O endereço continua o mesmo se publicar de novo. */

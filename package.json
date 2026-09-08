@@ -12,7 +12,8 @@
     "importar:propostas": "tsx --tsconfig scripts/tsconfig.json scripts/importar-propostas.ts",
     "verificar:valor-fechado": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-valor-fechado.ts",
     "publicar": "tsx --tsconfig scripts/tsconfig.json scripts/publicar.ts",
-    "verificar:colagem": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-colagem.ts"
+    "verificar:colagem": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-colagem.ts",
+    "verificar:pipeline": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-pipeline.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
