@@ -29,6 +29,16 @@ type Tabelas = {
       banco_agencia: string | null;
       banco_conta: string | null;
       banco_pix: string | null;
+      /** As cláusulas que fazem do orçamento uma proposta comercial. */
+      responsavel_tecnico: string | null;
+      horario_trabalho: string | null;
+      garantia_solidez_anos: number | null;
+      garantia_acabamento_anos: number | null;
+      emite_art: boolean;
+      /** Uma norma por linha. */
+      normas_tecnicas: string | null;
+      /** Um parágrafo por linha. */
+      clausulas_extras: string | null;
     };
     Insert: {
       id?: string;
@@ -49,6 +59,13 @@ type Tabelas = {
       banco_agencia?: string | null;
       banco_conta?: string | null;
       banco_pix?: string | null;
+      responsavel_tecnico?: string | null;
+      horario_trabalho?: string | null;
+      garantia_solidez_anos?: number | null;
+      garantia_acabamento_anos?: number | null;
+      emite_art?: boolean;
+      normas_tecnicas?: string | null;
+      clausulas_extras?: string | null;
     };
   };
   /**

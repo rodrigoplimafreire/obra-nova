@@ -2,7 +2,11 @@ import { moeda, numero } from "@/lib/orcamento/formato";
 import { lerMarca } from "@/lib/orcamento/marcas";
 import { AceiteDoCliente } from "./aceite-do-cliente";
 import { BotaoImprimir } from "./botao-imprimir";
-import { contaPreenchida, type Empreiteira } from "@/lib/admin/empreiteira";
+import {
+  contaPreenchida,
+  contratoPreenchido,
+  type Empreiteira,
+} from "@/lib/admin/empreiteira";
 import type { DocumentoPublicado } from "@/lib/orcamento/publicacao";
 
 /**
@@ -137,6 +141,26 @@ export function DocumentoDoCliente({
   const banco =
     empreiteira && contaPreenchida(empreiteira) ? empreiteira.banco : null;
 
+  // As cláusulas que fazem do orçamento uma proposta comercial. Nulas até a
+  // empreiteira preencher o Perfil — seção de garantias em branco num contrato
+  // é pior que seção nenhuma.
+  const contrato =
+    empreiteira && contratoPreenchido(empreiteira) ? empreiteira.contrato : null;
+
+  const garantias = contrato
+    ? [
+        contrato.garantiaSolidezAnos
+          ? `${porNome(contrato.garantiaSolidezAnos)} anos de garantia para solidez, estabilidade estrutural e alvenarias, conforme o Art. 618 do Código Civil Brasileiro.`
+          : null,
+        contrato.garantiaAcabamentoAnos
+          ? `${contrato.garantiaAcabamentoAnos === 1 ? "Um ano" : `${porNome(contrato.garantiaAcabamentoAnos)} anos`} de garantia para acabamentos e instalações hidráulicas, elétricas e de impermeabilização.`
+          : null,
+        contrato.emiteArt
+          ? "Emissão de ART (Anotação de Responsabilidade Técnica) junto ao conselho de classe."
+          : null,
+      ].filter((g): g is string => g !== null)
+    : [];
+
   const projeto = documento.secoes.filter((s) => s.tipo === "projeto");
   const observacoes = documento.secoes.filter((s) => s.tipo === "observacao");
   const etapas = documento.secoes.filter((s) => s.tipo === "etapa");
@@ -223,6 +247,58 @@ export function DocumentoDoCliente({
         .bank-rows .bk-v{font-size:14.5px;font-weight:600;color:#fff;letter-spacing:-.005em}
         .bank-rows .bk-row.bk-pix{grid-column:1 / -1;border-bottom:none;background:rgba(232,98,44,.08);border:1px dashed var(--accent);border-radius:4px;padding:14px 16px;margin-top:4px}
         .bank-rows .bk-pix .bk-v{font-family:var(--mono);font-size:15px;color:var(--accent)}
+      `}</style>
+
+      {/* As condições comerciais e o par de assinaturas não existiam nas
+          propostas feitas à mão — a folha da marca não tem classe para eles.
+          Vão aqui, e não dentro do `brand.css`, pelo mesmo motivo da seção de
+          pagamento: a folha da marca é canônica e não se edita.
+
+          A folha de impressão da RD já estiliza `.sign`, `.sl`, `.sname` e
+          `.srole` — só faltava o documento escrever a marcação. Por isso o
+          bloco de assinatura reusa exatamente esses nomes: o que se paga aqui
+          é só a grade de duas colunas, que é nova. */}
+      <style href="condicoes-e-assinatura" precedence="marca">{`
+        .cond-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px}
+        @media(min-width:720px){.cond-grid{grid-template-columns:repeat(2,1fr)}}
+        .cond{border:1px solid var(--line);border-radius:5px;background:var(--ink-2);padding:18px 20px}
+        .cond .cn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+        .cond .cv{font-size:14.5px;color:#fff;line-height:1.5}
+        .cond-sub{font-family:var(--archivo);font-weight:700;font-size:16px;color:#fff;margin:34px 0 12px}
+        .clausulas{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+        .clausulas li{position:relative;padding-left:22px;font-size:14.5px;line-height:1.6;color:var(--fog)}
+        .clausulas li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border:1px solid var(--accent);border-radius:1px}
+
+        /* Duas assinaturas lado a lado. A \`.sign-solo\` da marca é uma coluna
+           centrada de 360px — serve para a proposta que só a empreiteira
+           assinava, não para um contrato com duas partes. */
+        .sign-duo{display:grid;grid-template-columns:1fr;gap:20px;margin-top:48px}
+        @media(min-width:720px){.sign-duo{grid-template-columns:repeat(2,1fr);gap:28px}}
+        .sign-duo .sign{width:100%}
+        .sign-duo .sdoc{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--fog-2);margin-top:10px}
+        .print-cta{margin-top:40px;padding-top:26px;border-top:1px solid var(--line);display:flex;justify-content:center}
+      `}</style>
+
+      {/* Na impressão o par de assinaturas continua lado a lado e não pode ser
+          partido entre duas páginas: assinatura numa folha e nome na seguinte
+          é o tipo de defeito que invalida o documento aos olhos de quem lê. */}
+      <style
+        href="assinatura-impressa"
+        media="print"
+        precedence="marca-print"
+      >{`
+        @media print {
+          .sign-duo{display:grid !important;grid-template-columns:repeat(2,1fr) !important;gap:14mm;break-inside:avoid;margin-top:16mm}
+          .sign-duo .sign{border:none !important;padding:0 !important;background:none !important;text-align:left !important}
+          .sign-duo .sl{height:18mm;border-bottom:1px solid #333}
+          .sign-duo .sname{color:#111 !important;font-size:12pt}
+          .sign-duo .srole, .sign-duo .sdoc{color:#444 !important}
+          #condicoes .cond{background:#f6f4ef !important;border-color:#ddd8c8 !important}
+          #condicoes .cond .cv{color:#111 !important}
+          #condicoes .cond-sub{color:#0a0a0a !important}
+          #condicoes .clausulas li{color:#333 !important;break-inside:avoid}
+          #condicoes{break-inside:avoid-page}
+        }
       `}</style>
 
       {/* ---------- Capa, só na impressão ---------- */}
@@ -547,6 +623,86 @@ export function DocumentoDoCliente({
         </section>
       )}
 
+      {/* ---------- Condições comerciais: o que faz disto um contrato ---------- */}
+      {/* Vem depois do escopo e do preço, e antes do aceite: é a última coisa
+          que se lê antes de assinar, que é exatamente onde ela pertence. */}
+      {contrato && (
+        <section id="condicoes">
+          <div className="wrap">
+            <p className="kicker">
+              <span className="s-num">{proximoNumero()}</span> Condições
+              comerciais
+            </p>
+            <h2>Prazos, garantias e normas</h2>
+
+            <div className="cond-grid">
+              {documento.prazo && (
+                <div className="cond">
+                  <div className="cn">Prazo de execução</div>
+                  <div className="cv">{documento.prazo}</div>
+                </div>
+              )}
+              {contrato.horarioTrabalho && (
+                <div className="cond">
+                  <div className="cn">Horário de trabalho</div>
+                  <div className="cv">{contrato.horarioTrabalho}</div>
+                </div>
+              )}
+              <div className="cond">
+                <div className="cn">Validade da proposta</div>
+                <div className="cv">
+                  {documento.validadeDias} dias · até{" "}
+                  {validoAte(documento.publicadoEm, documento.validadeDias)}
+                </div>
+              </div>
+              {contrato.responsavelTecnico && (
+                <div className="cond">
+                  <div className="cn">Responsável técnico</div>
+                  <div className="cv">{contrato.responsavelTecnico}</div>
+                </div>
+              )}
+            </div>
+
+            {garantias.length > 0 && (
+              <>
+                <h3 className="cond-sub">Garantias</h3>
+                <ul className="clausulas">
+                  {garantias.map((g, i) => (
+                    <li key={i}>{g}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {contrato.normasTecnicas.length > 0 && (
+              <>
+                <h3 className="cond-sub">Normas técnicas aplicáveis</h3>
+                <p className="intro">
+                  Os serviços são executados sob cumprimento das Normas
+                  Técnicas Brasileiras (ABNT NBR).
+                </p>
+                <ul className="clausulas">
+                  {contrato.normasTecnicas.map((n, i) => (
+                    <li key={i}>{n}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {contrato.clausulasExtras.length > 0 && (
+              <>
+                <h3 className="cond-sub">Demais condições</h3>
+                <ul className="clausulas">
+                  {contrato.clausulasExtras.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       <section id="aceite" className="accept">
         <div className="wrap">
           <p className="kicker">
@@ -568,6 +724,40 @@ export function DocumentoDoCliente({
             Este orçamento é válido até{" "}
             <b>{validoAte(documento.publicadoEm, documento.validadeDias)}</b>
           </p>
+
+          {/* O segundo botão de imprimir, e o que importa é onde ele está.
+              O outro fica lá em cima, no cartão de resumo — quem rolou o
+              documento inteiro até as assinaturas é justamente quem quer o
+              papel na mão, e mandar essa pessoa voltar ao topo é onde
+              "imprimir não funciona" começa. */}
+          <div className="print-cta">
+            <BotaoImprimir rotulo="Imprimir para assinar" />
+          </div>
+
+          {/* Duas assinaturas, lado a lado — quem executa e quem contrata.
+              A linha nasce vazia nos dois lados: é para assinar à mão no
+              papel, não um nome em fonte cursiva fingindo assinatura. */}
+          <div className="sign-duo">
+            <div className="sign">
+              <div className="sl" />
+              <div className="sname">{marca.nome}</div>
+              <div className="srole">
+                {contrato?.responsavelTecnico
+                  ? `${contrato.responsavelTecnico} · Responsável técnico`
+                  : "Contratada"}
+              </div>
+              {empreiteira?.documento && (
+                <div className="sdoc">CNPJ {empreiteira.documento}</div>
+              )}
+            </div>
+
+            <div className="sign">
+              <div className="sl" />
+              <div className="sname">{documento.cliente}</div>
+              <div className="srole">Contratante</div>
+              <div className="sdoc">Data: ____ / ____ / ________</div>
+            </div>
+          </div>
         </div>
       </section>
 
