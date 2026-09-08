@@ -201,25 +201,33 @@ function Caixa({
 }) {
   const [aberto, setAberto] = useState(false);
 
-  return (
-    <div className="rounded-lg border border-nevoa bg-papel px-4 py-3">
+  // Fechada, é um link — não uma barra da largura da tela. Uma caixa vazia
+  // ocupando a linha inteira compete com o campo que ela existe para ajudar.
+  if (!aberto) {
+    return (
       <button
         type="button"
-        onClick={() => setAberto((a) => !a)}
-        className="rotulo flex w-full items-center justify-between gap-2 text-left underline underline-offset-4"
+        onClick={() => setAberto(true)}
+        className="self-start text-sm text-arroio-tinta underline underline-offset-4"
       >
-        {aberto ? "Fechar" : "Não sei — me ajude a calcular"}
-        <span aria-hidden className="text-cinza">
-          {aberto ? "−" : "+"}
-        </span>
+        Não sei — me ajude a calcular
       </button>
+    );
+  }
 
-      {aberto && (
-        <div className="mt-4 flex flex-col gap-4">
-          <p className="rotulo-campo">{titulo}</p>
-          {children}
-        </div>
-      )}
+  return (
+    <div className="rounded-lg border border-nevoa bg-papel px-4 py-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="rotulo">{titulo}</p>
+        <button
+          type="button"
+          onClick={() => setAberto(false)}
+          className="text-sm text-cinza underline underline-offset-4"
+        >
+          Fechar
+        </button>
+      </div>
+      <div className="flex flex-col gap-4">{children}</div>
     </div>
   );
 }
@@ -237,16 +245,18 @@ function Pergunta({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="rotulo-campo">{rotulo}</span>
-      <input
-        inputMode="decimal"
-        value={valor}
-        onChange={(e) => aoMudar(e.target.value)}
-        // Sem `name`: estes campos são rascunho da conta e não podem viajar
-        // no formulário que salva as premissas.
-        className="campo"
-      />
-      <span className="text-xs text-cinza">{ajuda}</span>
+      <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <span className="rotulo-campo">{rotulo}</span>
+        <input
+          inputMode="decimal"
+          value={valor}
+          onChange={(e) => aoMudar(e.target.value)}
+          // Sem `name`: estes campos são rascunho da conta e não podem viajar
+          // no formulário que salva as premissas.
+          className="campo w-24 text-right tabular-nums"
+        />
+      </span>
+      <span className="max-w-prose text-xs text-cinza">{ajuda}</span>
     </label>
   );
 }
