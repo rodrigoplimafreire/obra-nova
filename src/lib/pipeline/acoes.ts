@@ -337,33 +337,74 @@ export async function gerarOrcamentoDoPedido(pedidoId: string): Promise<Saida> {
   return { ok: true, id: orcamento.id };
 }
 
-/** As premissas de custo da empreiteira. Vazio continua vazio, de propósito. */
-export async function salvarAjustes(
+/**
+ * As premissas comerciais: o orçamento típico, a conversão esperada e o peso
+ * de cada porte.
+ *
+ * Grava tudo de uma vez porque os três só fazem sentido juntos — salvar o
+ * orçamento padrão sem a conversão dá uma tela que mostra custo e não mostra
+ * carga, e a pessoa fica sem saber o que ainda falta.
+ */
+export async function salvarPremissas(
   _anterior: Saida | null,
   form: FormData,
 ): Promise<Saida> {
   const { orgId } = await exigirAdmin();
+  const sb = supabaseAdmin();
+
+  const conversao = lerNumero(texto(form, "conversaoEstimada"));
+  if (conversao !== null && (conversao <= 0 || conversao > 100)) {
+    return { ok: false, erro: "A conversão vai de 1 a 100%." };
+  }
+
+  const pesos = { P: "cargaP", M: "cargaM", G: "cargaG" } as const;
+  const multiplicador: Record<string, number> = {};
+  for (const [porte, campo] of Object.entries(pesos)) {
+    const v = lerNumero(texto(form, campo));
+    if (v === null || v < 0 || v > 5) {
+      return { ok: false, erro: `O peso do porte ${porte} vai de 0 a 5.` };
+    }
+    multiplicador[porte] = v;
+  }
 
   const dias = Number(texto(form, "diasParaParado") ?? 5);
   if (!Number.isInteger(dias) || dias < 1 || dias > 60) {
     return { ok: false, erro: "Dias para sinalizar parado: entre 1 e 60." };
   }
 
-  const { error } = await supabaseAdmin().from("org_ajustes").upsert(
+  const { error } = await sb.from("org_ajustes").upsert(
     {
       org_id: orgId,
+      dias_para_parado: dias,
       custo_hora: lerNumero(texto(form, "custoHora")),
       custo_km: lerNumero(texto(form, "custoKm")),
-      dias_para_parado: dias,
+      conversao_estimada: conversao,
+      carga_p: multiplicador.P,
+      carga_m: multiplicador.M,
+      carga_g: multiplicador.G,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "org_id" },
   );
-
   if (error) return { ok: false, erro: error.message };
+
+  // O padrão inteiro de uma vez: etapa que ficou em branco é zero, e zero é
+  // uma resposta ("esta etapa não acontece"), não um campo por preencher.
+  const linhas = ETAPAS.map((etapa) => ({
+    org_id: orgId,
+    etapa,
+    minutos: Math.max(0, Math.round(lerNumero(texto(form, `min_${etapa}`)) ?? 0)),
+    km: etapa === "deslocamento" ? lerNumero(texto(form, "padraoKm")) : null,
+  }));
+
+  const { error: erroPadrao } = await sb
+    .from("org_orcamento_padrao")
+    .upsert(linhas, { onConflict: "org_id,etapa" });
+  if (erroPadrao) return { ok: false, erro: erroPadrao.message };
 
   revalidatePath("/admin/pipeline");
   revalidatePath("/admin/pipeline/analise");
+  revalidatePath("/admin/pipeline/precificacao");
   return { ok: true };
 }
 

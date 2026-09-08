@@ -1,12 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Cabecalho, Conteudo, Indicador, Secao, Vazio } from "./cabecalho";
-import { Dialogo } from "@/components/comum/dialogo";
-import { Girando } from "@/components/comum/esqueleto";
-import { moeda, paraCampo } from "@/lib/orcamento/formato";
-import { salvarAjustes } from "@/lib/pipeline/acoes";
+import { moeda } from "@/lib/orcamento/formato";
 import { horas } from "./painel-pipeline";
 import {
   ORIGENS,
@@ -33,8 +29,6 @@ export function TelaDeAnalise({
   pedidos: PedidoNoQuadro[];
   ajustes: AjustesDaOrg;
 }) {
-  const [editando, setEditando] = useState(false);
-
   const fechados = pedidos.filter((p) => p.status === "fechado");
   const perdidos = pedidos.filter((p) => p.status === "perdido");
   const comDesfecho = fechados.length + perdidos.length;
@@ -80,13 +74,9 @@ export function TelaDeAnalise({
         voltarPara="/admin/pipeline"
         voltarRotulo="Pipeline"
         acoes={
-          <button
-            type="button"
-            onClick={() => setEditando(true)}
-            className="btn btn-secundario"
-          >
-            Premissas
-          </button>
+          <Link href="/admin/pipeline/precificacao" className="btn btn-secundario">
+            Precificação
+          </Link>
         }
       />
 
@@ -96,13 +86,12 @@ export function TelaDeAnalise({
             Sem o custo por hora da empreiteira, os números de custo ficam de
             fora. Não é dado que se chuta: R$ 0,00 exibido como se fosse verdade
             estragaria a decisão que esta tela existe para apoiar.{" "}
-            <button
-              type="button"
-              onClick={() => setEditando(true)}
+            <Link
+              href="/admin/pipeline/precificacao"
               className="underline underline-offset-4"
             >
               Definir agora
-            </button>
+            </Link>
             .
           </p>
         )}
@@ -184,11 +173,6 @@ export function TelaDeAnalise({
           </div>
         )}
 
-        <Premissas
-          ajustes={ajustes}
-          aberto={editando}
-          aoFechar={() => setEditando(false)}
-        />
       </Conteudo>
     </>
   );
@@ -239,103 +223,6 @@ function DistribuicaoDeEsforco({ pedidos }: { pedidos: PedidoNoQuadro[] }) {
         />
       </div>
     </Secao>
-  );
-}
-
-/**
- * As premissas de custo.
- *
- * Ficam vazias até serem calculadas, e vazio é vazio: o app avisa que falta em
- * vez de exibir zero. Um custo de R$ 0,00 apresentado como verdade é pior que
- * custo nenhum, porque leva a decidir errado com confiança.
- */
-function Premissas({
-  ajustes,
-  aberto,
-  aoFechar,
-}: {
-  ajustes: AjustesDaOrg;
-  aberto: boolean;
-  aoFechar: () => void;
-}) {
-  const router = useRouter();
-  const [estado, acao, pendente] = useActionState(salvarAjustes, null);
-
-  useEffect(() => {
-    if (estado?.ok) {
-      aoFechar();
-      router.refresh();
-    }
-  }, [estado, aoFechar, router]);
-
-  return (
-    <Dialogo
-      aberto={aberto}
-      aoFechar={aoFechar}
-      titulo="Premissas de custo"
-      descricao="Deixe em branco o que ainda não foi calculado. O app prefere não mostrar o número a mostrar um errado."
-      estreito
-    >
-      <form action={acao} className="dialogo-forma">
-        <div className="dialogo-corpo flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="rotulo-campo">Custo por hora</span>
-            <input
-              name="custoHora"
-              inputMode="decimal"
-              defaultValue={paraCampo(ajustes.custoHora)}
-              placeholder="0,00"
-              className="campo"
-            />
-            <span className="text-xs text-cinza">
-              Quanto custa uma hora de trabalho, contando o que você precisa
-              tirar do mês.
-            </span>
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="rotulo-campo">Custo por km</span>
-            <input
-              name="custoKm"
-              inputMode="decimal"
-              defaultValue={paraCampo(ajustes.custoKm)}
-              placeholder="0,00"
-              className="campo"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="rotulo-campo">Dias para sinalizar parado</span>
-            <input
-              name="diasParaParado"
-              type="number"
-              min={1}
-              max={60}
-              defaultValue={ajustes.diasParaParado}
-              className="campo"
-            />
-          </label>
-
-          {estado?.erro && (
-            <p className="aviso aviso-erro text-sm">{estado.erro}</p>
-          )}
-        </div>
-
-        <div className="dialogo-rodape">
-          <button type="button" onClick={aoFechar} className="btn btn-secundario">
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={pendente}
-            className={`btn ${pendente ? "btn-carregando" : "btn-primario"}`}
-          >
-            {pendente && <Girando />}
-            Salvar
-          </button>
-        </div>
-      </form>
-    </Dialogo>
   );
 }
 

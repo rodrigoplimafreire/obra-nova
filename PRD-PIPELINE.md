@@ -130,13 +130,80 @@ Dezoito verificações, todas passando.
 
 ---
 
+---
+
+# Feature 3 — Precificação comercial
+
+Não estava no PRD original. Nasceu da pergunta do Rodrigo: *"os valores dos
+clientes que não fecharam devem ser inseridos na proposta do cliente que
+fechou"*.
+
+## A ideia, e o furo de tempo
+
+A intuição está certa: quem fecha paga por quem não fechou. Mas a execução
+literal não roda — **no dia em que a proposta do B é montada, ninguém sabe
+ainda que A e C vão se perder**. A perda vem depois.
+
+O que roda é o inverso: medir a proporção e carregar **toda** proposta com a
+fatia dos que não fecham.
+
+```
+carga = custo de produzir um orçamento ÷ taxa de conversão
+```
+
+Com R$ 630 por orçamento e conversão de 1 em 3, cada obra fechada carrega
+R$ 1.890 — a dela e a dos dois perdidos. Mesma conta da ideia original; só o
+momento de aplicar muda.
+
+## Duas fontes, e a tela diz qual está valendo
+
+O problema do dia 1 é que não há histórico, e uma taxa calculada sobre dois
+pedidos é ruído com aparência de número. Então cada entrada tem duas fontes:
+
+| Entrada | Premissa (dia 1) | Medido (assume quando) |
+|---|---|---|
+| Custo de orçar | O **orçamento típico**, etapa por etapa — a tabela do Rodrigo | 4 orçamentos com tempo lançado |
+| Conversão | Estimativa digitada | 6 pedidos com desfecho |
+
+A tela escreve de onde veio cada número e quantos faltam para virar medido.
+
+## Carga por porte, e a conferência que impede o autoengano
+
+O custo de orçar não cresce com o tamanho da obra, então a carga é **valor
+fixo**, não percentual. Mas R$ 1.890 numa obra de R$ 10 mil é 19% e derruba a
+venda — o que piora a conversão, o que aumenta a carga. Espiral.
+
+Por isso o peso é por porte (P/M/G), escolha do dono. E por isso existe a
+**Cobertura**: com a mistura de portes que já aconteceu, a carga recupera
+quanto do que foi gasto orçando? Abaixo de 100%, alguém não está pagando —
+e sem esse número isso não apareceria em lugar nenhum.
+
+## Onde o número aparece
+
+- **Precificação** (`/admin/pipeline/precificacao`): a conta, os pesos, e o
+  peso da carga sobre orçamentos **reais** da RD, não sobre exemplos.
+- **Tela do pedido**: a carga do porte daquele pedido.
+- **Tela do orçamento**: junto do total, na hora de pôr preço, com o percentual
+  que representa. Nunca vira item nem linha do documento — entra diluído, e o
+  cliente não lê "custo comercial" em lugar nenhum.
+
+## Verificação
+
+`npm run verificar:precificacao` — 26 casos sobre a função pura, com os números
+conferidos à mão: o cenário do dia 1, as trocas premissa→medido nos dois
+limiares, conversão zero (que é caso de negócio, não divisão por zero), e a
+cobertura acusando uma carteira só de obra pequena que não se paga.
+
+---
+
 ## 5. O que falta, e é do Rodrigo
 
 1. **Cadastrar os 7 orçamentos parados.** É o critério de pronto da v0.1 do PRD
    e depende de dados que só ele tem.
-2. **Calcular o custo/hora e o custo/km da RD.** Até lá, toda a coluna de custo
-   fica em branco de propósito — inclusive o "custo do orçamento perdido", que o
-   PRD aponta como o número mais importante da lista.
+2. **Preencher a Precificação:** custo/hora, custo/km, o orçamento típico e a
+   conversão estimada. Até lá toda a coluna de custo fica em branco de
+   propósito — inclusive o "custo do orçamento perdido" e a carga comercial.
+   Nada foi chutado no lugar dele.
 3. **A conversa comercial do §7 do PRD:** se a RD paga pela feature ou se ela
    entra no pacote da parceria. Isso não é decisão de código.
 

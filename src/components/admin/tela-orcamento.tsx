@@ -37,10 +37,14 @@ export function TelaDoOrcamento({
   orcamento,
   obras,
   urlBase,
+  cargaComercial,
 }: {
   orcamento: OrcamentoCompleto;
   obras: ObraParaVincular[];
   urlBase: string;
+  /** Custo comercial a embutir, quando este orçamento veio de um pedido do
+   *  pipeline e as premissas estão preenchidas. */
+  cargaComercial: number | null;
 }) {
   return (
     <>
@@ -68,6 +72,22 @@ export function TelaDoOrcamento({
             destaque={orcamento.semPreco > 0 ? "amarelo" : undefined}
           />
           <Indicador rotulo="Total" valor={moeda(orcamento.total)} />
+          {/* Aqui é onde o preço é decidido, então é aqui que o número
+              precisa estar. Não vira item nem linha do documento: entra
+              diluído, e o cliente não lê "custo comercial" em lugar nenhum. */}
+          {cargaComercial !== null && (
+            <Indicador
+              rotulo="Embutir"
+              valor={moeda(cargaComercial)}
+              detalhe={
+                orcamento.total
+                  ? `${Math.round((cargaComercial / orcamento.total) * 1000) / 10}% do total`
+                  : "custo comercial"
+              }
+              destaque="arroio"
+              dica="Custo comercial a diluir nos preços: paga este orçamento e a fatia dos que não fecham. Não aparece para o cliente."
+            />
+          )}
           <Indicador
             rotulo="Enviado"
             valor={

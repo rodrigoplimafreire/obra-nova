@@ -46,7 +46,14 @@ import {
  * marcos), quanto custou até agora (esforço), e o que se sabe do cliente
  * (detalhes). O histórico fica por último porque é consulta, não operação.
  */
-export function TelaDoPedido({ pedido }: { pedido: PedidoCompleto }) {
+export function TelaDoPedido({
+  pedido,
+  carga,
+}: {
+  pedido: PedidoCompleto;
+  /** Quanto embutir na proposta deste porte. Nulo enquanto faltar premissa. */
+  carga: number | null;
+}) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
 
@@ -130,12 +137,25 @@ export function TelaDoPedido({ pedido }: { pedido: PedidoCompleto }) {
                       : "tempo + deslocamento"
                   }
                 />
+                {/* O número que vai para dentro do preço. Fica junto do
+                    esforço porque é dele que sai — e longe do valor da obra,
+                    que é decisão do Reginato, não conta do sistema. */}
                 <Indicador
-                  rotulo="Lead time"
-                  valor={leadTime(pedido)}
-                  detalhe="desde o pedido"
+                  rotulo="Embutir na proposta"
+                  valor={carga === null ? "—" : moeda(carga)}
+                  detalhe={
+                    carga === null
+                      ? "faltam premissas"
+                      : `carga do porte ${pedido.porte ?? "M"}`
+                  }
+                  destaque={carga === null ? undefined : "arroio"}
+                  dica="Custo comercial a diluir no preço: paga este orçamento e a fatia dos que não fecham. Não é linha do documento — entra embutido."
                 />
               </div>
+
+              <p className="text-sm text-fumaca">
+                Lead time: <b>{leadTime(pedido)}</b> desde o pedido.
+              </p>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <CronometroDeEtapa

@@ -1031,13 +1031,19 @@ type TabelasDePipeline = {
     };
   };
 
-  /** Premissas de custo da empreiteira. Nulo = ainda não calculado. */
+  /** Premissas de custo e comerciais da empreiteira. Nulo = não calculado. */
   org_ajustes: {
     Row: {
       org_id: string;
       custo_hora: number | null;
       custo_km: number | null;
       dias_para_parado: number;
+      /** Conversão informada à mão, usada enquanto o histórico for curto. */
+      conversao_estimada: number | null;
+      /** Peso da carga comercial por porte de obra. 1 = carga cheia. */
+      carga_p: number;
+      carga_m: number;
+      carga_g: number;
       updated_at: string;
     };
     Insert: {
@@ -1045,14 +1051,40 @@ type TabelasDePipeline = {
       custo_hora?: number | null;
       custo_km?: number | null;
       dias_para_parado?: number;
+      conversao_estimada?: number | null;
+      carga_p?: number;
+      carga_m?: number;
+      carga_g?: number;
       updated_at?: string;
     };
     Update: {
       custo_hora?: number | null;
       custo_km?: number | null;
       dias_para_parado?: number;
+      conversao_estimada?: number | null;
+      carga_p?: number;
+      carga_m?: number;
+      carga_g?: number;
       updated_at?: string;
     };
+  };
+
+  /** O orçamento típico da empreiteira, etapa por etapa. */
+  org_orcamento_padrao: {
+    Row: {
+      org_id: string;
+      etapa: PipeEtapa;
+      minutos: number;
+      /** Só faz sentido em `deslocamento`. */
+      km: number | null;
+    };
+    Insert: {
+      org_id: string;
+      etapa: PipeEtapa;
+      minutos?: number;
+      km?: number | null;
+    };
+    Update: { minutos?: number; km?: number | null };
   };
 };
 

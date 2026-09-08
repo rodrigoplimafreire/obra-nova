@@ -13,7 +13,8 @@
     "verificar:valor-fechado": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-valor-fechado.ts",
     "publicar": "tsx --tsconfig scripts/tsconfig.json scripts/publicar.ts",
     "verificar:colagem": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-colagem.ts",
-    "verificar:pipeline": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-pipeline.ts"
+    "verificar:pipeline": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-pipeline.ts",
+    "verificar:precificacao": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-precificacao.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
