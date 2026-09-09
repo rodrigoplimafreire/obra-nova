@@ -9,6 +9,27 @@ import { GateDoOrcamento } from "@/components/orcamento/gate-do-orcamento";
 export const dynamic = "force-dynamic";
 
 /**
+ * **Esta rota não tem `loading.tsx`, e não pode voltar a ter.**
+ *
+ * Tinha um esqueleto escuro, para o cliente no celular com sinal ruim não ver
+ * tela branca. O preço disso era um limite de Suspense: o Next mandava o
+ * esqueleto na hora e o documento depois, dentro de um `<div hidden>` que um
+ * script do React revela no fim.
+ *
+ * Na build de produção essa revelação **nunca acontecia**. O React 19 enfileira
+ * os blocos em `$RB` e espera o runtime do cliente mandar revelar; aqui a fila
+ * ficava com os 3 blocos parados para sempre. Resultado: o cliente ficava no
+ * "Carregando o orçamento…" eterno, e quem mandava imprimir levava uma folha
+ * em branco — porque a única coisa visível na página era o esqueleto. Sem
+ * erro no console, e em `next dev` funcionava.
+ *
+ * Sem `loading.tsx` não há limite de Suspense: o servidor termina a consulta
+ * antes de responder e o HTML já sai com o documento inteiro. Custa alguns
+ * décimos no primeiro byte e não depende de JavaScript nenhum — que é o certo
+ * para um documento feito para ser lido e assinado.
+ */
+
+/**
  * O título da aba é da empreiteira, no formato das propostas em HTML da RD:
  * "RD Engenharia · Gesso drywall e pintura — Sr. Paulo Roberto".
  *
