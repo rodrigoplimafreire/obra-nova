@@ -123,7 +123,14 @@ export function TelaDoPedido({
                   detalhe="rodados"
                 />
                 {/* Sem custo/hora o cartão diz que falta, em vez de mostrar
-                    R$ 0,00 — que leria como "não custou nada". */}
+                    R$ 0,00 — que leria como "não custou nada".
+
+                    O detalhe mostra as duas parcelas separadas, e não só
+                    "tempo + deslocamento": o Rodrigo estranhou um R$ 129,59
+                    calculando de cabeça só o km (50 × R$ 1,16 = R$ 58) e não
+                    achando de onde vinha o resto — que eram os 48 minutos de
+                    esforço a R$ 89,49/hora. As duas contas ficam explícitas
+                    para não precisar recalcular na cabeça toda vez. */}
                 <Indicador
                   rotulo="Custo estimado"
                   valor={
@@ -134,7 +141,7 @@ export function TelaDoPedido({
                   detalhe={
                     pedido.custoHora === null
                       ? "falta o custo/hora"
-                      : "tempo + deslocamento"
+                      : `${moeda((pedido.totalMinutos / 60) * pedido.custoHora)} de tempo + ${moeda(pedido.kmTotal * (pedido.custoKm ?? 0))} de km`
                   }
                 />
                 {/* O número que vai para dentro do preço. Fica junto do
