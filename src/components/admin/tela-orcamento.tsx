@@ -12,6 +12,7 @@ import {
 import { Dialogo } from "@/components/comum/dialogo";
 import { PublicacaoDoOrcamento } from "./publicacao-do-orcamento";
 import { TabelaDeCustos } from "./tabela-de-custos";
+import { PlanejamentoDoDocumento } from "./planejamento-do-documento";
 import { TextosDoDocumento } from "./textos-do-documento";
 import {
   arquivarOrcamento,
@@ -118,6 +119,11 @@ export function TelaDoOrcamento({
             para escrever, e escrever antes de ter o que orçar é escrever no
             vazio. */}
         <TextosDoDocumento orcamento={orcamento} />
+
+        {/* Depois dos textos porque é a última camada: o planejamento só faz
+            sentido quando já existe o que planejar. As duas seções que ele
+            alimenta são opcionais no documento. */}
+        <PlanejamentoDoDocumento orcamento={orcamento} />
 
         <ZonaDeRisco orcamento={orcamento} />
       </Conteudo>

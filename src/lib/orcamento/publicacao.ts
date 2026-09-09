@@ -45,6 +45,27 @@ export type TextosPublicados = {
   introAceite: string | null;
 };
 
+/**
+ * Uma macroetapa do resumo orçamentário. Congelada junto com o resto: o
+ * cliente precisa poder confiar que o prazo que ele leu é o que foi combinado.
+ */
+export type ModuloPublicado = {
+  nome: string;
+  prazo: string | null;
+  valor: number | null;
+  percentual: number | null;
+};
+
+/** Uma semana do cronograma executivo físico-financeiro. */
+export type SemanaPublicada = {
+  semana: number;
+  titulo: string | null;
+  fisico: string | null;
+  financeiro: number | null;
+  marco: string | null;
+  critico: boolean;
+};
+
 export type DocumentoPublicado = {
   versao: number;
   numero: string | null;
@@ -64,6 +85,10 @@ export type DocumentoPublicado = {
   itens: ItemPublicado[];
   textos: TextosPublicados;
   secoes: SecaoPublicada[];
+  /** Seção 2. Vazio = a seção não aparece no documento. */
+  modulos: ModuloPublicado[];
+  /** Seção 4. Vazio = a seção não aparece no documento. */
+  cronograma: SemanaPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
   total: number;
   valorFechado: number | null;
@@ -103,6 +128,8 @@ type OrcamentoDeOrigem = {
   notaCustos: string | null;
   introAceite: string | null;
   secoes: SecaoPublicada[];
+  modulos: ModuloPublicado[];
+  cronograma: SemanaPublicada[];
 };
 
 /**
@@ -159,6 +186,22 @@ export function montarDocumento(
       tipo: s.tipo,
       titulo: s.titulo,
       texto: s.texto,
+    })),
+    // Remapeados campo a campo pelo mesmo motivo das seções: a origem carrega
+    // `id` e `position`, que são do editor.
+    modulos: orcamento.modulos.map((m) => ({
+      nome: m.nome,
+      prazo: m.prazo,
+      valor: m.valor,
+      percentual: m.percentual,
+    })),
+    cronograma: orcamento.cronograma.map((c) => ({
+      semana: c.semana,
+      titulo: c.titulo,
+      fisico: c.fisico,
+      financeiro: c.financeiro,
+      marco: c.marco,
+      critico: c.critico,
     })),
     total: orcamento.valorFechado ?? soma,
     valorFechado: orcamento.valorFechado,
@@ -219,6 +262,45 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
       })
     : [];
 
+  // Publicação anterior a esta funcionalidade não tem nenhum dos dois, e o
+  // documento simplesmente não mostra as seções — que é o mesmo comportamento
+  // de um orçamento novo em que ninguém preencheu.
+  const modulos = Array.isArray(d.modulos)
+    ? d.modulos.flatMap((linha): ModuloPublicado[] => {
+        if (!linha || typeof linha !== "object") return [];
+        const m = linha as Record<string, unknown>;
+        const nome = texto(m.nome);
+        if (!nome) return [];
+        return [
+          {
+            nome,
+            prazo: texto(m.prazo),
+            valor: numero(m.valor),
+            percentual: numero(m.percentual),
+          },
+        ];
+      })
+    : [];
+
+  const cronograma = Array.isArray(d.cronograma)
+    ? d.cronograma.flatMap((linha): SemanaPublicada[] => {
+        if (!linha || typeof linha !== "object") return [];
+        const c = linha as Record<string, unknown>;
+        const semana = numero(c.semana);
+        if (semana === null) return [];
+        return [
+          {
+            semana,
+            titulo: texto(c.titulo),
+            fisico: texto(c.fisico),
+            financeiro: numero(c.financeiro),
+            marco: texto(c.marco),
+            critico: c.critico === true,
+          },
+        ];
+      })
+    : [];
+
   return {
     versao: numero(d.versao) ?? 1,
     numero: texto(d.numero),
@@ -242,6 +324,8 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
       introAceite: texto(t.introAceite),
     },
     secoes,
+    modulos,
+    cronograma,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
     publicadoEm: texto(d.publicadoEm) ?? new Date().toISOString(),

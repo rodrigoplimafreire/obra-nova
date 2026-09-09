@@ -129,6 +129,18 @@ export function DocumentoDoCliente({
   const itemizado = documento.valorFechado === null;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
+  // Seções 2 e 4. As duas somem inteiras quando ninguém preencheu — regra do
+  // produto, não detalhe de implementação: nem toda obra tem cronograma
+  // físico-financeiro, e o Rodrigo pediu que o que ele não informar não
+  // apareça. Ver ESTRUTURA-DA-PROPOSTA.md.
+  const modulos = documento.modulos;
+  const cronograma = documento.cronograma;
+  // Coluna só existe se algum módulo tem o número. Coluna inteira de
+  // travessões passa a impressão de proposta preenchida pela metade.
+  const mostraValorDeModulo = modulos.some((m) => m.valor !== null);
+  const mostraPercentual = modulos.some((m) => m.percentual !== null);
+  const ultimaSemana = cronograma.reduce((m, c) => Math.max(m, c.semana), 0);
+
   // As parcelas são calculadas e a **última leva o resto** — nunca cada uma
   // pelo seu percentual. Com 70% de R$ 17.323,25, ou com um total dividido em
   // quatro, as contas separadas somariam um centavo a mais ou a menos que o
@@ -315,6 +327,48 @@ export function DocumentoDoCliente({
         /* Comprovante do aceite. A \`.paper-note\` da marca é uma nota cor de
            creme torta com sombra — serve para um recado, não para registrar um
            compromisso de dezenas de milhares de reais. */
+        /* Resumo por módulo: a mesma tabela dos custos, com a numeração da
+           macroetapa reusando o \`.gn\` que a marca já estiliza nos grupos. */
+        .mod-table td.total{font-weight:600}
+
+        /* Cronograma executivo. Faixa de semanas, não Gantt — ver o comentário
+           na seção. Três colunas no desktop: número, o que acontece, o que se
+           paga. No celular vira uma coluna só, com o número virando etiqueta. */
+        .cron{list-style:none;margin-top:24px;display:grid;gap:2px}
+        .cron-li{display:grid;grid-template-columns:auto 1fr;gap:8px 20px;
+          padding:22px 0;border-top:1px solid var(--line-soft);align-items:start}
+        .cron-li:first-child{border-top:none}
+        @media(min-width:760px){
+          .cron-li{grid-template-columns:auto 1fr auto;gap:24px}
+        }
+        .cron-sem{display:flex;flex-direction:column;align-items:center;gap:2px;
+          width:56px;flex:none}
+        .cron-n{font-family:var(--archivo);font-weight:800;font-size:24px;
+          letter-spacing:-.02em;color:var(--fog);line-height:1}
+        .cron-rot{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+          text-transform:uppercase;color:var(--fog-2)}
+        .cron-critica .cron-n{color:var(--accent)}
+        .cron-corpo{min-width:0}
+        .cron-corpo h3{font-size:16px;letter-spacing:-.01em;color:var(--white);display:inline}
+        .cron-tag{margin-left:10px;font-family:var(--mono);font-size:8.5px;
+          letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+          white-space:nowrap}
+        .cron-metas{list-style:none;margin-top:10px;display:grid;gap:5px}
+        .cron-metas li{position:relative;padding-left:18px;font-size:14px;
+          line-height:1.55;color:var(--fog)}
+        .cron-metas li::before{content:"";position:absolute;left:0;top:9px;
+          width:6px;height:1px;background:var(--accent)}
+        .cron-fin{grid-column:2;display:flex;flex-wrap:wrap;align-items:baseline;
+          gap:4px 12px;margin-top:6px}
+        @media(min-width:760px){
+          .cron-fin{grid-column:3;flex-direction:column;align-items:flex-end;
+            text-align:right;margin-top:2px;min-width:120px}
+        }
+        .cron-marco{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+          text-transform:uppercase;color:var(--fog-2)}
+        .cron-val{font-family:var(--archivo);font-weight:700;font-size:16px;
+          letter-spacing:-.01em;color:var(--accent);white-space:nowrap}
+
         .aceite-ok{max-width:640px;margin:34px auto 0;background:var(--ink-2);border:1px solid var(--line);
           border-left:3px solid var(--accent);border-radius:4px;padding:clamp(22px,4vw,34px);text-align:left}
         .ao-selo{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
@@ -347,6 +401,13 @@ export function DocumentoDoCliente({
           #condicoes .cond-sub{color:#0a0a0a !important}
           #condicoes .clausulas li{color:#333 !important;break-inside:avoid}
           #condicoes{break-inside:avoid-page}
+          .cron-li{break-inside:avoid;border-top-color:#e2ddd0 !important}
+          .cron-n{color:#0a0a0a !important}
+          .cron-critica .cron-n, .cron-tag, .cron-val{color:#E8622C !important}
+          .cron-corpo h3{color:#0a0a0a !important}
+          .cron-metas li{color:#333 !important}
+          .cron-marco{color:#555 !important}
+          #cronograma, #modulos{break-inside:auto}
           .aceite-ok{background:#f6f4ef !important;border-color:#ddd8c8 !important;border-left-color:#E8622C !important;break-inside:avoid}
           .aceite-ok .ao-titulo{color:#0a0a0a !important}
           .aceite-ok .ao-dados dd{color:#111 !important}
@@ -476,6 +537,67 @@ export function DocumentoDoCliente({
         </section>
       )}
 
+      {/* ---------- Resumo por módulo (seção 2 da proposta canônica) ----------
+          Só aparece quando há macroetapa cadastrada. Nem toda obra tem esse
+          recorte, e tabela vazia num contrato é pior que seção nenhuma.
+
+          As colunas de valor e percentual entram juntas e só quando algum
+          módulo tem número: coluna cheia de travessão dá a impressão de
+          proposta pela metade. */}
+      {modulos.length > 0 && (
+        <section id="modulos">
+          <div className="wrap">
+            <p className="kicker">
+              <span className="s-num">{proximoNumero()}</span> Resumo
+              orçamentário
+            </p>
+            <h2>As etapas da obra</h2>
+            <p className="intro">
+              O serviço dividido em macroetapas, com o prazo previsto de cada
+              uma.
+            </p>
+
+            <div className="cost-wrap">
+              <table className="cost-table mod-table">
+                <thead>
+                  <tr>
+                    <th>Macroetapa</th>
+                    <th>Prazo previsto</th>
+                    {mostraValorDeModulo && <th className="ct-num">Valor</th>}
+                    {mostraPercentual && <th className="ct-num">% do total</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {modulos.map((m, i) => (
+                    <tr key={i}>
+                      <td className="total">
+                        <span className="gn">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        {m.nome}
+                      </td>
+                      <td className="unit">{m.prazo ?? "—"}</td>
+                      {mostraValorDeModulo && (
+                        <td className="num">
+                          {m.valor !== null ? moeda(m.valor) : "—"}
+                        </td>
+                      )}
+                      {mostraPercentual && (
+                        <td className="num">
+                          {m.percentual !== null
+                            ? `${numero(m.percentual)}%`
+                            : "—"}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section id="custos">
         <div className="wrap">
           <p className="kicker">
@@ -556,6 +678,77 @@ export function DocumentoDoCliente({
           )}
         </div>
       </section>
+
+      {/* ---------- Cronograma executivo (seção 4) ----------
+          Semana a semana, com meta física e meta financeira lado a lado.
+
+          Não é diagrama de Gantt de propósito: quem assina a proposta não lê
+          Gantt. O que ele precisa enxergar sem esforço é "na semana 3 o
+          banheiro está pronto e eu pago a segunda medição" — e é essa a
+          leitura que a faixa de semanas entrega, no papel e na tela.
+
+          Como tudo aqui, some inteira quando ninguém preencheu. */}
+      {cronograma.length > 0 && (
+        <section id="cronograma">
+          <div className="wrap">
+            <p className="kicker">
+              <span className="s-num">{proximoNumero()}</span> Cronograma
+              executivo
+            </p>
+            <h2>
+              {ultimaSemana} semana{ultimaSemana === 1 ? "" : "s"} de obra
+            </h2>
+            <p className="intro">
+              O que acontece em cada semana e o que é pago em cada marco. As
+              semanas marcadas como caminho crítico são as que não admitem
+              atraso: elas empurram a entrega inteira.
+            </p>
+
+            <ol className="cron">
+              {cronograma.map((c, i) => (
+                <li
+                  key={i}
+                  className={c.critico ? "cron-li cron-critica" : "cron-li"}
+                >
+                  <div className="cron-sem">
+                    <span className="cron-n">
+                      {String(c.semana).padStart(2, "0")}
+                    </span>
+                    <span className="cron-rot">semana</span>
+                  </div>
+
+                  <div className="cron-corpo">
+                    <h3>{c.titulo ?? `Semana ${c.semana}`}</h3>
+                    {c.critico && (
+                      <span className="cron-tag">caminho crítico</span>
+                    )}
+                    {c.fisico && (
+                      <ul className="cron-metas">
+                        {c.fisico
+                          .split(/\r?\n/)
+                          .map((l) => l.trim())
+                          .filter(Boolean)
+                          .map((meta, j) => (
+                            <li key={j}>{meta}</li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {(c.marco || c.financeiro !== null) && (
+                    <div className="cron-fin">
+                      {c.marco && <span className="cron-marco">{c.marco}</span>}
+                      {c.financeiro !== null && (
+                        <span className="cron-val">{moeda(c.financeiro)}</span>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
 
       {/* ---------- Forma de pagamento ---------- */}
       {/* Depois do total e antes das observações: a pergunta "como eu pago"

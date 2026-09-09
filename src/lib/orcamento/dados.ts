@@ -155,6 +155,41 @@ export async function obrasParaVincular(): Promise<ObraParaVincular[]> {
   }));
 }
 
+/**
+ * Uma macroetapa do resumo orçamentário (seção 2 da proposta canônica).
+ *
+ * `prazo` é texto e não número de dias porque é assim que o Reginato fala:
+ * "2 semanas", "10 dias úteis", "junto com a alvenaria". `valor` e
+ * `percentual` são opcionais — quando o preço é fechado não existe valor por
+ * módulo, e a tabela sai só com macroetapa e prazo.
+ */
+export type ModuloDoOrcamento = {
+  id: string;
+  position: number;
+  nome: string;
+  prazo: string | null;
+  valor: number | null;
+  percentual: number | null;
+};
+
+/**
+ * Uma semana do cronograma executivo físico-financeiro (seção 4).
+ *
+ * `fisico` é multilinha: uma meta por linha, como as normas e as cláusulas da
+ * empreiteira. `critico` marca a semana que está no caminho crítico — atraso
+ * ali empurra a entrega inteira, e é a informação que o cliente precisa
+ * enxergar sem ler um diagrama de Gantt.
+ */
+export type SemanaDoCronograma = {
+  id: string;
+  semana: number;
+  titulo: string | null;
+  fisico: string | null;
+  financeiro: number | null;
+  marco: string | null;
+  critico: boolean;
+};
+
 export type OrcamentoCompleto = {
   id: string;
   numero: string | null;
@@ -181,6 +216,10 @@ export type OrcamentoCompleto = {
   introAceite: string | null;
   /** Cards do projeto, observações técnicas e etapas, em ordem. */
   secoes: SecaoDoOrcamento[];
+  /** Seção 2 da proposta: macroetapas e prazos. Vazio = seção não aparece. */
+  modulos: ModuloDoOrcamento[];
+  /** Seção 4: o cronograma semana a semana. Vazio = seção não aparece. */
+  cronograma: SemanaDoCronograma[];
 
   senha: string | null;
   token: string;
@@ -290,8 +329,13 @@ export async function carregarOrcamento(
     .maybeSingle();
   if (!o) return null;
 
-  const [{ data: linhas }, { data: publicacoes }, { data: secoes }] =
-    await Promise.all([
+  const [
+    { data: linhas },
+    { data: publicacoes },
+    { data: secoes },
+    { data: modulos },
+    { data: cronograma },
+  ] = await Promise.all([
       sb
         .from("orc_itens")
         .select(
@@ -310,6 +354,16 @@ export async function carregarOrcamento(
         .select("id, tipo, position, titulo, texto, origem")
         .eq("orcamento_id", id)
         .order("position"),
+      sb
+        .from("orc_modulos")
+        .select("id, position, nome, prazo, valor, percentual")
+        .eq("orcamento_id", id)
+        .order("position"),
+      sb
+        .from("orc_cronograma")
+        .select("id, semana, titulo, fisico, financeiro, marco, critico")
+        .eq("orcamento_id", id)
+        .order("semana"),
     ]);
 
   const todos = (linhas ?? []).map(paraItem);
@@ -351,6 +405,8 @@ export async function carregarOrcamento(
       texto: s.texto,
       origem: s.origem,
     })),
+    modulos: modulos ?? [],
+    cronograma: cronograma ?? [],
 
     senha: o.senha,
     token: o.token,

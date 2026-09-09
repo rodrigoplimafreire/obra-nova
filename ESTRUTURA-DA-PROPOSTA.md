@@ -97,7 +97,17 @@ papel, não nome em fonte cursiva fingindo assinatura.
 - As cláusulas, garantias, horário, normas e responsável técnico moram em
   colunas da tabela `orgs` — são iguais em toda proposta da mesma empreiteira,
   e redigitar a cada uma é como o dado some.
-- A seção só aparece quando há conteúdo. Bloco de garantias em branco num
+- **A seção só aparece quando há conteúdo.** Bloco de garantias em branco num
   contrato é pior que bloco nenhum: parece que a empreiteira não dá garantia.
+  Vale para todas: sem macroetapa cadastrada não há seção 2, sem semana
+  cadastrada não há seção 4, e o documento vai direto da apresentação para a
+  planilha. Nem toda obra tem cronograma fechado.
+- As seções 2 e 4 se editam no card **Planejamento**, na tela do orçamento
+  (`orc_modulos` e `orc_cronograma`). O botão "Puxar da planilha" traz os
+  grupos da tabela como macroetapas, já com valor e percentual — o prazo, que
+  é o que só o Reginato sabe, fica em branco.
+- Na seção 2, as colunas de valor e percentual só existem quando algum módulo
+  tem o número. Coluna inteira de travessão passa a impressão de proposta
+  preenchida pela metade.
 - Imprimir tem que funcionar, e o documento não pode depender de JavaScript
   para aparecer. Ver o comentário em `src/app/p/[token]/page.tsx`.

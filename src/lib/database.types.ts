@@ -699,6 +699,69 @@ type TabelasDeOrcamento = {
    * têm a mesma forma — título e texto —, então o `tipo` separa em vez de
    * três tabelas iguais.
    */
+  orc_modulos: {
+    Row: {
+      id: string;
+      orcamento_id: string;
+      position: number;
+      nome: string;
+      prazo: string | null;
+      valor: number | null;
+      percentual: number | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      orcamento_id: string;
+      position: number;
+      nome: string;
+      prazo?: string | null;
+      valor?: number | null;
+      percentual?: number | null;
+    };
+    Update: {
+      position?: number;
+      nome?: string;
+      prazo?: string | null;
+      valor?: number | null;
+      percentual?: number | null;
+      updated_at?: string;
+    };
+  };
+  orc_cronograma: {
+    Row: {
+      id: string;
+      orcamento_id: string;
+      semana: number;
+      titulo: string | null;
+      fisico: string | null;
+      financeiro: number | null;
+      marco: string | null;
+      critico: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      orcamento_id: string;
+      semana: number;
+      titulo?: string | null;
+      fisico?: string | null;
+      financeiro?: number | null;
+      marco?: string | null;
+      critico?: boolean;
+    };
+    Update: {
+      semana?: number;
+      titulo?: string | null;
+      fisico?: string | null;
+      financeiro?: number | null;
+      marco?: string | null;
+      critico?: boolean;
+      updated_at?: string;
+    };
+  };
   orc_secoes: {
     Row: {
       id: string;
