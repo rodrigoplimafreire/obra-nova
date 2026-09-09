@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { carregarOrcamento, obrasParaVincular } from "@/lib/orcamento/dados";
-import { cargaDoOrcamento } from "@/lib/pipeline/dados";
+import { custoComercialDoOrcamento } from "@/lib/pipeline/dados";
 import { TelaDoOrcamento } from "@/components/admin/tela-orcamento";
 
 export const dynamic = "force-dynamic";
@@ -33,9 +33,9 @@ export default async function PaginaDoOrcamento({
       orcamento={orcamento}
       obras={await obrasParaVincular()}
       // Só existe quando o documento nasceu de um pedido do pipeline: sem
-      // pedido não há porte, e sem porte a carga seria um número genérico
+      // pedido não há porte nem medição, e os números seriam genéricos
       // aparecendo numa tela onde ninguém pediu.
-      cargaComercial={await cargaDoOrcamento(id)}
+      custoComercial={await custoComercialDoOrcamento(id)}
       // Montada no servidor: o link que vai por WhatsApp precisa do endereço
       // público, e `window.location` no cliente daria o de desenvolvimento
       // quando alguém abrisse pelo túnel ou por IP da rede local.

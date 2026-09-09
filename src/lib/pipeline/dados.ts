@@ -267,22 +267,47 @@ export async function carregarPrecificacao(): Promise<{
 }
 
 /**
- * A carga comercial de um orçamento, pelo porte do pedido que o originou.
+ * O custo comercial deste orçamento: o que foi medido nele e o que embutir.
  *
- * Nulo quando o documento não veio do pipeline: sem pedido não há porte, e sem
- * porte a carga viraria um número genérico aparecendo numa tela onde ninguém
- * pediu. Nulo também enquanto faltar premissa — a tela de Precificação é quem
- * explica o que falta, não esta.
+ * **São dois números diferentes, e a tela mostra os dois juntos de propósito.**
+ * O Rodrigo travou exatamente aqui: via "Embutir R$ X" e não entendia como um
+ * valor único podia servir para clientes com deslocamentos e complexidades
+ * diferentes.
+ *
+ * - `custoMedido` é deste cliente e só dele: as horas e os quilômetros que
+ *   foram registrados neste pedido, ao preço da hora e do km da empreiteira.
+ *   Cliente em Aquiraz dá um número, cliente no bairro do lado dá outro.
+ * - `carga` é política de preço, não medição: quanto embutir para os
+ *   orçamentos que **não** fecham se pagarem. Precisa ser média porque, no dia
+ *   em que esta proposta é montada, ninguém sabe ainda quais vão se perder.
+ *   Ver o comentário longo em `precificacao.ts`.
+ *
+ * Nulo quando o documento não veio do pipeline: sem pedido não há porte nem
+ * medição, e os números virariam genéricos numa tela onde ninguém pediu.
  */
-export async function cargaDoOrcamento(
+export type CustoComercialDoOrcamento = {
+  /** O que embutir, pelo porte. Nulo enquanto faltar premissa. */
+  carga: number | null;
+  porte: Porte | null;
+  /** Minutos e km registrados **neste** pedido. Zero = ninguém cronometrou. */
+  minutos: number;
+  km: number;
+  /** minutos × custo/hora + km × custo/km. Nulo sem medição ou sem premissa. */
+  custoMedido: number | null;
+};
+
+export async function custoComercialDoOrcamento(
   orcamentoId: string,
-): Promise<number | null> {
+): Promise<CustoComercialDoOrcamento | null> {
   const sb = supabaseAdmin();
   const org = await orgAtual();
 
+  // A view já faz a conta do custo medido com o custo/hora e o custo/km da
+  // org. Refazer aqui seria duplicar a fórmula em dois lugares que podem
+  // divergir — e a tela do pedido mostra o número que vem dela.
   const { data: pedido } = await sb
-    .from("pipe_pedidos")
-    .select("porte")
+    .from("pipe_pedidos_resumo")
+    .select("porte, total_minutos, km_total, custo_estimado")
     .eq("orcamento_id", orcamentoId)
     .eq("org_id", org)
     .maybeSingle();
@@ -290,5 +315,18 @@ export async function cargaDoOrcamento(
   if (!pedido) return null;
 
   const { carga } = await carregarPrecificacao();
-  return carga.porPorte?.[pedido.porte ?? "M"] ?? null;
+  const porte = (pedido.porte as Porte | null) ?? null;
+
+  return {
+    carga: carga.porPorte?.[porte ?? "M"] ?? null,
+    porte,
+    minutos: Number(pedido.total_minutos ?? 0),
+    km: Number(pedido.km_total ?? 0),
+    // Sem minuto nem km registrado o custo medido é zero, e zero aqui mentiria:
+    // não é que produzir custou nada, é que ninguém cronometrou.
+    custoMedido:
+      Number(pedido.total_minutos ?? 0) === 0 && Number(pedido.km_total ?? 0) === 0
+        ? null
+        : (pedido.custo_estimado ?? null),
+  };
 }

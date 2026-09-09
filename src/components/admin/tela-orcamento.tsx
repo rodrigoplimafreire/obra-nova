@@ -13,6 +13,9 @@ import { Dialogo } from "@/components/comum/dialogo";
 import { PublicacaoDoOrcamento } from "./publicacao-do-orcamento";
 import { TabelaDeCustos } from "./tabela-de-custos";
 import { PlanejamentoDoDocumento } from "./planejamento-do-documento";
+// `horas` vem daqui porque é o mesmo formato do pipeline: "3h20", "45 min".
+// Duas grafias para a mesma duração em telas vizinhas é ruído.
+import { horas } from "./painel-pipeline";
 import { TextosDoDocumento } from "./textos-do-documento";
 import {
   arquivarOrcamento,
@@ -21,6 +24,9 @@ import {
   numerarOrcamento,
 } from "@/lib/orcamento/acoes";
 import { data, moeda, numero } from "@/lib/orcamento/formato";
+// Só o tipo: `dados.ts` é `server-only`, e `import type` some na compilação
+// sem arrastar o módulo para o bundle do cliente.
+import type { CustoComercialDoOrcamento } from "@/lib/pipeline/dados";
 import {
   CampoDeMoeda,
   CampoDePercentual,
@@ -38,14 +44,14 @@ export function TelaDoOrcamento({
   orcamento,
   obras,
   urlBase,
-  cargaComercial,
+  custoComercial,
 }: {
   orcamento: OrcamentoCompleto;
   obras: ObraParaVincular[];
   urlBase: string;
-  /** Custo comercial a embutir, quando este orçamento veio de um pedido do
-   *  pipeline e as premissas estão preenchidas. */
-  cargaComercial: number | null;
+  /** O medido deste pedido e a carga a embutir, quando este orçamento veio de
+   *  um pedido do pipeline. Ver `custoComercialDoOrcamento`. */
+  custoComercial: CustoComercialDoOrcamento | null;
 }) {
   return (
     <>
@@ -73,21 +79,53 @@ export function TelaDoOrcamento({
             destaque={orcamento.semPreco > 0 ? "amarelo" : undefined}
           />
           <Indicador rotulo="Total" valor={moeda(orcamento.total)} />
-          {/* Aqui é onde o preço é decidido, então é aqui que o número
-              precisa estar. Não vira item nem linha do documento: entra
-              diluído, e o cliente não lê "custo comercial" em lugar nenhum. */}
-          {cargaComercial !== null && (
-            <Indicador
-              rotulo="Embutir"
-              valor={moeda(cargaComercial)}
-              detalhe={
-                orcamento.total
-                  ? `${Math.round((cargaComercial / orcamento.total) * 1000) / 10}% do total`
-                  : "custo comercial"
-              }
-              destaque="arroio"
-              dica="Custo comercial a diluir nos preços: paga este orçamento e a fatia dos que não fecham. Não aparece para o cliente."
-            />
+          {/* Aqui é onde o preço é decidido, então é aqui que os números
+              precisam estar. Nenhum dos dois vira item ou linha do documento:
+              entram diluídos, e o cliente não lê "custo comercial" em lugar
+              nenhum.
+
+              **Os dois juntos, e nessa ordem, de propósito.** Sozinho, o
+              "Embutir" parecia um valor único aplicado a clientes com
+              deslocamentos completamente diferentes — foi exatamente onde o
+              Rodrigo travou. Com o custo medido ao lado fica visível que o que
+              é único é o preço da hora e do km; o que varia por cliente são as
+              horas e os quilômetros dele, e isso já é medido pedido a pedido. */}
+          {custoComercial && (
+            <>
+              <Indicador
+                rotulo="Custo deste"
+                valor={
+                  custoComercial.custoMedido === null
+                    ? "—"
+                    : moeda(custoComercial.custoMedido)
+                }
+                detalhe={
+                  custoComercial.minutos === 0 && custoComercial.km === 0
+                    ? "sem tempo registrado no pedido"
+                    : [
+                        horas(custoComercial.minutos),
+                        custoComercial.km > 0 ? `${custoComercial.km} km` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
+                }
+                destaque="arroio"
+                dica="O que produzir ESTE orçamento custou: as horas e os quilômetros registrados neste pedido, ao seu custo por hora e por km. Varia de cliente para cliente porque o deslocamento e o tempo variam."
+              />
+              {custoComercial.carga !== null && (
+                <Indicador
+                  rotulo="Embutir"
+                  valor={moeda(custoComercial.carga)}
+                  detalhe={
+                    orcamento.total
+                      ? `${Math.round((custoComercial.carga / orcamento.total) * 1000) / 10}% do total${custoComercial.porte ? ` · porte ${custoComercial.porte}` : ""}`
+                      : "custo comercial"
+                  }
+                  destaque="arroio"
+                  dica="Quanto diluir nos preços para os orçamentos que NÃO fecham se pagarem. É média por porte, e tem que ser: hoje, montando esta proposta, ninguém sabe quais das próximas vão se perder."
+                />
+              )}
+            </>
           )}
           <Indicador
             rotulo="Enviado"
