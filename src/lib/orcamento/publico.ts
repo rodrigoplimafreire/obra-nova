@@ -21,6 +21,15 @@ export type OrcamentoPublico = {
   temSenha: boolean;
   situacao: string;
   aprovadoEm: string | null;
+  /**
+   * Quem aceitou e quando, lido do evento que a própria ação de aceite grava.
+   *
+   * O documento mostra isso de volta para o cliente porque um aceite sem nome
+   * e sem data não é registro de nada — é um selo bonito. Vem do evento e não
+   * de uma coluna nova: o `orc_eventos` já é a memória do que aconteceu, e
+   * duplicar o nome em `orc_orcamentos` criaria duas verdades.
+   */
+  aceite: { nome: string | null; em: string | null } | null;
   documento: DocumentoPublicado;
   /**
    * A empreiteira, lida ao vivo e não da fotografia publicada.
@@ -66,9 +75,37 @@ export async function carregarOrcamentoPublicado(
     temSenha: Boolean(orcamento.senha),
     situacao: orcamento.situacao,
     aprovadoEm: orcamento.aprovado_em,
+    aceite: await lerAceite(orcamento.id, orcamento.aprovado_em),
     documento,
     empreiteira: await empreiteiraDaOrg(orcamento.org_id),
   };
+}
+
+/**
+ * O nome de quem aceitou, do último evento de aceite.
+ *
+ * Devolve a data mesmo sem nome: orçamento aprovado pelo painel não passa por
+ * aqui e não tem quem assine, e nesse caso o documento mostra só a data.
+ */
+async function lerAceite(
+  orcamentoId: string,
+  aprovadoEm: string | null,
+): Promise<{ nome: string | null; em: string | null } | null> {
+  if (!aprovadoEm) return null;
+
+  const { data } = await supabaseAdmin()
+    .from("orc_eventos")
+    .select("detalhe, created_at")
+    .eq("orcamento_id", orcamentoId)
+    .eq("tipo", "aceito")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const detalhe = data?.detalhe as { nome?: unknown } | null;
+  const nome = typeof detalhe?.nome === "string" ? detalhe.nome.trim() : null;
+
+  return { nome: nome || null, em: data?.created_at ?? aprovadoEm };
 }
 
 /** Confere a senha do gate. Comparação no servidor, nunca no navegador. */

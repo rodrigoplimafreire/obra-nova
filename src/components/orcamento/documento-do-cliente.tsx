@@ -104,11 +104,14 @@ export function DocumentoDoCliente({
   documento,
   token,
   jaAprovado,
+  aceite,
   empreiteira,
 }: {
   documento: DocumentoPublicado;
   token: string;
   jaAprovado: boolean;
+  /** Quem aceitou e quando, para o comprovante. Nulo enquanto ninguém aceitou. */
+  aceite?: { nome: string | null; em: string | null } | null;
   /** Do Perfil. O logotipo dela vence o do tema, e é o que faz o white
    *  label existir para quem não é a RD. */
   empreiteira?: Empreiteira;
@@ -308,6 +311,25 @@ export function DocumentoDoCliente({
         .sign-duo .sign{width:100%}
         .sign-duo .sdoc{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--fog-2);margin-top:10px}
         .print-cta{margin-top:40px;padding-top:26px;border-top:1px solid var(--line);display:flex;justify-content:center}
+
+        /* Comprovante do aceite. A \`.paper-note\` da marca é uma nota cor de
+           creme torta com sombra — serve para um recado, não para registrar um
+           compromisso de dezenas de milhares de reais. */
+        .aceite-ok{max-width:640px;margin:34px auto 0;background:var(--ink-2);border:1px solid var(--line);
+          border-left:3px solid var(--accent);border-radius:4px;padding:clamp(22px,4vw,34px);text-align:left}
+        .ao-selo{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+        .ao-titulo{font-size:clamp(19px,3vw,22px);letter-spacing:-.01em;margin:10px 0 22px;color:var(--white)}
+        .ao-dados>div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 20px;
+          padding:12px 0;border-top:1px solid var(--line-soft)}
+        .ao-dados>div:first-child{border-top:none;padding-top:0}
+        .ao-dados dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog-2)}
+        .ao-dados dd{font-size:14.5px;line-height:1.4;color:var(--fog);margin-left:auto;text-align:right}
+        .ao-valor{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;
+          justify-content:space-between;align-items:baseline;gap:8px 20px}
+        .ao-valor-rot{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fog-2)}
+        .ao-valor-num{font-family:var(--archivo);font-weight:800;font-size:clamp(24px,5vw,30px);
+          letter-spacing:-.02em;color:var(--accent);margin-left:auto}
+        .ao-nota{margin-top:18px;font-size:13px;line-height:1.6;color:var(--fog-2)}
       `}</style>
 
       {/* Na impressão o par de assinaturas continua lado a lado e não pode ser
@@ -325,6 +347,12 @@ export function DocumentoDoCliente({
           #condicoes .cond-sub{color:#0a0a0a !important}
           #condicoes .clausulas li{color:#333 !important;break-inside:avoid}
           #condicoes{break-inside:avoid-page}
+          .aceite-ok{background:#f6f4ef !important;border-color:#ddd8c8 !important;border-left-color:#E8622C !important;break-inside:avoid}
+          .aceite-ok .ao-titulo{color:#0a0a0a !important}
+          .aceite-ok .ao-dados dd{color:#111 !important}
+          .aceite-ok .ao-dados dt, .aceite-ok .ao-valor-rot, .aceite-ok .ao-nota{color:#444 !important}
+          .aceite-ok .ao-dados>div{border-top-color:#e2ddd0 !important}
+          .aceite-ok .ao-valor{border-top-color:#ddd8c8 !important}
         }
       `}</style>
 
@@ -735,7 +763,7 @@ export function DocumentoDoCliente({
           <p className="kicker">
             <span className="s-num">{proximoNumero()}</span> Aceite
           </p>
-          <h2>Combinado?</h2>
+          <h2>Aceite da proposta</h2>
           <p className="intro">
             {documento.textos.introAceite ??
               "Ao aceitar, você registra a concordância com o escopo e o valor acima. A data e o valor ficam guardados como estão hoje."}
@@ -745,6 +773,9 @@ export function DocumentoDoCliente({
             token={token}
             jaAprovado={jaAprovado}
             total={documento.total}
+            versao={documento.versao}
+            cliente={documento.cliente}
+            aceite={aceite ?? null}
           />
 
           <p className="validade">

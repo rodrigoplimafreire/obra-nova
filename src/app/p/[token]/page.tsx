@@ -80,6 +80,7 @@ export default async function PaginaDoOrcamento({
       documento={orcamento.documento}
       token={token}
       jaAprovado={orcamento.situacao === "aprovado"}
+      aceite={orcamento.aceite}
       empreiteira={orcamento.empreiteira}
     />
   );
