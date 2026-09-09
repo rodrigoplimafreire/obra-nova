@@ -186,27 +186,34 @@ export function DocumentoDoCliente({
 
   return (
     <>
-      {/* `precedence` no <link> faz o React 19 içar a folha para o head e
-          deduplicar. Só no link: ver o aviso abaixo sobre <style>.
+      {/* `precedence` faz o React 19 içar a folha para o head e deduplicar.
           A de impressão entra com media="print": nunca pinta a tela. */}
       <link rel="stylesheet" href={marca.estilo} precedence="marca" />
       <link rel="stylesheet" href={marca.impressao} media="print" />
 
-      {/* ⚠️ NÃO ponha `href` + `precedence` nos <style> abaixo.
-      
-          Essa combinação — o hoisting de <style> do React 19 — **quebra a
-          hidratação inteira desta página**, e só na build de produção. Em
-          desenvolvimento tudo funciona, o console não acusa nada, o HTML sai
-          correto e todos os scripts carregam com 200. O que morre é o React:
-          nenhum `onClick` responde. Foi assim que os dois botões de imprimir e
-          o **botão de aceite do cliente** ficaram mortos sem ninguém perceber —
-          o documento parecia perfeito e não respondia a um clique.
-      
-          Reproduzido com `npm run build && npm start` e provado por bissecção:
-          tirando `href`/`precedence` dos três <style>, a hidratação volta.
-          Como são folhas únicas por documento, não havia nada a deduplicar; o
-          hoisting não trazia benefício nenhum. <style> puro no corpo aplica
-          igual, e ainda vence o brand.css por vir depois na ordem. */}
+      {/* **A impressão não passa pelo React, e isso é deliberado.**
+
+          Esta página não hidrata na build de produção: o HTML sai completo, os
+          scripts carregam com 200, o console não acusa nada, e nenhum onClick
+          responde. Reproduzido com `npm run build && npm start`; em `next dev`
+          funciona, e por isso passou batido. A causa raiz ainda não está
+          achada — o que está descartado é a folha de estilo com `precedence`
+          (testei com e sem, falha dos dois jeitos).
+
+          Enquanto isso, imprimir não pode depender de hidratação. Este
+          ouvinte é DOM puro, anexado por script inline: funciona com o React
+          parado, e continua funcionando quando ele voltar. É por isso que o
+          botão não tem `onClick` — se tivesse, imprimiria duas vezes no dia em
+          que a hidratação for consertada. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html:
+            "document.addEventListener('click',function(e){" +
+            "var b=e.target&&e.target.closest&&e.target.closest('[data-imprimir]');" +
+            "if(b){e.preventDefault();window.print();}},true);",
+        }}
+      />
+
 
       {/* O `.proj-grid` da marca é fixo em três colunas, porque as propostas
           feitas à mão sempre tinham três cards. Aqui a quantidade varia com o
@@ -215,7 +222,7 @@ export function DocumentoDoCliente({
           específico — a folha da marca é canônica e não se edita. O mobile
           continua em coluna única porque a regra vive dentro do mesmo
           `min-width` da original. */}
-      <style>{`
+      <style href="grade-do-projeto" precedence="marca">{`
         @media (min-width: 760px) {
           .proj-grid[data-cards="1"] { grid-template-columns: 1fr }
           .proj-grid[data-cards="2"],
@@ -234,7 +241,7 @@ export function DocumentoDoCliente({
           parcelas, num grid de três, a segunda ficaria com um buraco à
           direita. Mesmo conserto do `.proj-grid`, pelo mesmo motivo, e o
           número de colunas acompanha o número de parcelas. */}
-      <style>{`
+      <style href="forma-de-pagamento" precedence="marca">{`
         .pag-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
         @media(min-width:720px){
           .pag-grid{grid-template-columns:repeat(2,1fr)}
@@ -270,7 +277,7 @@ export function DocumentoDoCliente({
           `.srole` — só faltava o documento escrever a marcação. Por isso o
           bloco de assinatura reusa exatamente esses nomes: o que se paga aqui
           é só a grade de duas colunas, que é nova. */}
-      <style>{`
+      <style href="condicoes-e-assinatura" precedence="marca">{`
         .cond-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px}
         @media(min-width:720px){.cond-grid{grid-template-columns:repeat(2,1fr)}}
         .cond{border:1px solid var(--line);border-radius:5px;background:var(--ink-2);padding:18px 20px}

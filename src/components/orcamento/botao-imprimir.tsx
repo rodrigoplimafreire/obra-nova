@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Botão de imprimir de verdade, não instrução para apertar Ctrl+P.
  *
@@ -7,10 +5,14 @@
  * abrindo o link no celular: ninguém que precisa da proposta impressa vai
  * descobrir um atalho de teclado sozinho.
  *
- * Aparece duas vezes no documento — no cartão de resumo, para quem já sabe
- * que quer o papel, e junto das assinaturas, para quem leu tudo e chegou na
- * hora de assinar. Quem rolou o documento inteiro não deve ter que voltar ao
- * topo para achar o botão.
+ * **Não é componente de cliente, e não tem `onClick`.** Quem escuta o clique é
+ * um ouvinte de DOM puro, anexado por script inline no documento — porque esta
+ * página não hidrata em produção, e um `onClick` do React nunca chegava a
+ * rodar. Era exatamente isso que fazia o botão não responder.
+ *
+ * Aparece duas vezes no documento: no cartão de resumo, para quem já sabe que
+ * quer o papel, e junto das assinaturas, para quem leu tudo e chegou na hora
+ * de assinar.
  */
 export function BotaoImprimir({
   rotulo = "Imprimir orçamento",
@@ -18,7 +20,7 @@ export function BotaoImprimir({
   rotulo?: string;
 }) {
   return (
-    <button type="button" className="btn solid" onClick={() => window.print()}>
+    <button type="button" data-imprimir className="btn solid">
       {rotulo}
     </button>
   );
