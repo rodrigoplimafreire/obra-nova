@@ -186,15 +186,27 @@ export function DocumentoDoCliente({
 
   return (
     <>
-      {/* `precedence` faz o React 19 içar a folha para o head e deduplicar.
+      {/* `precedence` no <link> faz o React 19 içar a folha para o head e
+          deduplicar. Só no link: ver o aviso abaixo sobre <style>.
           A de impressão entra com media="print": nunca pinta a tela. */}
       <link rel="stylesheet" href={marca.estilo} precedence="marca" />
-      <link
-        rel="stylesheet"
-        href={marca.impressao}
-        media="print"
-        precedence="marca-print"
-      />
+      <link rel="stylesheet" href={marca.impressao} media="print" />
+
+      {/* ⚠️ NÃO ponha `href` + `precedence` nos <style> abaixo.
+      
+          Essa combinação — o hoisting de <style> do React 19 — **quebra a
+          hidratação inteira desta página**, e só na build de produção. Em
+          desenvolvimento tudo funciona, o console não acusa nada, o HTML sai
+          correto e todos os scripts carregam com 200. O que morre é o React:
+          nenhum `onClick` responde. Foi assim que os dois botões de imprimir e
+          o **botão de aceite do cliente** ficaram mortos sem ninguém perceber —
+          o documento parecia perfeito e não respondia a um clique.
+      
+          Reproduzido com `npm run build && npm start` e provado por bissecção:
+          tirando `href`/`precedence` dos três <style>, a hidratação volta.
+          Como são folhas únicas por documento, não havia nada a deduplicar; o
+          hoisting não trazia benefício nenhum. <style> puro no corpo aplica
+          igual, e ainda vence o brand.css por vir depois na ordem. */}
 
       {/* O `.proj-grid` da marca é fixo em três colunas, porque as propostas
           feitas à mão sempre tinham três cards. Aqui a quantidade varia com o
@@ -203,7 +215,7 @@ export function DocumentoDoCliente({
           específico — a folha da marca é canônica e não se edita. O mobile
           continua em coluna única porque a regra vive dentro do mesmo
           `min-width` da original. */}
-      <style href="grade-do-projeto" precedence="marca">{`
+      <style>{`
         @media (min-width: 760px) {
           .proj-grid[data-cards="1"] { grid-template-columns: 1fr }
           .proj-grid[data-cards="2"],
@@ -222,7 +234,7 @@ export function DocumentoDoCliente({
           parcelas, num grid de três, a segunda ficaria com um buraco à
           direita. Mesmo conserto do `.proj-grid`, pelo mesmo motivo, e o
           número de colunas acompanha o número de parcelas. */}
-      <style href="forma-de-pagamento" precedence="marca">{`
+      <style>{`
         .pag-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
         @media(min-width:720px){
           .pag-grid{grid-template-columns:repeat(2,1fr)}
@@ -258,7 +270,7 @@ export function DocumentoDoCliente({
           `.srole` — só faltava o documento escrever a marcação. Por isso o
           bloco de assinatura reusa exatamente esses nomes: o que se paga aqui
           é só a grade de duas colunas, que é nova. */}
-      <style href="condicoes-e-assinatura" precedence="marca">{`
+      <style>{`
         .cond-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px}
         @media(min-width:720px){.cond-grid{grid-template-columns:repeat(2,1fr)}}
         .cond{border:1px solid var(--line);border-radius:5px;background:var(--ink-2);padding:18px 20px}
@@ -282,11 +294,7 @@ export function DocumentoDoCliente({
       {/* Na impressão o par de assinaturas continua lado a lado e não pode ser
           partido entre duas páginas: assinatura numa folha e nome na seguinte
           é o tipo de defeito que invalida o documento aos olhos de quem lê. */}
-      <style
-        href="assinatura-impressa"
-        media="print"
-        precedence="marca-print"
-      >{`
+      <style media="print">{`
         @media print {
           .sign-duo{display:grid !important;grid-template-columns:repeat(2,1fr) !important;gap:14mm;break-inside:avoid;margin-top:16mm}
           .sign-duo .sign{border:none !important;padding:0 !important;background:none !important;text-align:left !important}
