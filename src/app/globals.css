@@ -765,8 +765,15 @@
   }
 
   /* `body > *` e não `.casca`: pega qualquer coisa que o Next ou uma extensão
-     tenham pendurado na raiz, sem depender de eu ter lembrado da classe. */
-  body > *:not([data-imprimindo]) {
+     tenham pendurado na raiz, sem depender de eu ter lembrado da classe.
+
+     O `:has()` não é enfeite — é o que impede esta regra de vazar para fora do
+     painel. Ela vive no `globals.css`, que o layout raiz carrega em **toda**
+     página, inclusive no documento que o cliente imprime para assinar. Lá não
+     existe `[data-imprimindo]`, então ela apagava o documento inteiro e saía
+     uma folha em branco. Agora a troca de conteúdo só acontece na página que
+     de fato oferece um bloco de impressão no lugar da tela. */
+  body:has([data-imprimindo]) > *:not([data-imprimindo]) {
     display: none !important;
   }
 
