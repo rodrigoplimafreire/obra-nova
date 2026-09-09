@@ -20,6 +20,13 @@ const PREFIXO_DO_COOKIE = "orc_gate_";
  * Cookie por token, não um só para o site: uma pessoa pode receber dois
  * orçamentos, e destravar um não pode destravar o outro. `httpOnly` porque o
  * JavaScript da página não tem nada que fazer com ele.
+ *
+ * O isolamento entre orçamentos está no **nome** do cookie, não no `path` —
+ * e é por isso que o `path` é a raiz. Ele já foi `/p/${token}`, e isso
+ * quebrava o domínio da RD: lá o cliente abre `orcamentos.rd.eng.br/nome/`,
+ * que um rewrite da Vercel serve a partir de `/p/nome`. O caminho da barra do
+ * navegador nunca batia com o do cookie, ele não voltava em requisição
+ * nenhuma, e o cliente redigitava a senha a cada visita.
  */
 export async function entrarNoOrcamento(
   _anterior: { erro?: string } | null,
@@ -37,7 +44,7 @@ export async function entrarNoOrcamento(
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: `/p/${token}`,
+    path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
 

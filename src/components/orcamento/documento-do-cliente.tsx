@@ -191,26 +191,38 @@ export function DocumentoDoCliente({
       <link rel="stylesheet" href={marca.estilo} precedence="marca" />
       <link rel="stylesheet" href={marca.impressao} media="print" />
 
-      {/* **A impressão não passa pelo React, e isso é deliberado.**
+      {/* **Imprimir tem dois caminhos, e precisa dos dois.**
 
-          Esta página não hidrata na build de produção: o HTML sai completo, os
-          scripts carregam com 200, o console não acusa nada, e nenhum onClick
-          responde. Reproduzido com `npm run build && npm start`; em `next dev`
-          funciona, e por isso passou batido. A causa raiz ainda não está
-          achada — o que está descartado é a folha de estilo com `precedence`
-          (testei com e sem, falha dos dois jeitos).
+          Esta página chega ao cliente de duas maneiras, e cada uma quebra um
+          jeito diferente de escutar o clique:
 
-          Enquanto isso, imprimir não pode depender de hidratação. Este
-          ouvinte é DOM puro, anexado por script inline: funciona com o React
-          parado, e continua funcionando quando ele voltar. É por isso que o
-          botão não tem `onClick` — se tivesse, imprimiria duas vezes no dia em
-          que a hidratação for consertada. */}
+          1. **GET direto**, com o cookie do gate já no navegador. O HTML vem
+             pronto do servidor — e não hidrata na build de produção. Nenhum
+             `onClick` do React chega a rodar. (Em `next dev` hidrata; a causa
+             raiz ainda não está achada. Descartados: `precedence` nas folhas,
+             chunk faltando, CSP e payload cortado.)
+          2. **Resposta do gate**, quando o cliente acabou de digitar a senha.
+             Aí o React monta a página no cliente e os `onClick` funcionam —
+             mas o `<script>` inline abaixo é inserido por DOM e **não executa**.
+
+          No domínio da RD todo acesso cai no caminho 2, porque o cookie do
+          gate não voltava (ver `entrarNoOrcamento`). Por isso o ouvinte de DOM
+          sozinho não bastava: era o caminho que ele não cobre.
+
+          A saída é ter os dois e não imprimir duas vezes. Os dois chamam
+          `__imprimirRD`, que ignora chamada repetida na mesma janela de 800ms
+          — se um dia a hidratação voltar e os dois dispararem, sai uma folha
+          só. */}
       <script
         dangerouslySetInnerHTML={{
           __html:
+            "window.__imprimirRD=function(){" +
+            "var t=Date.now();" +
+            "if(t-(window.__ultimaImpressao||0)<800)return;" +
+            "window.__ultimaImpressao=t;window.print();};" +
             "document.addEventListener('click',function(e){" +
             "var b=e.target&&e.target.closest&&e.target.closest('[data-imprimir]');" +
-            "if(b){e.preventDefault();window.print();}},true);",
+            "if(b){e.preventDefault();window.__imprimirRD();}},true);",
         }}
       />
 
