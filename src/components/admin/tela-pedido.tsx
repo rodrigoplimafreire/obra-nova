@@ -18,6 +18,7 @@ import { moeda, data as dataBR, paraCampo } from "@/lib/orcamento/formato";
 import { CronometroDeEtapa, LancamentoManual } from "./cronometro-de-etapa";
 import { AcoesDaLinha } from "./acoes-da-linha";
 import { horas } from "./painel-pipeline";
+import { custoDeProducao } from "@/lib/pipeline/precificacao";
 import {
   apagarPedido,
   apagarTempo,
@@ -141,7 +142,7 @@ export function TelaDoPedido({
                   detalhe={
                     pedido.custoHora === null
                       ? "falta o custo/hora"
-                      : `${moeda((pedido.totalMinutos / 60) * pedido.custoHora)} de tempo + ${moeda(pedido.kmTotal * (pedido.custoKm ?? 0))} de km`
+                      : `${moeda(custoDeProducao(pedido.totalMinutos, 0, pedido.custoHora, 0))} de tempo + ${moeda(custoDeProducao(0, pedido.kmTotal, pedido.custoHora, pedido.custoKm))} de km`
                   }
                 />
                 {/* O número que vai para dentro do preço. Fica junto do

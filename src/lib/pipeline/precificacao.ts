@@ -93,10 +93,11 @@ export function calcularCarga(e: EntradasDaCarga): Carga {
   const custoPorOrcamento =
     e.custoHora === null || minutosPorOrcamento === 0
       ? null
-      : arredondar(
-          (minutosPorOrcamento / 60) * e.custoHora +
-            kmPorOrcamento * (e.custoKm ?? 0),
-          2,
+      : custoDeProducao(
+          minutosPorOrcamento,
+          kmPorOrcamento,
+          e.custoHora,
+          e.custoKm,
         );
 
   // --- Conversão ------------------------------------------------------------
@@ -177,6 +178,29 @@ function coberturaReal(
     .reduce((s, p) => s + porPorte[p.porte ?? "M"], 0);
 
   return arredondar((recuperado / gasto) * 100, 1);
+}
+
+/**
+ * O que custou produzir um orçamento: tempo mais deslocamento.
+ *
+ *   minutos ÷ 60 × custo/hora  +  km × custo/km
+ *
+ * As **duas** parcelas, sempre — foi aqui que o Rodrigo tropeçou olhando um
+ * "Custo estimado" de R$ 129,59: ele conferiu de cabeça só o km (50 × 1,16 =
+ * 58) e não achou de onde vinham os outros R$ 71,59, que eram 48 minutos a
+ * R$ 89,49/hora. O minuto parado dirigindo ou estudando o pedido é hora que
+ * não foi trabalhada em outra coisa, e tem custo igual ao km do carro.
+ *
+ * Uma função só, e não a conta repetida na tela, na view do Postgres e no
+ * cálculo da carga: três cópias divergem no dia em que uma muda.
+ */
+export function custoDeProducao(
+  minutos: number,
+  km: number,
+  custoHora: number,
+  custoKm: number | null,
+): number {
+  return arredondar((minutos / 60) * custoHora + km * (custoKm ?? 0), 2);
 }
 
 /** Percentual que a carga representa sobre um valor de obra. */
