@@ -222,6 +222,36 @@ function Miolo({
     return (
       <>
         <div className="dialogo-corpo flex flex-col gap-5">
+          {/* Antes de tudo, porque é sobre dinheiro faltando.
+
+              A IA às vezes não emite a linha de fechamento de um grupo —
+              medido, nove rodadas do mesmo texto, três sem o "Valor de
+              material". Isso não dá erro nem tela vazia: sobra um item com
+              preço, o orçamento parece completo, e sai R$ 5.718 abaixo do que
+              o cliente escreveu. A conferência é por regex contra o texto cru,
+              que é a única fonte que não alucina. Ver `conferirTotais`. */}
+          {colagem.conferencia.faltando.length > 0 && (
+            <div className="aviso aviso-erro text-sm leading-relaxed">
+              <p className="font-semibold">
+                {colagem.conferencia.faltando.length === 1
+                  ? "Um valor que você colou não entrou na tabela."
+                  : `${colagem.conferencia.faltando.length} valores que você colou não entraram na tabela.`}
+              </p>
+              <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+                {colagem.conferencia.faltando.map((t, n) => (
+                  <li key={n}>
+                    <b>{t.rotulo}</b> — {moeda(t.valor)}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2">
+                A tabela abaixo soma {moeda(colagem.conferencia.somaDosItens)}.
+                Acrescente a linha que falta antes de gravar, ou peça para ler
+                de novo.
+              </p>
+            </div>
+          )}
+
           {colagem.entendido && (
             <p className="aviso text-sm leading-relaxed">
               {colagem.entendido}

@@ -54,6 +54,8 @@ OS ITENS:
 VALOR FECHADO POR GRUPO — atenção, é o caso mais comum:
 Muitas vezes o material lista vários serviços SEM preço individual e dá um valor único no fim ("Valor total da mão de obra: 8.700,00"). Nesse caso: os serviços entram como itens sem valor, E você acrescenta ao fim daquele grupo um item com "descricao" igual a "Valor total da mão de obra" (ou "Valor do gesso", conforme o texto), "quantidade": 1, "unidade": "Vb" e o valor em "valorUnitario". Não distribua o total entre os itens.
 
+ATENÇÃO — o erro mais comum: um material costuma ter MAIS DE UM fechamento ("Valor total da mão de obra: 8.700,00" e, mais abaixo, "Valor de material: R$ 5.718,00"). Varra o texto até a ÚLTIMA linha e emita um item de fechamento para CADA UM. Esquecer o segundo faz sair um orçamento com preço menor que o do cliente.
+
 Responda SOMENTE com JSON válido, sem markdown:
 
 {
@@ -86,7 +88,91 @@ export type Colagem = {
   itens: ItemColado[];
   entendido: string;
   duvidas: string[];
+  /** A conferencia do dinheiro contra o texto cru. Ver `conferirTotais`. */
+  conferencia: Conferencia;
 };
+
+/** Um total que o próprio texto do cliente declara: "Valor de material: R$ 5.718,00". */
+export type TotalDeclarado = { rotulo: string; valor: number };
+
+/**
+ * A conferência que não depende da IA.
+ *
+ * **Medido:** o modelo às vezes não emite a linha de fechamento de um grupo.
+ * Rodando o mesmo texto nove vezes, três esqueceram o "Valor de material:
+ * R$ 5.718,00" do orçamento da Santa Terezinha — sempre com
+ * `finish_reason: "stop"`, nunca por truncamento, e `temperature: 0` não
+ * corrige. É variação do modelo, e prompt não garante.
+ *
+ * O estrago é pior do que parecer vazio: sobra um item com preço (os
+ * R$ 8.700 da mão de obra), o orçamento parece completo, e sai um documento
+ * R$ 5.718 abaixo do que o empreiteiro calculou. Nenhuma trava pega isso,
+ * porque não há nada de errado na forma — só no número.
+ *
+ * Então o dinheiro é conferido por regex contra o texto cru, que é a única
+ * fonte que não alucina. Não corrige sozinho: avisa, e quem decide é ele. A
+ * colagem já nasce para ser revisada antes de gravar.
+ */
+export type Conferencia = {
+  /** Os totais escritos no material colado, na ordem em que aparecem. */
+  declarados: TotalDeclarado[];
+  /** Soma dos valores dos itens que a IA montou. */
+  somaDosItens: number;
+  /** Declarados que não viraram item nem batem com a soma. O bug, quando acontece. */
+  faltando: TotalDeclarado[];
+};
+
+/**
+ * Os totais escritos no material cru.
+ *
+ * Ancorado no rótulo ("Valor…", "Total…") e não em qualquer número com
+ * vírgula: o texto do cliente é cheio de medida ("27,90 m²") que não é
+ * dinheiro. Aceita o negrito do WhatsApp e do Markdown em volta.
+ */
+export function totaisDeclarados(texto: string): TotalDeclarado[] {
+  const LINHA =
+    /^[\s*#>_\-]*((?:valor|total)[^\d:]{0,60}?)\s*[:\-]?\s*(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+
+  const achados: TotalDeclarado[] = [];
+  for (const linha of texto.split(/\r?\n/)) {
+    const m = LINHA.exec(linha.trim());
+    if (!m) continue;
+    const valor = Number(m[2].replace(/\./g, "").replace(",", "."));
+    if (!Number.isFinite(valor) || valor <= 0) continue;
+    achados.push({
+      rotulo: m[1].replace(/[*_#]/g, "").trim().replace(/\s+/g, " "),
+      valor,
+    });
+  }
+  return achados;
+}
+
+/**
+ * Confere o que a IA montou contra o que o texto declara.
+ *
+ * Um declarado está coberto quando **algum item tem exatamente aquele valor**
+ * — ou quando ele é a soma dos itens, que é o caso do total geral. Sem essa
+ * segunda regra, um material que declara mão de obra, material E o total
+ * ("2.560 + 1.390 = 3.950") acusaria falta no total geral, que está certo.
+ */
+export function conferirTotais(
+  itens: ItemColado[],
+  texto: string,
+): Conferencia {
+  const declarados = totaisDeclarados(texto);
+  const valores = itens
+    .map((i) => i.valorUnitario)
+    .filter((v): v is number => v !== null && v > 0);
+
+  const soma = Math.round(valores.reduce((s, v) => s + v, 0) * 100) / 100;
+  const perto = (a: number, b: number) => Math.abs(a - b) < 0.01;
+
+  const faltando = declarados.filter(
+    (d) => !valores.some((v) => perto(v, d.valor)) && !perto(soma, d.valor),
+  );
+
+  return { declarados, somaDosItens: soma, faltando };
+}
 
 export type SaidaDaColagem =
   | { ok: true; colagem: Colagem }
@@ -300,6 +386,9 @@ export async function lerColagem(
     }
 
     const colagem = normalizar(bruto);
+    // Contra o material cru, nao contra o que a IA devolveu: e justamente
+    // a IA que as vezes perde a linha de total.
+    colagem.conferencia = conferirTotais(colagem.itens, material);
     if (colagem.itens.length === 0) {
       return {
         ok: false,
@@ -331,6 +420,7 @@ function normalizar(bruto: unknown): Colagem {
     itens: [],
     entendido: "",
     duvidas: [],
+    conferencia: { declarados: [], somaDosItens: 0, faltando: [] },
   };
   if (!bruto || typeof bruto !== "object") return vazio;
   const d = bruto as Record<string, unknown>;
@@ -371,6 +461,7 @@ function normalizar(bruto: unknown): Colagem {
           })
           .slice(0, 60)
       : [],
+    conferencia: { declarados: [], somaDosItens: 0, faltando: [] },
     entendido: typeof d.entendido === "string" ? d.entendido.trim() : "",
     duvidas: Array.isArray(d.duvidas)
       ? d.duvidas

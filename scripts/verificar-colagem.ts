@@ -14,7 +14,12 @@
  */
 
 import { config } from "dotenv";
-import { lerColagem, sugerirSlug } from "@/lib/orcamento/colagem";
+import {
+  conferirTotais,
+  lerColagem,
+  sugerirSlug,
+  totaisDeclarados,
+} from "@/lib/orcamento/colagem";
 
 config({ path: ".env.local" });
 
@@ -115,6 +120,60 @@ function moeda(n: number) {
 async function main() {
   let falhas = 0;
 
+  // ---------- A rede, testada sem a IA ----------
+  //
+  // A extração depende do modelo e oscila. A conferência, não: é regex contra
+  // o texto cru. Como ela só aparece quando a IA erra, e a IA erra quando quer,
+  // ela precisa ser provada aqui, com entrada sintética — senão o dia em que
+  // ela quebrar passa despercebido porque a IA por acaso acertou.
+  {
+    console.log("\nA conferência de totais (sem IA)");
+    const item = (v: number | null) => ({
+      grupo: null,
+      descricao: "linha",
+      quantidade: 1,
+      unidade: "Vb",
+      valorUnitario: v,
+    });
+    const conferirPuro = (nome: string, certo: boolean) => {
+      console.log(`  ${certo ? "ok    " : "FALHOU"}  ${nome}`);
+      if (!certo) falhas++;
+    };
+
+    const santa = CASOS[0].texto;
+
+    conferirPuro(
+      "acha os dois totais declarados no texto",
+      totaisDeclarados(santa).length === 2,
+    );
+    conferirPuro(
+      "orçamento completo não gera aviso falso",
+      conferirTotais([item(8700), item(5718)], santa).faltando.length === 0,
+    );
+    conferirPuro(
+      "perdeu o total de material: acusa, e diz qual",
+      (() => {
+        const f = conferirTotais([item(8700)], santa).faltando;
+        return f.length === 1 && f[0].valor === 5718;
+      })(),
+    );
+    conferirPuro(
+      "não trouxe preço nenhum: acusa os dois",
+      conferirTotais([item(null)], santa).faltando.length === 2,
+    );
+    conferirPuro(
+      "medida com vírgula não vira dinheiro",
+      totaisDeclarados("| Pintura de forro | 27,90 m² |").length === 0,
+    );
+    conferirPuro(
+      "total geral que é a soma dos outros não conta como faltando",
+      conferirTotais(
+        [item(2560), item(1390)],
+        "*VALOR DA MÃO DE OBRA: 2.560,00*\n*VALOR DOS MATERIAIS: 1.390,00*\n*TOTAL: R$ 3.950,00*",
+      ).faltando.length === 0,
+    );
+  }
+
   // A conta Groq e de 8.000 tokens/minuto: tres casos seguidos estouram.
   // O app tem repeticao com espera; aqui a pausa e explicita para o teste
   // medir a extracao, e nao a cota.
@@ -171,7 +230,27 @@ async function main() {
     conferir(`slug = ${caso.esperado.slug}`, slug === caso.esperado.slug);
     conferir("endereço extraído", Boolean(c.endereco));
     conferir("objeto extraído", Boolean(c.objeto));
-    conferir("soma bate com o total validado à mão", Math.abs(total - caso.esperado.total) < 0.01);
+    const somaBate = Math.abs(total - caso.esperado.total) < 0.01;
+    conferir("soma bate com o total validado à mão", somaBate);
+
+    // **A rede de baixo.** A soma acima depende da IA e falha de vez em quando
+    // — medido: três em nove rodadas perderam a linha "Valor de material" deste
+    // mesmo texto. O que NÃO pode falhar é a conferência avisar quando isso
+    // acontece; é ela que impede um orçamento sair R$ 5.718 abaixo em silêncio.
+    // Então o teste é o contrapositivo: soma errada obriga aviso, soma certa
+    // proíbe aviso falso.
+    const acusou = c.conferencia.faltando.length > 0;
+    conferir(
+      somaBate
+        ? "conferência não acusou falta num orçamento correto"
+        : "conferência acusou o total que a IA perdeu",
+      somaBate ? !acusou : acusou,
+    );
+    if (acusou) {
+      for (const f of c.conferencia.faltando) {
+        console.log(`          ↳ faltando: ${f.rotulo} — R$ ${f.valor.toLocaleString("pt-BR")}`);
+      }
+    }
     conferir("não inventou prazo", c.prazo === null);
     conferir("não inventou parcela", c.entradaPercentual === null);
 
