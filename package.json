@@ -15,7 +15,8 @@
     "verificar:colagem": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-colagem.ts",
     "verificar:pipeline": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-pipeline.ts",
     "verificar:precificacao": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-precificacao.ts",
-    "verificar:custo-comercial": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-custo-comercial.ts"
+    "verificar:custo-comercial": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-custo-comercial.ts",
+    "minerar:servicos": "tsx --tsconfig scripts/tsconfig.json scripts/minerar-servicos.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

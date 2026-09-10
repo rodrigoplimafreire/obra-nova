@@ -43,3 +43,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Saida do minerador: descricoes e precos reais da RD. O repo e publico.
+servicos-candidatos.md
