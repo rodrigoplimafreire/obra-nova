@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Dialogo } from "@/components/comum/dialogo";
 import { Girando } from "@/components/comum/esqueleto";
 import { Cabecalho, Conteudo } from "./cabecalho";
@@ -9,6 +11,7 @@ import {
   adicionarAmbiente,
   alternarConclusao,
   apagarVistoria,
+  gerarOrcamentoDaVistoria,
   removerAmbiente,
   removerMedicao,
   salvarAmbiente,
@@ -55,11 +58,22 @@ export function TelaDaVistoria({ vistoria }: { vistoria: VistoriaCompleta }) {
     medicao: Medicao | null;
   } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [gerando, setGerando] = useState(false);
+  const router = useRouter();
 
   const medidas = vistoria.ambientes.reduce(
     (s, a) => s + a.medicoes.length,
     0,
   );
+
+  async function gerar() {
+    setGerando(true);
+    setErro(null);
+    const r = await gerarOrcamentoDaVistoria(vistoria.id);
+    if (r.ok && r.link) router.push(r.link);
+    else setErro(r.erro ?? "Não consegui gerar o orçamento.");
+    setGerando(false);
+  }
 
   async function concluir() {
     setErro(null);
@@ -82,10 +96,33 @@ export function TelaDaVistoria({ vistoria }: { vistoria: VistoriaCompleta }) {
           .join(" · ")}
         acoes={
           <div className="flex items-center gap-2">
+            {/* O botao que fecha o ciclo do PRD: o levantado em pe vira
+                planilha, em vez de ser redigitado a noite. So aparece quando
+                ha o que orcar. */}
+            {vistoria.orcamentoId ? (
+              <Link
+                href={`/admin/orcamentos/${vistoria.orcamentoId}`}
+                className="btn btn-secundario"
+              >
+                Ver orçamento
+              </Link>
+            ) : (
+              medidas > 0 && (
+                <button
+                  type="button"
+                  onClick={gerar}
+                  disabled={gerando}
+                  className={`btn ${gerando ? "btn-carregando" : "btn-primario"}`}
+                >
+                  {gerando && <Girando />}
+                  {gerando ? "Gerando…" : "Gerar orçamento"}
+                </button>
+              )
+            )}
             <button
               type="button"
               onClick={concluir}
-              className={`btn ${vistoria.concluidaEm ? "btn-secundario" : "btn-primario"}`}
+              className={`btn btn-secundario`}
             >
               {vistoria.concluidaEm ? "Reabrir" : "Concluir visita"}
             </button>

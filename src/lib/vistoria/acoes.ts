@@ -339,3 +339,152 @@ export async function removerMedicao(
   revalidar(vistoriaId);
   return { ok: true };
 }
+
+/* --------------------------------------------------- vistoria → orçamento */
+
+/**
+ * A visita vira orçamento.
+ *
+ * É o momento em que o ganho de tempo do PRD aparece: o que foi levantado em
+ * pé, no cliente, já sai como planilha para revisar — em vez de ser digitado
+ * de novo de noite, item por item.
+ *
+ * **Decisão D1, tomada em 11/09/2026: o ambiente vira o grupo do item.** Então
+ * "Cozinha" e "Banheiro suíte" ocupam `orc_itens.grupo`, no formato numerado
+ * que a RD já usa (`1 - COZINHA`), e a planilha do cliente passa a ser lida
+ * por cômodo. O custo disso — perder a divisão mão de obra / material — está
+ * escrito no `PRD-VISTORIA.md`.
+ *
+ * **Todo item nasce sem preço, e isso não é limitação: é a regra.** Preço
+ * nunca é estimado pela máquina. A publicação já trava com item sem valor, de
+ * modo que o orçamento não chega ao cliente antes de o Reginato precificar.
+ */
+export async function gerarOrcamentoDaVistoria(
+  vistoriaId: string,
+): Promise<Resultado> {
+  const { orgId, id: usuarioId } = await exigirAdmin();
+  const sb = supabaseAdmin();
+
+  const { data: vistoria } = await sb
+    .from("vist_vistorias")
+    .select("id, cliente_nome, endereco, observacoes, orcamento_id, pedido_id, concluida_em")
+    .eq("id", vistoriaId)
+    .eq("org_id", orgId)
+    .maybeSingle();
+
+  if (!vistoria) return { ok: false, erro: "Vistoria inválida." };
+
+  // Gerar duas vezes duplicaria a planilha, ou obrigaria a decidir o que fazer
+  // com o que já foi editado no orçamento. Recusa e aponta o que existe.
+  if (vistoria.orcamento_id) {
+    return {
+      ok: false,
+      erro: "Esta visita já virou orçamento.",
+      link: `/admin/orcamentos/${vistoria.orcamento_id}`,
+    };
+  }
+
+  const { data: ambientes } = await sb
+    .from("vist_ambientes")
+    .select("id, position, nome, observacao")
+    .eq("vistoria_id", vistoriaId)
+    .order("position");
+
+  if (!ambientes?.length) {
+    return { ok: false, erro: "Inclua ao menos um ambiente antes de gerar." };
+  }
+
+  const { data: medicoes } = await sb
+    .from("vist_medicoes")
+    .select("ambiente_id, position, servico, quantidade, unidade, observacao")
+    .in("ambiente_id", ambientes.map((a) => a.id))
+    .order("position");
+
+  if (!medicoes?.length) {
+    return { ok: false, erro: "Nenhum serviço levantado. Não há o que orçar." };
+  }
+
+  // A observação do ambiente é sobre o cômodo inteiro, não sobre um serviço —
+  // não cabe em nenhum item. Vai para as observações do orçamento, nomeada,
+  // em vez de se perder na vistoria.
+  const notas = ambientes
+    .filter((a) => a.observacao)
+    .map((a) => `${a.nome}: ${a.observacao}`);
+  const observacoes = [vistoria.observacoes, ...notas]
+    .filter(Boolean)
+    .join("\n");
+
+  const { data: orcamento, error: erroOrcamento } = await sb
+    .from("orc_orcamentos")
+    .insert({
+      org_id: orgId,
+      cliente_nome: vistoria.cliente_nome,
+      endereco: vistoria.endereco,
+      observacoes: observacoes || null,
+      criado_por: usuarioId,
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (erroOrcamento || !orcamento) {
+    return {
+      ok: false,
+      erro: erroOrcamento?.message ?? "Não consegui criar o orçamento.",
+    };
+  }
+
+  const porAmbiente = new Map<string, typeof medicoes>();
+  for (const m of medicoes) {
+    const lista = porAmbiente.get(m.ambiente_id) ?? [];
+    lista.push(m);
+    porAmbiente.set(m.ambiente_id, lista);
+  }
+
+  let posicao = 0;
+  const itens = ambientes.flatMap((a) =>
+    (porAmbiente.get(a.id) ?? []).map((m) => ({
+      orcamento_id: orcamento.id,
+      // `1 - COZINHA`: o mesmo formato dos grupos que a RD já digita à mão,
+      // para a planilha do cliente não mudar de cara conforme a origem.
+      grupo: `${a.position} - ${a.nome.toUpperCase()}`,
+      position: ++posicao,
+      descricao: m.servico,
+      quantidade: m.quantidade,
+      unidade: m.unidade,
+      // Sem preço, sempre. Ver o comentário do topo desta função.
+      valor_unitario: null,
+      observacao: m.observacao,
+      origem: "humano" as const,
+    })),
+  );
+
+  const { error: erroItens } = await sb.from("orc_itens").insert(itens);
+  if (erroItens) {
+    // O orçamento sem itens ficaria órfão e confundiria a lista. Desfaz.
+    await sb.from("orc_orcamentos").delete().eq("id", orcamento.id);
+    return { ok: false, erro: erroItens.message };
+  }
+
+  await sb
+    .from("vist_vistorias")
+    .update({
+      orcamento_id: orcamento.id,
+      // Gerar o orçamento é o fim do levantamento. Continua reversível.
+      concluida_em: vistoria.concluida_em ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", vistoriaId);
+
+  // O pedido do funil passa a apontar para o documento, como acontece quando
+  // o orçamento nasce pelos outros caminhos.
+  if (vistoria.pedido_id) {
+    await sb
+      .from("pipe_pedidos")
+      .update({ orcamento_id: orcamento.id })
+      .eq("id", vistoria.pedido_id);
+  }
+
+  revalidar(vistoriaId);
+  revalidatePath("/admin/orcamentos");
+  return { ok: true, link: `/admin/orcamentos/${orcamento.id}` };
+}

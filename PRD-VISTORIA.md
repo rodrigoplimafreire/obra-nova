@@ -145,11 +145,25 @@ F07 e F08, em cima da biblioteca cheia e da vistoria pronta.
 O PRD original não decide estas seis. **Nenhuma linha de código da Entrega 2
 deve ser escrita antes delas** — são escolhas de produto, não de implementação.
 
-**D1 · Ambiente é uma dimensão nova ou vira o grupo?**
-`orc_itens.grupo` é texto livre e hoje carrega a divisão que o Reginato usa de
-verdade: `1 - MÃO DE OBRA`, `2 - MATERIAIS`. Se "Cozinha" virar o grupo, essa
-divisão se perde. As opções são duas dimensões (ambiente **e** disciplina) ou
-uma só. Isso muda o schema e a cara do documento do cliente.
+**D1 · Ambiente é uma dimensão nova ou vira o grupo? — DECIDIDO em 11/09/2026**
+
+**Ambiente vira o grupo do item.** Decisão do Rodrigo.
+
+`orc_itens.grupo` é texto livre e hoje carrega a divisão que o Reginato usa nos
+orçamentos digitados: `1 - MÃO DE OBRA`, `2 - MATERIAIS`. A decisão troca isso
+por `1 - COZINHA`, `2 - BANHEIRO SUÍTE` **nos orçamentos que nascerem de
+vistoria** — a planilha do cliente passa a ser lida por cômodo, e não por
+natureza de custo.
+
+O que a decisão custa, dito por extenso para não ser redescoberto depois:
+
+- Um orçamento gerado por vistoria **não separa mão de obra de material**. Se
+  a RD precisar dessa divisão num orçamento específico, ela volta a ser feita
+  à mão no editor, renomeando grupo.
+- Os orçamentos antigos não mudam: a decisão vale para o que a vistoria gera,
+  não é migração.
+- Se um dia as duas dimensões forem necessárias ao mesmo tempo, aí sim entra
+  coluna nova em `orc_itens` — e aí é schema, não convenção.
 
 **D2 · A vistoria funciona sem sinal?**
 "Continuar depois sem perder dados", numa obra, no celular. Autosave contra o

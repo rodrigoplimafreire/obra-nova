@@ -131,6 +131,78 @@ async function main() {
       erroSemServico?.code ?? "passou, e não devia",
     );
 
+    console.log("\nVistoria vira orçamento (decisão D1: ambiente = grupo)");
+
+    // Reproduz o que `gerarOrcamentoDaVistoria` grava, sem passar pela Server
+    // Action — que exige sessão. O que se prova aqui é o contrato do dado:
+    // grupo por ambiente, item por medição, preço sempre vazio.
+    const { data: segundo } = await sb
+      .from("vist_ambientes")
+      .insert({ vistoria_id: v.id, position: 2, nome: "Banheiro suíte" })
+      .select("id, position, nome")
+      .maybeSingle();
+    if (!segundo) throw new Error("sem segundo ambiente");
+
+    const { data: orc } = await sb
+      .from("orc_orcamentos")
+      .insert({ org_id: org.id, cliente_nome: "TESTE — APAGAR" })
+      .select("id")
+      .maybeSingle();
+    if (!orc) throw new Error("sem orçamento de teste");
+
+    const { error: erroItens } = await sb.from("orc_itens").insert([
+      {
+        orcamento_id: orc.id,
+        grupo: "1 - COZINHA",
+        position: 1,
+        descricao: "Pintura",
+        quantidade: 11.2,
+        unidade: "m²",
+        valor_unitario: null,
+        origem: "humano" as const,
+      },
+      {
+        orcamento_id: orc.id,
+        grupo: `${segundo.position} - ${segundo.nome.toUpperCase()}`,
+        position: 2,
+        descricao: "Revestimento de parede",
+        quantidade: 21.3,
+        unidade: "m²",
+        valor_unitario: null,
+        origem: "humano" as const,
+      },
+    ]);
+    ok(!erroItens, "grava os itens gerados", erroItens?.message);
+
+    const { data: gerados } = await sb
+      .from("orc_itens")
+      .select("grupo, descricao, quantidade, valor_unitario, total")
+      .eq("orcamento_id", orc.id)
+      .order("position");
+
+    ok((gerados ?? []).length === 2, "um item por medição levantada");
+    ok(
+      gerados?.[1]?.grupo === "2 - BANHEIRO SUÍTE",
+      "o ambiente vira o grupo, numerado e em maiúsculas",
+      gerados?.[1]?.grupo ?? "",
+    );
+    ok(
+      (gerados ?? []).every((i) => i.valor_unitario === null),
+      "todo item nasce SEM preço",
+      "preço nunca é estimado pela máquina",
+    );
+    ok(
+      (gerados ?? []).every((i) => i.total === null),
+      "sem preço, o total gerado pelo banco também é nulo",
+    );
+    ok(
+      gerados?.[0]?.quantidade !== null,
+      "a quantidade medida na visita atravessa",
+      String(gerados?.[0]?.quantidade),
+    );
+
+    await sb.from("orc_orcamentos").delete().eq("id", orc.id);
+
     console.log("\nCascata");
 
     await sb.from("vist_ambientes").delete().eq("id", ambiente.id);
