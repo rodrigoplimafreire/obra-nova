@@ -16,6 +16,7 @@
     "verificar:pipeline": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-pipeline.ts",
     "verificar:precificacao": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-precificacao.ts",
     "verificar:custo-comercial": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-custo-comercial.ts",
+    "verificar:vistoria": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-vistoria.ts",
     "minerar:servicos": "tsx --tsconfig scripts/tsconfig.json scripts/minerar-servicos.ts"
   },
   "dependencies": {

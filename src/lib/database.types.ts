@@ -699,6 +699,107 @@ type TabelasDeOrcamento = {
    * têm a mesma forma — título e texto —, então o `tipo` separa em vez de
    * três tabelas iguais.
    */
+  vist_vistorias: {
+    Row: {
+      id: string;
+      org_id: string;
+      pedido_id: string | null;
+      orcamento_id: string | null;
+      cliente_nome: string;
+      endereco: string | null;
+      data_visita: string;
+      observacoes: string | null;
+      concluida_em: string | null;
+      criado_por: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      org_id: string;
+      pedido_id?: string | null;
+      orcamento_id?: string | null;
+      cliente_nome: string;
+      endereco?: string | null;
+      data_visita?: string;
+      observacoes?: string | null;
+      concluida_em?: string | null;
+      criado_por?: string | null;
+    };
+    Update: {
+      pedido_id?: string | null;
+      orcamento_id?: string | null;
+      cliente_nome?: string;
+      endereco?: string | null;
+      data_visita?: string;
+      observacoes?: string | null;
+      concluida_em?: string | null;
+      updated_at?: string;
+    };
+  };
+  vist_ambientes: {
+    Row: {
+      id: string;
+      vistoria_id: string;
+      position: number;
+      nome: string;
+      observacao: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      vistoria_id: string;
+      position: number;
+      nome: string;
+      observacao?: string | null;
+    };
+    Update: {
+      position?: number;
+      nome?: string;
+      observacao?: string | null;
+      updated_at?: string;
+    };
+  };
+  vist_medicoes: {
+    Row: {
+      id: string;
+      ambiente_id: string;
+      position: number;
+      servico: string;
+      comprimento: number | null;
+      largura: number | null;
+      altura: number | null;
+      quantidade: number | null;
+      unidade: string | null;
+      observacao: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      ambiente_id: string;
+      position: number;
+      servico: string;
+      comprimento?: number | null;
+      largura?: number | null;
+      altura?: number | null;
+      quantidade?: number | null;
+      unidade?: string | null;
+      observacao?: string | null;
+    };
+    Update: {
+      position?: number;
+      servico?: string;
+      comprimento?: number | null;
+      largura?: number | null;
+      altura?: number | null;
+      quantidade?: number | null;
+      unidade?: string | null;
+      observacao?: string | null;
+      updated_at?: string;
+    };
+  };
   orc_modulos: {
     Row: {
       id: string;

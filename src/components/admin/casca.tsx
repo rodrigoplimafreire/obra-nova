@@ -63,6 +63,14 @@ const ITENS = [
     icone: Funil,
     prefixos: ["/admin/pipeline"],
   },
+  // Entre Pipeline e Orçamentos porque é onde cai na vida: o pedido entra no
+  // funil, a visita levanta o que tem para fazer, e só depois vira documento.
+  {
+    href: "/admin/vistorias",
+    rotulo: "Vistorias",
+    icone: Trena,
+    prefixos: ["/admin/vistorias"],
+  },
   {
     href: "/admin/orcamentos",
     rotulo: "Orçamentos",
@@ -349,6 +357,15 @@ function Funil() {
   return (
     <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />
+    </svg>
+  );
+}
+
+/** Trena: a medida tirada no local, que é o que a vistoria captura. */
+function Trena() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 8h18v8H3zM7 8v3M11 8v4M15 8v3M19 8v4" />
     </svg>
   );
 }
