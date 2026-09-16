@@ -52,9 +52,16 @@ Sem Vite, sem SPA, sem gerenciador de estado global.
 > breaking changes em relação ao que a maioria dos modelos conhece. Ler
 > `node_modules/next/dist/docs/` antes de escrever código de framework.
 
-**Deploy:** `npx vercel --prod --yes` na raiz. Não há git remote — o deploy é
-sempre pela CLI. Domínio: `obra-nova-two.vercel.app`. Projeto Supabase:
-`wnzdsqpsowxmistbnhca`.
+**Deploy:** `npx vercel --prod --yes` na raiz — **o deploy é sempre pela CLI**,
+e não sai de `git push`. O `.vercel/project.json` liga a pasta ao projeto da
+Vercel; não há vínculo com repositório do lado de lá. Domínio:
+`obra-nova-two.vercel.app`. Projeto Supabase: `wnzdsqpsowxmistbnhca`.
+
+**Existe git remote:** `origin` aponta para
+`github.com/rodrigoplimafreire/obra-nova`, e `main` o acompanha. Este documento
+dizia o contrário até 16/09/2026, quando o remote foi conferido. O que continua
+verdade é a outra metade da frase: publicar no GitHub não publica na Vercel, e
+as duas coisas são independentes.
 
 **Pedir autorização antes de todo deploy.** É regra do cliente.
 

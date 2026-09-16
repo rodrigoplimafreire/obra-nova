@@ -49,8 +49,12 @@ deploy na Vercel. Sem Vite, sem SPA, sem estado global.
 > de escrever código de framework. *(Vale igual para o Codex.)*
 
 - Projeto Supabase: `wnzdsqpsowxmistbnhca`, região São Paulo.
-- Deploy: `npx vercel --prod --yes` na raiz. **Não há git remote** — o deploy é
-  sempre pela CLI. Domínio: `obra-nova-two.vercel.app`.
+- Deploy: `npx vercel --prod --yes` na raiz. **Sempre pela CLI** — não sai de
+  `git push`, e o `.vercel/project.json` não tem vínculo com repositório.
+  Domínio: `obra-nova-two.vercel.app`.
+- **Há git remote:** `origin` em `github.com/rodrigoplimafreire/obra-nova`, com
+  `main` acompanhando. Publicar no GitHub e publicar na Vercel são atos
+  separados; um não dispara o outro.
 - **Pedir autorização antes de todo deploy.** É regra do cliente.
 - Antes de qualquer deploy: `npx tsc --noEmit` e `npm run build`.
 - **Sem testes automatizados.** A verificação é `tsc`, `eslint`, `build`, os
