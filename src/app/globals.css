@@ -850,6 +850,10 @@
     font-family: var(--font-mono);
     font-size: 8pt;
     color: #5f5a51;
+    /* Sem isto o separador fica pendurado no fim da linha quando o nome do
+       cliente e comprido: "Condominio Parque das Flores ·" numa linha e o
+       "#42" sozinho na de baixo. */
+    white-space: nowrap;
   }
 
   /* Faixa de grupo: o estado do funil vira um degrau na tabela em vez de uma
@@ -883,6 +887,7 @@
     font-size: 8pt;
     font-weight: 700;
     color: #14181a;
+    white-space: nowrap;
   }
 
   .impressao-lista .resumo {
