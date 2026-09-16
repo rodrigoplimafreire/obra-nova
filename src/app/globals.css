@@ -852,6 +852,39 @@
     color: #5f5a51;
   }
 
+  /* Faixa de grupo: o estado do funil vira um degrau na tabela em vez de uma
+     coluna que rola de lado. Vai junto com a primeira linha do grupo — um
+     cabeçalho sozinho no pé da folha não diz de que grupo ele é. */
+  .impressao-lista th.grupo {
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    color: #14181a;
+    background: #f1ece4;
+    border-bottom: 1px solid #14181a;
+    padding: 7px 8px;
+  }
+  .impressao-lista tbody:first-of-type th.grupo {
+    padding-top: 7px;
+  }
+  .impressao-lista tbody th.grupo {
+    padding-top: 16px;
+    /* Cabeçalho de grupo no pé da folha, com os pedidos na página seguinte,
+       não diz de que grupo ele é. */
+    break-after: avoid;
+  }
+
+  /* O "parado" é a única coisa da folha que pede ação. Sai em negrito e não
+     em cor: a folha é impressa em preto e branco. */
+  .impressao-lista .alerta {
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    font-weight: 700;
+    color: #14181a;
+  }
+
   .impressao-lista .resumo {
     display: flex;
     gap: 28px;

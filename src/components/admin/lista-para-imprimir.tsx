@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { moeda } from "@/lib/orcamento/formato";
 import { ROTULO_SITUACAO } from "./publicacao-do-orcamento";
@@ -39,8 +39,7 @@ export function ListaParaImprimir({
    * como ancestrais — e esconder o ancestral esconde o filho junto, por mais
    * `display: block` que se ponha nele.
    */
-  const [montado, setMontado] = useState(false);
-  useEffect(() => setMontado(true), []);
+  const montado = useMontado();
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -117,5 +116,19 @@ export function ListaParaImprimir({
       </footer>
     </div>,
     document.body,
+  );
+}
+
+/**
+ * `false` no servidor e no primeiro render, `true` depois de hidratar.
+ *
+ * O portal precisa do `document`, que só existe no navegador; devolver o
+ * mesmo `false` dos dois lados é o que impede o erro de hidratação.
+ */
+function useMontado(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
   );
 }

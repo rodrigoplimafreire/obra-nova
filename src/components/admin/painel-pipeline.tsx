@@ -9,6 +9,7 @@ import { CampoDeTelefone } from "@/components/comum/campos";
 import { Girando } from "@/components/comum/esqueleto";
 import { moeda } from "@/lib/orcamento/formato";
 import { criarPedido } from "@/lib/pipeline/acoes";
+import { PipelineParaImprimir } from "./pipeline-para-imprimir";
 import {
   FUNIL,
   ORIGENS,
@@ -36,9 +37,12 @@ import {
  */
 export function PainelDePipeline({
   pedidos,
+  empreiteira,
   semCustoHora,
 }: {
   pedidos: PedidoNoQuadro[];
+  /** Só serve ao cabeçalho da folha impressa: de quem é esta posição. */
+  empreiteira: string;
   /** A empreiteira ainda não calculou o custo/hora. */
   semCustoHora: boolean;
 }) {
@@ -80,8 +84,27 @@ export function PainelDePipeline({
               <Mais />
               <span className="hidden sm:inline">Novo pedido</span>
             </button>
+            {/* A posição do funil no papel, que é o que vai para o Reginato
+                toda semana. Ícone e não rótulo: no celular a faixa amarela do
+                "Novo pedido" já ocupa o que dá para ocupar. */}
+            {pedidos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                aria-label="Imprimir a posição do funil"
+                className="btn btn-secundario btn-icone"
+              >
+                <Impressora />
+              </button>
+            )}
           </div>
         }
+      />
+
+      <PipelineParaImprimir
+        pedidos={pedidos}
+        empreiteira={empreiteira}
+        semCustoHora={semCustoHora}
       />
 
       <Conteudo>
@@ -505,6 +528,23 @@ function Mais() {
       strokeLinecap="round"
     >
       <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function Impressora() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="h-4 w-4 fill-none stroke-current"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 9V3h12v6" />
+      <rect x="4" y="9" width="16" height="8" rx="1.5" />
+      <path d="M6 14h12v7H6Z" />
     </svg>
   );
 }
