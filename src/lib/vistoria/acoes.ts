@@ -270,6 +270,107 @@ export async function removerAmbiente(id: string): Promise<Resultado> {
 
 /* --------------------------------------------------------------- medições */
 
+/**
+ * Incluir um serviço com um toque, sem formulário e sem diálogo.
+ *
+ * É a ação que sustenta a captura contínua da tela do ambiente. O caminho
+ * antigo — abrir diálogo, escolher disciplina, preencher medida, confirmar,
+ * fechar — custava oito toques por item e uma ida e volta de modal. Numa
+ * visita de três cômodos e dez serviços isso era o trabalho inteiro.
+ *
+ * Aqui o serviço nasce **só com o nome**, que é o único campo obrigatório no
+ * banco. Medida, unidade e observação continuam opcionais e entram depois, na
+ * folha de medição, quando a trena já saiu do bolso. É a ordem em que a visita
+ * acontece de verdade: primeiro se enxerga o que tem para fazer, depois se
+ * mede.
+ */
+export async function adicionarServico(
+  ambienteId: string,
+  servico: string,
+): Promise<Resultado> {
+  const vistoriaId = await ambienteDaOrg(ambienteId);
+  if (!vistoriaId) return { ok: false, erro: "Ambiente inválido." };
+
+  const nome = servico.trim();
+  if (nome.length < 2) return { ok: false, erro: "Escreva o serviço." };
+
+  const { error } = await supabaseAdmin()
+    .from("vist_medicoes")
+    .insert({
+      ambiente_id: ambienteId,
+      position: await proximaPosicaoDeMedicao(ambienteId),
+      servico: nome.slice(0, 200),
+    });
+
+  if (error) return { ok: false, erro: error.message };
+
+  revalidar(vistoriaId);
+  return { ok: true };
+}
+
+/**
+ * Gravar a medida de um item que já existe.
+ *
+ * Separada de `salvarMedicao` porque a folha de medição não é um formulário
+ * de cadastro: o item já nasceu, e o que muda ali são números. Passar por
+ * `FormData` obrigaria a tela a reenviar o serviço e a observação a cada
+ * ajuste de medida — dado que ela não está editando e que não deveria ter
+ * como estragar.
+ *
+ * A quantidade chega **calculada pela tela**, e é de propósito: o modo de
+ * medição vive no cliente (ver `medicao.ts`), e recalcular aqui obrigaria a
+ * duplicar as sete fórmulas no servidor. Duas cópias da mesma conta é como
+ * elas divergem num centavo — a mesma razão de `orc_itens.total` ser coluna
+ * gerada em vez de conta em código.
+ */
+export async function gravarMedida(
+  medicaoId: string,
+  campos: {
+    servico: string;
+    comprimento: number | null;
+    largura: number | null;
+    altura: number | null;
+    quantidade: number | null;
+    unidade: string | null;
+    observacao: string | null;
+  },
+): Promise<Resultado> {
+  const sb = supabaseAdmin();
+
+  const { data: medicao } = await sb
+    .from("vist_medicoes")
+    .select("ambiente_id")
+    .eq("id", medicaoId)
+    .maybeSingle();
+  if (!medicao) return { ok: false, erro: "Serviço inválido." };
+
+  const vistoriaId = await ambienteDaOrg(medicao.ambiente_id);
+  if (!vistoriaId) return { ok: false, erro: "Ambiente inválido." };
+
+  const servico = campos.servico.trim();
+  if (servico.length < 2) return { ok: false, erro: "Escreva o serviço." };
+
+  const negativo = (v: number | null) => v !== null && v < 0;
+  if (
+    negativo(campos.comprimento) ||
+    negativo(campos.largura) ||
+    negativo(campos.altura) ||
+    negativo(campos.quantidade)
+  ) {
+    return { ok: false, erro: "Medida não pode ser negativa." };
+  }
+
+  const { error } = await sb
+    .from("vist_medicoes")
+    .update({ ...campos, servico: servico.slice(0, 200) })
+    .eq("id", medicaoId);
+
+  if (error) return { ok: false, erro: error.message };
+
+  revalidar(vistoriaId);
+  return { ok: true };
+}
+
 export async function salvarMedicao(
   _anterior: Resultado | null,
   form: FormData,

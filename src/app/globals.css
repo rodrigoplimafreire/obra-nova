@@ -387,6 +387,142 @@
     .dialogo-estreito .dialogo-painel {
       max-width: 30rem;
     }
+    .dialogo-largo .dialogo-painel {
+      max-width: 58rem;
+    }
+  }
+
+  /* ---- Vistoria: a folha de medição e a captura contínua ----------------
+     O levantamento acontece em pé, com uma mão, dentro do cômodo. As regras
+     abaixo existem para essa postura, não para a mesa. */
+
+  /* A barra de captura gruda no fim do conteúdo: rolando ou não, o campo de
+     incluir serviço fica onde o polegar alcança. `sticky` e não `fixed` —
+     fixo sairia do fluxo e taparia a última linha da lista, que é justamente
+     a que a pessoa acabou de incluir e quer conferir. */
+  .captura {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -16px -16px;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+    background: var(--color-papel);
+    border-top: 1px solid var(--color-nevoa);
+  }
+  @media (min-width: 768px) {
+    .captura {
+      position: static;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border-top: none;
+    }
+  }
+
+  /* Pastilha: alvo de 44px que é a unidade de interação da visita inteira —
+     cômodo, serviço sugerido e modo de medição usam a mesma. */
+  .pastilha {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--color-nevoa);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.875rem;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+  .pastilha:hover:not(:disabled) {
+    border-color: var(--color-cinza-200);
+    background: var(--color-papel-fundo);
+  }
+  .pastilha:disabled {
+    opacity: 0.55;
+  }
+  /* Selecionado é grafite cheio, não amarelo: o amarelo é o acento único da
+     tela e já está na ação principal. Duas cores de destaque competindo fazem
+     a pessoa procurar qual é a saída. */
+  .pastilha-ativa,
+  .pastilha-ativa:hover:not(:disabled) {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-cal);
+  }
+
+  /* A linha de serviço é toda clicável: o alvo é a linha inteira, não um
+     botão "Editar" de 60px ao lado. Em pé, mirar num botão pequeno é o que
+     faz errar. */
+  .linha-servico {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-nevoa);
+    border-radius: var(--radius-cartao);
+    background: #fff;
+    text-align: left;
+    transition: border-color 120ms ease;
+  }
+  .linha-servico:hover {
+    border-color: var(--color-cinza-200);
+  }
+
+  /* O microfone. Grande de propósito: é a ação que substitui dez digitações,
+     e é a que se aperta sem olhar. */
+  .botao-microfone {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid var(--color-nevoa);
+    background: #fff;
+    transition:
+      background 120ms ease,
+      border-color 120ms ease;
+  }
+  .botao-microfone-gravando {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-cal);
+  }
+  /* Pulsa enquanto grava. É o sinal de que o aparelho está ouvindo, e o
+     motivo é concreto: no canteiro não dá para confiar no silêncio da tela. */
+  .botao-microfone-gravando::after {
+    content: "";
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    border: 2px solid var(--color-tinta);
+    animation: pulso-microfone 1.4s ease-out infinite;
+  }
+  @keyframes pulso-microfone {
+    from {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.45);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .botao-microfone-gravando::after {
+      animation: none;
+      opacity: 0.4;
+    }
   }
 
   /* A alça só existe no celular: é o sinal de "isto sobe e desce". */

@@ -46,3 +46,8 @@ next-env.d.ts
 
 # Saida do minerador: descricoes e precos reais da RD. O repo e publico.
 servicos-candidatos.md
+
+# Worktrees de sessao do Claude Code: uma copia inteira do repo dentro do
+# repo. O launch.json ao lado fica versionado de proposito -- e como se sobe o
+# servidor de desenvolvimento.
+.claude/worktrees/

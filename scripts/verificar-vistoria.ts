@@ -14,7 +14,13 @@
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { areaDe } from "../src/lib/vistoria/constantes";
+import { areaDe, type Medicao } from "../src/lib/vistoria/constantes";
+import {
+  calcular,
+  descontoDe,
+  modoDe,
+  type Modo,
+} from "../src/lib/vistoria/medicao";
 
 config({ path: ".env.local" });
 
@@ -43,6 +49,100 @@ async function main() {
   ok(areaDe(null, null, null) === null, "sem medida nenhuma devolve null");
   ok(areaDe(0, 3, null) === null, "zero não vira área", "não é medida, é vazio");
   ok(areaDe(3.33, 3, null) === 9.99, "arredonda para dois decimais");
+
+  /**
+   * Os sete modos de medição.
+   *
+   * Aqui é onde erro vira dinheiro: a quantidade que sai destas contas é a
+   * que entra em `orc_itens.quantidade` e multiplica o preço unitário no
+   * documento do cliente. Uma vírgula fora de lugar não aparece na tela —
+   * aparece na fatura.
+   */
+  console.log("\nOs modos de medição (funções puras)");
+
+  const dim = (
+    comprimento: number | null,
+    largura: number | null = null,
+    altura: number | null = null,
+    desconto: number | null = null,
+  ) => ({ comprimento, largura, altura, desconto });
+
+  ok(calcular("piso", dim(4, 3)) === 12, "piso: 4 × 3 = 12 m²");
+  ok(calcular("parede", dim(4, null, 2.8)) === 11.2, "parede: 4 × 2,8 = 11,2 m²");
+  ok(
+    calcular("parede", dim(4, null, 2.8, 2)) === 9.2,
+    "parede com vão: 11,2 − 2 = 9,2 m²",
+  );
+  ok(calcular("linear", dim(12)) === 12, "metro corrido: 12 m");
+  ok(calcular("volume", dim(4, 3, 0.05)) === 0.6, "volume: 4 × 3 × 0,05 = 0,6 m³");
+  ok(calcular("contagem", dim(null)) === null, "contagem não calcula: é digitada");
+  ok(calcular("quantidade", dim(null)) === null, "quantidade não calcula");
+  ok(calcular("verba", dim(null)) === null, "verba não calcula");
+
+  ok(
+    calcular("piso", dim(4, null)) === null,
+    "medida faltando não vira número",
+    "nunca zero por ausência",
+  );
+  ok(
+    calcular("parede", dim(4, null, 2.8, 99)) === null,
+    "desconto maior que a parede é recusado",
+    "resultado negativo não entra",
+  );
+
+  /**
+   * A ida e volta do modo.
+   *
+   * O modo não tem coluna: é deduzido do que está gravado. Se a dedução
+   * errar, um item de parede reabre como piso e a conta muda sozinha na
+   * segunda edição — o tipo de bug que ninguém vê acontecer.
+   */
+  console.log("\nO modo deduzido volta igual ao escolhido");
+
+  const linha = (p: Partial<Medicao>): Medicao => ({
+    id: "x",
+    position: 1,
+    servico: "teste",
+    comprimento: null,
+    largura: null,
+    altura: null,
+    quantidade: null,
+    unidade: null,
+    observacao: null,
+    ...p,
+  });
+
+  const ida: [Modo, Medicao][] = [
+    ["piso", linha({ comprimento: 4, largura: 3, quantidade: 12, unidade: "m²" })],
+    ["parede", linha({ comprimento: 4, altura: 2.8, quantidade: 11.2, unidade: "m²" })],
+    ["linear", linha({ comprimento: 12, quantidade: 12, unidade: "m" })],
+    ["volume", linha({ comprimento: 4, largura: 3, altura: 0.05, quantidade: 0.6, unidade: "m³" })],
+    ["contagem", linha({ quantidade: 6, unidade: "un" })],
+    ["verba", linha({ quantidade: 1, unidade: "vb" })],
+    ["quantidade", linha({ quantidade: 20, unidade: "sc" })],
+  ];
+
+  for (const [esperado, m] of ida) {
+    ok(modoDe(m) === esperado, `${esperado} volta como ${esperado}`, `veio ${modoDe(m)}`);
+  }
+
+  ok(
+    descontoDe(
+      linha({ comprimento: 4, altura: 2.8, quantidade: 9.2, unidade: "m²" }),
+    ) === 2,
+    "o desconto de vão sai da diferença",
+    "11,2 cheia − 9,2 gravada = 2",
+  );
+  ok(
+    descontoDe(
+      linha({ comprimento: 4, altura: 2.8, quantidade: 11.2, unidade: "m²" }),
+    ) === null,
+    "parede sem vão não inventa desconto",
+  );
+  ok(
+    descontoDe(linha({ comprimento: 4, largura: 3, quantidade: 10 })) === null,
+    "desconto só existe em parede",
+  );
 
   const { data: org } = await sb.from("orgs").select("id").limit(1).maybeSingle();
   if (!org) {

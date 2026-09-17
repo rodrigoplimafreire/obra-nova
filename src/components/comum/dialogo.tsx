@@ -26,6 +26,7 @@ export function Dialogo({
   titulo,
   descricao,
   estreito = false,
+  largo = false,
   children,
 }: {
   aberto: boolean;
@@ -34,6 +35,15 @@ export function Dialogo({
   descricao?: string;
   /** Confirmações e formulários curtos ficam mais legíveis estreitos. */
   estreito?: boolean;
+  /**
+   * Para conteúdo que é tabela, não formulário.
+   *
+   * A folha de conferência da voz lista serviço, medida e unidade lado a lado;
+   * em 44rem as três colunas brigam e a medida quebra em duas linhas, o que
+   * atrapalha justamente a leitura que a conferência existe para fazer. No
+   * celular não muda nada: lá toda folha ocupa a largura da tela.
+   */
+  largo?: boolean;
   children: React.ReactNode;
 }) {
   const referencia = useRef<HTMLDialogElement>(null);
@@ -103,7 +113,7 @@ export function Dialogo({
       onClick={(e) => {
         if (e.target === referencia.current) aoFechar();
       }}
-      className={`dialogo ${estreito ? "dialogo-estreito" : ""}`}
+      className={`dialogo ${estreito ? "dialogo-estreito" : ""} ${largo ? "dialogo-largo" : ""}`}
     >
       <div className="dialogo-painel">
         <div className="dialogo-alca" aria-hidden>
