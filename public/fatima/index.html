@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#0A0A0A">
+<title>RD Engenharia · Áreas externas — Dona Fátima</title>
+<link rel="icon" href="/marcas/rd/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&display=swap">
+<!-- As folhas da marca são canônicas e não se editam: brand.css para a tela,
+     print.css para o A4. Ver src/lib/orcamento/marcas.ts. -->
+<link rel="stylesheet" href="/marcas/rd/brand.css">
+<link rel="stylesheet" href="/marcas/rd/print.css" media="print">
+<style>
+  /* O que a folha da marca não cobre nesta proposta: a faixa de preço (que é
+     faixa, não número fechado), a grade de condições e a etiqueta de pendência.
+     Fica aqui, e não no brand.css, pelo mesmo motivo do documento do cliente:
+     a folha da marca é canônica e não se edita. */
+  .faixa{margin-top:22px;background:var(--accent);color:#0a0a0a;border-radius:4px;padding:26px 30px;
+    display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px}
+  .faixa .fx-label{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+  .faixa .fx-value{font-family:var(--archivo);font-weight:800;font-size:clamp(26px,4.4vw,40px);letter-spacing:-.03em;line-height:1}
+  .faixa .fx-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;opacity:.78}
+  .pend{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    /* #c8501f sobre o creme da planilha dá 4,0:1, e isto é texto de 10px —
+       abaixo do mínimo. A borda continua laranja; o texto escurece. */
+    color:#8a3a12;border:1px dashed var(--accent);border-radius:2px;padding:2px 6px;white-space:nowrap}
+  .formula{margin-top:20px;background:var(--ink-2);border:1px solid var(--accent);border-radius:5px;padding:22px 24px}
+  .formula .fm-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .formula .fm-eq{font-family:var(--mono);font-size:14.5px;color:#fff;line-height:1.6;letter-spacing:.01em}
+  .cond-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:22px}
+  @media(min-width:720px){.cond-grid{grid-template-columns:repeat(2,1fr)}}
+  .cond{border:1px solid var(--line);border-radius:5px;background:var(--ink-2);padding:18px 20px}
+  .cond .cn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .cond .cv{font-size:14.5px;color:#fff;line-height:1.5}
+  .cond-sub{font-family:var(--archivo);font-weight:700;font-size:16px;color:#fff;margin:34px 0 12px}
+  .clausulas{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+  .clausulas li{position:relative;padding-left:22px;font-size:14.5px;line-height:1.6;color:var(--fog)}
+  .clausulas li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border:1px solid var(--accent);border-radius:1px}
+  .aconfirmar{color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  @media print{
+    .faixa,.formula{background:#f6f4ef !important;border-color:#bbb !important;color:#111 !important}
+    .faixa .fx-value,.faixa .fx-label,.formula .fm-eq,.cond .cv{color:#0a0a0a !important}
+    .cond{background:#f6f4ef !important;border-color:#ddd8c8 !important}
+    .clausulas li{color:#333 !important}
+    .pend{color:#8a3a12 !important;border-color:#8a3a12 !important}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="nav-logo" href="#topo"><img src="/marcas/rd/logo-hor-laranja.png" alt="RD Engenharia"></a>
+    <ul>
+      <li class="nav-hide"><a href="#escopo">Escopo</a></li>
+      <li class="nav-hide"><a href="#planilha">Planilha</a></li>
+      <li class="nav-hide"><a href="#valores">Valores</a></li>
+      <li class="nav-hide"><a href="#condicoes">Condições</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header id="topo">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="hero-doc">
+          <span>Orçamento preliminar revisado</span>
+          <b>Versão interna · revisão de Reginato</b>
+          <span>17/09/2026</span>
+        </p>
+        <h1>Áreas externas da residência da <em>Dona Fátima</em></h1>
+        <p class="lede">
+          Recuperação e manutenção das áreas externas — vigas, granito, pintura,
+          colunas, piscina, deck, pergolado e entrada. Contratação de
+          mão de obra; os materiais são orçados à parte.
+        </p>
+        <div class="meta">
+          <span class="tag">Mão de obra</span>
+          <span class="tag">Materiais à parte</span>
+          <span class="tag">19 frentes de serviço</span>
+          <span class="tag">Preço a fechar</span>
+        </div>
+      </div>
+
+      <aside class="spec-card">
+        <div class="sc-top"><b>Identificação</b></div>
+        <div class="sc-body">
+          <div class="sc-row"><span class="k">Cliente</span><span class="v">Dona Fátima</span></div>
+          <div class="sc-row"><span class="k">Endereço</span><span class="v aconfirmar">A preencher</span></div>
+          <div class="sc-row"><span class="k">Contratada</span><span class="v">RD Engenharia</span></div>
+          <div class="sc-row"><span class="k">CNPJ</span><span class="v aconfirmar">A preencher</span></div>
+          <div class="sc-row"><span class="k">Resp. técnico</span><span class="v aconfirmar">A preencher</span></div>
+          <div class="sc-row"><span class="k">Modalidade</span><span class="v">Mão de obra</span></div>
+          <div class="sc-row"><span class="k">Situação</span><span class="v">Preliminar · em revisão</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</header>
+
+<!-- 1 · APRESENTAÇÃO & ESCOPO -->
+<section id="escopo">
+  <div class="wrap">
+    <p class="kicker"><span class="s-num">01</span> Apresentação &amp; escopo dos serviços</p>
+    <h2>O que esta proposta compreende</h2>
+    <p class="intro">
+      Esta proposta trata da <strong>recuperação e manutenção das áreas externas</strong>
+      da residência da Dona Fátima, no endereço <span class="aconfirmar">a preencher</span>.
+      O escopo compreende, em traços largos: tratamento das vigas, retirada e
+      regularização do granito Verde Ubatuba nas faces atingidas, preparação e
+      pintura das paredes externas e das quatro colunas, revestimento das colunas,
+      pintura das grades, limpeza das pastilhas da piscina e do deck, intervenção
+      no pergolado e no espaço de terra, serviços na bancada, na prateleira e na
+      laje sobre ela, e recuperação dos degraus da entrada principal.
+    </p>
+    <p class="intro">
+      <strong>Esta é uma versão interna, para revisão de Reginato.</strong> O
+      subtotal anterior de R$ 25.059,54 fica substituído por esta versão: ele
+      misturava materiais, mão de obra e previsão de margem, e por isso não serve
+      de base para aplicar os percentuais definidos agora.
+    </p>
+  </div>
+</section>
+
+<!-- 2 · PLANILHA DISCRIMINADA POR ITEM -->
+<section id="planilha">
+  <div class="wrap">
+    <p class="kicker"><span class="s-num">02</span> Planilha discriminada por item</p>
+    <h2>Serviços previstos e quantitativos</h2>
+    <p class="intro">
+      Todos os serviços levantados estão relacionados abaixo, item por item. As
+      quantidades marcadas como pendência precisam ser conferidas antes de
+      fechar o preço. <strong>Nenhum preço unitário foi estimado</strong> — a
+      composição entra depois da revisão de Reginato.
+    </p>
+
+    <div class="cost-wrap">
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th class="ct-num">Quantidade levantada</th>
+            <th>Un.</th>
+            <th>Observação para fechamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="ct-group"><td colspan="4"><span class="gn">A</span>Estrutura e granito</td></tr>
+          <tr>
+            <td>Tratamento das vigas</td>
+            <td class="num">9,53 <span class="pend">parcial</span></td>
+            <td class="unit">m</td>
+            <td>Completar as medidas e definir extensão e tipo de recuperação.</td>
+          </tr>
+          <tr>
+            <td>Retirada do granito Verde Ubatuba</td>
+            <td class="num">13,96</td>
+            <td class="unit">m²</td>
+            <td>Comprimento de 19,94 m × altura de 0,70 m.</td>
+          </tr>
+          <tr>
+            <td>Intervenção nas 13 placas de granito soltas</td>
+            <td class="num">3,64</td>
+            <td class="unit">m²</td>
+            <td>Confirmar se já fazem parte dos 13,96 m² acima e se haverá retirada, reassentamento ou substituição.</td>
+          </tr>
+          <tr>
+            <td>Regularização das superfícies após a retirada do granito</td>
+            <td class="num">até 13,96 <span class="pend">conferir</span></td>
+            <td class="unit">m²</td>
+            <td>Definir acabamento e condição da base; não confundir com tratamento estrutural.</td>
+          </tr>
+          <tr>
+            <td>Demolição da laje sobre a bancada</td>
+            <td class="num">1,23 <span class="pend">projeção</span></td>
+            <td class="unit">m²</td>
+            <td>Conferir espessura, ligação com a estrutura e necessidade de escoramento.</td>
+          </tr>
+
+          <tr class="ct-group"><td colspan="4"><span class="gn">B</span>Pintura e revestimento</td></tr>
+          <tr>
+            <td>Preparação e pintura das paredes — frente, piscina, superiores, entrada, fundos e lavanderia</td>
+            <td class="num">239,33 <span class="pend">bruto</span></td>
+            <td class="unit">m²</td>
+            <td>Conferir vãos, sobreposições e trechos com medidas incompletas.</td>
+          </tr>
+          <tr>
+            <td>Preparação e pintura das quatro colunas</td>
+            <td class="num">até 46,60</td>
+            <td class="unit">m²</td>
+            <td>Confirmar medidas e faces expostas; descontar a parte que receber revestimento.</td>
+          </tr>
+          <tr>
+            <td>Revestimento das quatro colunas, até 3,27 m</td>
+            <td class="num">23,28 <span class="pend">estimado</span></td>
+            <td class="unit">m²</td>
+            <td>Cálculo com seção de 0,64 × 0,25 m e quatro faces; definir o material.</td>
+          </tr>
+          <tr>
+            <td>Pintura da parede acima do telhado dos fundos</td>
+            <td class="num"><span class="pend">a medir</span></td>
+            <td class="unit">m²</td>
+            <td>Confirmar se já está incluída na área dos fundos.</td>
+          </tr>
+          <tr>
+            <td>Pintura das paredes da caixa-d&rsquo;água</td>
+            <td class="num"><span class="pend">a confirmar</span></td>
+            <td class="unit">m²</td>
+            <td>Seriam 64 m² apenas se forem quatro faces de 2 m com altura pintável de 8 m.</td>
+          </tr>
+          <tr>
+            <td>Preparação e pintura das grades das janelas</td>
+            <td class="num">3</td>
+            <td class="unit">un.</td>
+            <td>Duas grades e uma oval; faltam dimensões e avaliação do estado.</td>
+          </tr>
+          <tr>
+            <td>Complemento de revestimento abaixo da pia, junto ao ralo</td>
+            <td class="num"><span class="pend">a medir</span></td>
+            <td class="unit">m²</td>
+            <td>Definir extensão e eventual ajuste do ralo.</td>
+          </tr>
+
+          <tr class="ct-group"><td colspan="4"><span class="gn">C</span>Piscina, deck e área de lazer</td></tr>
+          <tr>
+            <td>Limpeza das pastilhas da piscina</td>
+            <td class="num">6,07</td>
+            <td class="unit">m²</td>
+            <td>2,10 × 2,89 m.</td>
+          </tr>
+          <tr>
+            <td>Limpeza do revestimento do deck</td>
+            <td class="num">13,00</td>
+            <td class="unit">m²</td>
+            <td>4,10 × 3,17 m.</td>
+          </tr>
+          <tr>
+            <td>Serviço no pergolado de madeira</td>
+            <td class="num">12,43 <span class="pend">projeção</span></td>
+            <td class="unit">m²</td>
+            <td>Definir a intervenção e medir a superfície efetiva das peças de madeira.</td>
+          </tr>
+          <tr>
+            <td>Serviço no espaço de terra</td>
+            <td class="num">26,91 <span class="pend">estimado</span></td>
+            <td class="unit">m²</td>
+            <td>Confirmar a geometria e se será piso, contrapiso, drenagem ou outro serviço.</td>
+          </tr>
+
+          <tr class="ct-group"><td colspan="4"><span class="gn">D</span>Bancada, prateleira e entrada</td></tr>
+          <tr>
+            <td>Serviço na bancada da pia</td>
+            <td class="num">1,17</td>
+            <td class="unit">m²</td>
+            <td>Definir instalação, substituição, recuperação ou limpeza.</td>
+          </tr>
+          <tr>
+            <td>Serviço na prateleira</td>
+            <td class="num">0,78</td>
+            <td class="unit">m²</td>
+            <td>Definir material, suportes e intervenção.</td>
+          </tr>
+          <tr>
+            <td>Serviço nos degraus da entrada principal</td>
+            <td class="num">3,89 <span class="pend">projeção</span></td>
+            <td class="unit">m²</td>
+            <td>Definir a intervenção e medir pisos e espelhos dos degraus.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="total-note">
+      <b>As colunas continuam sendo a pendência mais importante:</b> foram anotadas
+      duas medidas diferentes. Mantida a hipótese de serem as mesmas quatro colunas,
+      os quantitativos de pintura e de revestimento não podem ser somados
+      integralmente sobre as mesmas superfícies.
+    </p>
+  </div>
+</section>
+
+<!-- 3 · VALORES E FORMA DE COMPOSIÇÃO -->
+<section id="valores">
+  <div class="wrap">
+    <p class="kicker"><span class="s-num">03</span> Valores &amp; forma de composição</p>
+    <h2>Como o preço será montado</h2>
+
+    <div class="faixa">
+      <div>
+        <div class="fx-label">Mão de obra · estimativa global de Reginato</div>
+        <div class="fx-sub">Faixa comercial, a conferir pela soma dos serviços</div>
+      </div>
+      <div class="fx-value">R$ 40.000 a R$ 50.000</div>
+    </div>
+
+    <div class="cost-wrap">
+      <table class="cost-table">
+        <thead>
+          <tr><th>Componente</th><th>Tratamento nesta versão</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mão de obra — estimativa global de Reginato</td>
+            <td class="total">R$ 40.000 a R$ 50.000</td>
+          </tr>
+          <tr>
+            <td>Valores-base de mão de obra por serviço</td>
+            <td>A calcular com o escopo definido e as referências de custo identificadas.</td>
+          </tr>
+          <tr>
+            <td>Acréscimo por complexidade e margem da RD</td>
+            <td>Reginato define <b>por serviço</b> na revisão.</td>
+          </tr>
+          <tr>
+            <td>Materiais</td>
+            <td>Orçamento separado, acrescentado se o fornecimento for contratado com a RD.</td>
+          </tr>
+          <tr>
+            <td>Andaimes, equipamentos, fretes e descarte de entulho</td>
+            <td>Separar e confirmar se Reginato já os considerou na faixa informada.</td>
+          </tr>
+          <tr>
+            <td>Avaliação e documentação de responsabilidade técnica</td>
+            <td>Definir escopo, custo e inclusão.</td>
+          </tr>
+          <tr>
+            <td>Preço final fechado</td>
+            <td class="total">Pendente da composição e da revisão dos itens.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="formula">
+      <div class="fm-tag">Composição detalhada</div>
+      <p class="fm-eq">mão de obra do serviço = quantidade × preço-base unitário × (1 + acréscimo de Reginato)</p>
+    </div>
+
+    <p class="total-note" style="margin-top:18px">
+      <b>Não será aplicado outro percentual sobre os R$ 40 mil a R$ 50 mil.</b>
+      Essa faixa é a estimativa comercial de Reginato, a conferir pela soma dos
+      serviços. O acréscimo já contempla a margem da RD; na revisão é preciso
+      verificar quais despesas também estão cobertas por ele.
+    </p>
+  </div>
+</section>
+
+<!-- 4 · DIRETRIZES TÉCNICAS & NORMAS -->
+<section id="normas">
+  <div class="wrap">
+    <p class="kicker"><span class="s-num">04</span> Diretrizes técnicas &amp; normas aplicáveis</p>
+    <h2>Como os serviços serão executados</h2>
+    <p class="intro">
+      Os serviços seguem as normas técnicas brasileiras da ABNT, assegurando
+      solidez, estanqueidade e durabilidade. Para as disciplinas presentes neste
+      escopo aplicam-se, entre outras:
+    </p>
+    <ul class="clausulas">
+      <li><b>ABNT NBR 16280</b> — reforma em edificações: sistema de gestão de reformas.</li>
+      <li><b>ABNT NBR 15575</b> — desempenho de edificações habitacionais.</li>
+      <li><b>ABNT NBR 6118</b> e <b>NBR 14931</b> — projeto e execução de estruturas de concreto, aplicáveis ao tratamento das vigas e à demolição da laje sobre a bancada.</li>
+      <li><b>ABNT NBR 7200</b> — execução de revestimento de paredes e tetos com argamassas inorgânicas, para a regularização após a retirada do granito.</li>
+      <li><b>ABNT NBR 13755</b> — revestimentos cerâmicos de fachada e paredes externas com argamassa colante, para o revestimento das colunas.</li>
+      <li><b>ABNT NBR 13245</b> — pintura de edificações não industriais: preparo das superfícies e aplicação.</li>
+      <li><b>ABNT NBR 9575</b> e <b>NBR 9574</b> — projeto e execução de impermeabilização, onde a recuperação exigir.</li>
+      <li><b>ABNT NBR 12655</b> — concreto: preparo, controle e recebimento, nos reparos estruturais.</li>
+      <li><b>ABNT NBR 10004</b> — classificação e destinação dos resíduos da obra.</li>
+    </ul>
+    <p class="total-note" style="margin-top:22px">
+      <b>Segurança do trabalho:</b> NR-18 e NR-35 para os serviços em altura —
+      colunas, paredes superiores, caixa-d&rsquo;água e parede acima do telhado dos
+      fundos. O custo de andaimes e de proteção coletiva está entre os itens a
+      separar na seção 03.
+    </p>
+  </div>
+</section>
+
+<!-- 5 · MATERIAIS, CONDIÇÕES COMERCIAIS E GARANTIAS -->
+<section id="condicoes">
+  <div class="wrap">
+    <p class="kicker"><span class="s-num">05</span> Materiais, condições comerciais &amp; garantias</p>
+    <h2>Materiais, pagamento e garantias</h2>
+
+    <p class="intro">
+      Se a Dona Fátima contratar <strong>somente a mão de obra</strong>, os
+      materiais ficam sob responsabilidade dela, conforme as especificações e a
+      programação acordadas com a RD. Se contratar também o fornecimento, os
+      materiais serão apresentados em orçamento separado, para aprovação.
+    </p>
+
+    <div class="cond-grid">
+      <div class="cond">
+        <div class="cn">Forma de pagamento — proposta</div>
+        <div class="cv">
+          30% na mobilização · 40% por medição · 30% na entrega.
+          <br><span class="aconfirmar">Segue apenas como sugestão</span> — será
+          aplicada ao valor final aprovado.
+        </div>
+      </div>
+      <div class="cond">
+        <div class="cn">Prazo de execução</div>
+        <div class="cv">
+          <span class="aconfirmar">A definir</span> — depende da definição do
+          tratamento das vigas, dos revestimentos e dos acessos. Sairá em semanas
+          e em dias, corridos e úteis.
+        </div>
+      </div>
+      <div class="cond">
+        <div class="cn">Horário de trabalho</div>
+        <div class="cv"><span class="aconfirmar">A preencher</span></div>
+      </div>
+      <div class="cond">
+        <div class="cn">Validade da proposta</div>
+        <div class="cv">
+          20 dias, a contar da versão aprovada por Reginato.
+          <br><span class="aconfirmar">Esta versão interna não tem validade comercial</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="cond-sub">Garantias legais e responsabilidade técnica</h3>
+    <ul class="clausulas">
+      <li><b>5 anos</b> de solidez e estabilidade estrutural e de alvenaria, conforme o Art. 618 do Código Civil — piso legal, e não concessão da empreiteira.</li>
+      <li><b>1 ano</b> para acabamentos, instalações hidráulicas, elétricas e impermeabilizações.</li>
+      <li>Emissão de <b>ART/RRT</b> junto ao conselho de classe quando necessário, pelo responsável técnico da RD Engenharia.</li>
+    </ul>
+
+    <h3 class="cond-sub">Pendências para fechar o preço</h3>
+    <ul class="clausulas">
+      <li>Endereço completo da obra, CNPJ da RD Engenharia, nome e registro do responsável técnico.</li>
+      <li>As quatro colunas: duas medidas anotadas, e pintura e revestimento não somáveis sobre as mesmas faces.</li>
+      <li>As 13 placas de granito soltas: dentro ou fora dos 13,96 m², e qual a intervenção.</li>
+      <li>Caixa-d&rsquo;água, parede acima do telhado dos fundos e complemento abaixo da pia: a medir.</li>
+      <li>Definição da intervenção no pergolado, no espaço de terra, na bancada, na prateleira e nos degraus.</li>
+      <li>Andaimes, fretes, descarte de entulho e ART: dentro ou fora da faixa de R$ 40 mil a R$ 50 mil.</li>
+      <li>Horário de trabalho e prazo de execução.</li>
+    </ul>
+
+    <p class="total-note" style="margin-top:26px">
+      <b>Sem assinaturas.</b> Este documento é a versão interna para revisão de
+      Reginato: o preço não está fechado e o prazo não está definido, e por isso
+      não sai com linhas de assinatura. Elas entram na versão que for à Dona
+      Fátima, com contratada e contratante lado a lado.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-logo"><img src="/marcas/rd/logo-hor-laranja.png" alt="RD Engenharia"></div>
+      <div class="foot-contact">
+        <span>RD Engenharia</span>
+        <span>CNPJ · a preencher</span>
+        <span>Responsável técnico · a preencher</span>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>Orçamento preliminar revisado · Dona Fátima · 17/09/2026</span>
+      <span>Documento confidencial · versão interna</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
