@@ -63,7 +63,13 @@ dizia o contrário até 16/09/2026, quando o remote foi conferido. O que continu
 verdade é a outra metade da frase: publicar no GitHub não publica na Vercel, e
 as duas coisas são independentes.
 
-**Pedir autorização antes de todo deploy.** É regra do cliente.
+**Deploy não pede autorização.** Decisão do Rodrigo em 17/09/2026, revogando a
+regra anterior — ele é o dono do produto e da conta, e parar a cada entrega
+para perguntar custava uma ida e volta numa resposta que era sempre sim.
+
+O que **não** foi revogado é o que vem antes: rodar `npx tsc --noEmit`,
+`npm run build` e o `verificar:*` que couber, e relatar o que ficou sem prova.
+A autorização é para não perguntar, não para pular checagem.
 
 ---
 

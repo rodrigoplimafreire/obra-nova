@@ -55,8 +55,14 @@ deploy na Vercel. Sem Vite, sem SPA, sem estado global.
 - **Há git remote:** `origin` em `github.com/rodrigoplimafreire/obra-nova`, com
   `main` acompanhando. Publicar no GitHub e publicar na Vercel são atos
   separados; um não dispara o outro.
-- **Pedir autorização antes de todo deploy.** É regra do cliente.
+- **Deploy não pede autorização** (decisão do Rodrigo em 17/09/2026, revogando
+  a regra anterior). O que continua obrigatório é o que vem antes.
 - Antes de qualquer deploy: `npx tsc --noEmit` e `npm run build`.
+- **Os três portões não pegam CSS inválido.** Valor de propriedade que não
+  existe é descartado em silêncio, por especificação — foi assim que
+  `var(--color-cal)`, uma variável que nunca existiu, pôs texto preto sobre
+  fundo preto em produção. Ao mexer em `globals.css`, conferir cada `var(--…)`
+  contra o bloco `@theme` e medir contraste no navegador.
 - **Sem testes automatizados.** A verificação é `tsc`, `eslint`, `build`, os
   scripts `npm run verificar:*` (regressões específicas, rodadas contra o banco
   real) e medição no navegador.
