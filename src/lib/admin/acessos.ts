@@ -70,6 +70,38 @@ export async function conferirAcesso(email: string): Promise<Veredito> {
   return (count ?? 0) === 0 ? "sem-lista" : "fora";
 }
 
+/** Uma empreiteira para escolher no convite. */
+export type EmpreiteiraNaLista = {
+  id: string;
+  /** `nome_exibicao` quando existe; senão o `name`, que nasce como o e-mail. */
+  nome: string;
+};
+
+/**
+ * As empreiteiras que já existem, para o convite escolher em vez de digitar.
+ *
+ * O campo era texto livre e casava por `orgs.name`, que é a **chave técnica** —
+ * enquanto `nome_exibicao` é o que aparece em toda tela. Na prática isso
+ * significava que convidar alguém para a RD Engenharia exigia digitar
+ * "Obra Nova", porque foi assim que aquela org nasceu, e digitar o nome que
+ * está na tela criava silenciosamente uma empreiteira nova e vazia.
+ *
+ * O convidado entrava num painel em branco e parecia bug do app. Errar uma
+ * letra tinha o mesmo efeito. Com a lista vindo do banco, o nome técnico deixa
+ * de ser algo que alguém precisa saber.
+ */
+export async function listarEmpreiteiras(): Promise<EmpreiteiraNaLista[]> {
+  const { data } = await supabaseAdmin()
+    .from("orgs")
+    .select("id, name, nome_exibicao")
+    .order("nome_exibicao", { nullsFirst: false });
+
+  return (data ?? []).map((o) => ({
+    id: o.id,
+    nome: o.nome_exibicao?.trim() || o.name,
+  }));
+}
+
 export type Acesso = {
   email: string;
   nota: string | null;

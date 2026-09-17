@@ -21,7 +21,7 @@ import {
 } from "@/lib/admin/acoes-perfil";
 import { reduzirImagem } from "@/lib/imagem";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
-import type { Acesso } from "@/lib/admin/acessos";
+import type { Acesso, EmpreiteiraNaLista } from "@/lib/admin/acessos";
 import type { Empreiteira } from "@/lib/admin/empreiteira";
 import type { Resultado } from "@/lib/admin/tipos";
 
@@ -42,12 +42,15 @@ export function TelaDePerfil({
   avatar,
   empreiteira,
   acessos,
+  empreiteiras,
 }: {
   email: string;
   avatar: string | null;
   empreiteira: Empreiteira;
   /** Nulo para quem não é operador — e aí a seção inteira não existe. */
   acessos: Acesso[] | null;
+  /** Para o convite escolher em vez de digitar. Vazia para quem não é operador. */
+  empreiteiras: EmpreiteiraNaLista[];
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
@@ -132,7 +135,13 @@ export function TelaDePerfil({
           </div>
         </Secao>
 
-        {acessos && <AcessosDoPainel acessos={acessos} euSou={email} />}
+        {acessos && (
+          <AcessosDoPainel
+            acessos={acessos}
+            empreiteiras={empreiteiras}
+            euSou={email}
+          />
+        )}
 
         <Secao titulo="Acesso">
           <div className="cartao px-5 py-5">

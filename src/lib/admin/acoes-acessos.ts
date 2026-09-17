@@ -37,7 +37,21 @@ export async function liberarAcesso(
     .trim()
     .toLowerCase();
   const nota = String(form.get("nota") ?? "");
-  const empreiteira = String(form.get("empreiteira") ?? "").trim();
+  /**
+   * `empreiteira` é a escolha do seletor: o id de uma que existe, `nova` para
+   * criar, ou `propria` para a pessoa ganhar um espaço batizado com o e-mail
+   * dela no primeiro login.
+   *
+   * Antes era o nome digitado, comparado contra `orgs.name`. Ver
+   * `listarEmpreiteiras` para o que isso custava.
+   *
+   * **Vazio é recusado, não tratado como padrão.** Pôr alguém na empreiteira
+   * errada é dar a ela os orçamentos e os clientes de outra pessoa; a escolha
+   * tem que ser dita. O `required` do formulário já barra antes, e isto é a
+   * mesma regra do lado do servidor, onde ela vale de verdade.
+   */
+  const escolha = String(form.get("empreiteira") ?? "").trim();
+  const nomeNovo = String(form.get("empreiteiraNova") ?? "").trim();
 
   if (!email.includes("@") || email.startsWith("@")) {
     return { ok: false, erro: "Isso não parece um e-mail." };
@@ -49,25 +63,55 @@ export async function liberarAcesso(
   // pessoa. Assim o admin já a vê na barra de contexto antes mesmo de ela
   // entrar — e o trigger `org_nova_vincula_operadores` cuida do vínculo.
   let orgId: string | null = null;
-  if (empreiteira) {
+
+  if (!escolha) {
+    return { ok: false, erro: "Escolha a empreiteira desta pessoa." };
+  }
+
+  if (escolha === "propria") {
+    orgId = null;
+  } else if (escolha === "nova") {
+    if (nomeNovo.length < 2) {
+      return { ok: false, erro: "Escreva o nome da empreiteira nova." };
+    }
+
+    // `name` tem índice único e é a chave técnica; `nome_exibicao` é o que
+    // aparece para o cliente. Nascem iguais e o Perfil renomeia o de exibição
+    // depois, sem esbarrar na unicidade.
+    const { data: jaExiste } = await sb
+      .from("orgs")
+      .select("id")
+      .eq("name", nomeNovo)
+      .maybeSingle();
+
+    if (jaExiste) {
+      return {
+        ok: false,
+        erro: `Já existe uma empreiteira chamada "${nomeNovo}". Escolha ela na lista.`,
+      };
+    }
+
+    const { data: nova, error: erroOrg } = await sb
+      .from("orgs")
+      .insert({ name: nomeNovo, nome_exibicao: nomeNovo })
+      .select("id")
+      .single();
+
+    if (erroOrg) return { ok: false, erro: erroOrg.message };
+    orgId = nova.id;
+  } else {
+    // Só um id que existe passa. Valor inventado no formulário não vira org
+    // nova pelas costas — é justamente o que o campo de texto fazia.
     const { data: existente } = await sb
       .from("orgs")
       .select("id")
-      .eq("name", empreiteira)
+      .eq("id", escolha)
       .maybeSingle();
 
-    if (existente) {
-      orgId = existente.id;
-    } else {
-      const { data: nova, error: erroOrg } = await sb
-        .from("orgs")
-        .insert({ name: empreiteira, nome_exibicao: empreiteira })
-        .select("id")
-        .single();
-
-      if (erroOrg) return { ok: false, erro: erroOrg.message };
-      orgId = nova.id;
+    if (!existente) {
+      return { ok: false, erro: "Essa empreiteira não existe mais." };
     }
+    orgId = existente.id;
   }
 
   const { error } = await sb.from("acessos").upsert(

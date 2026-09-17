@@ -10,7 +10,7 @@ import {
   liberarAcesso,
   tirarAcesso,
 } from "@/lib/admin/acoes-acessos";
-import type { Acesso } from "@/lib/admin/acessos";
+import type { Acesso, EmpreiteiraNaLista } from "@/lib/admin/acessos";
 import type { Resultado } from "@/lib/admin/tipos";
 
 /**
@@ -31,9 +31,11 @@ import type { Resultado } from "@/lib/admin/tipos";
  */
 export function AcessosDoPainel({
   acessos,
+  empreiteiras,
   euSou,
 }: {
   acessos: Acesso[];
+  empreiteiras: EmpreiteiraNaLista[];
   euSou: string;
 }) {
   const [liberando, setLiberando] = useState(false);
@@ -70,7 +72,12 @@ export function AcessosDoPainel({
         descricao="Você libera a entrada, não a senha: a pessoa ainda cria a conta dela e escolhe a própria senha."
         estreito
       >
-        {liberando && <Formulario aoFechar={() => setLiberando(false)} />}
+        {liberando && (
+          <Formulario
+            empreiteiras={empreiteiras}
+            aoFechar={() => setLiberando(false)}
+          />
+        )}
       </Dialogo>
     </Secao>
   );
@@ -192,12 +199,32 @@ function Situacao({ acesso }: { acesso: Acesso }) {
   );
 }
 
-function Formulario({ aoFechar }: { aoFechar: () => void }) {
+function Formulario({
+  empreiteiras,
+  aoFechar,
+}: {
+  empreiteiras: EmpreiteiraNaLista[];
+  aoFechar: () => void;
+}) {
   const router = useRouter();
   const [estado, acao, pendente] = useActionState<Resultado | null, FormData>(
     liberarAcesso,
     null,
   );
+  /**
+   * Nasce sem escolha nenhuma, e o campo é obrigatório.
+   *
+   * Os dois padrões possíveis erram, e erram para lados diferentes. Começar em
+   * "espaço próprio" repete por omissão o engano que o campo de texto fazia por
+   * digitação: a pessoa entra e não vê nada. Começar na primeira empreiteira da
+   * lista é pior — **põe um convidado dentro dos dados de um cliente**, com os
+   * orçamentos e o cadastro dele à vista, e ninguém percebe porque a tela não
+   * reclama de nada.
+   *
+   * Entre um padrão que confunde e um que vaza, o certo é não ter padrão. Uma
+   * escolha a mais no convite é barata; ela acontece uma vez por pessoa.
+   */
+  const [empreiteira, setEmpreiteira] = useState("");
 
   useEffect(() => {
     if (estado?.ok) {
@@ -226,17 +253,48 @@ function Formulario({ aoFechar }: { aoFechar: () => void }) {
 
         <label className="flex flex-col gap-1.5">
           <span className="rotulo-campo">Empreiteira</span>
-          <input
+          <select
             name="empreiteira"
-            placeholder="Construtora Silva"
+            value={empreiteira}
+            onChange={(e) => setEmpreiteira(e.target.value)}
+            required
             className="campo"
-          />
+          >
+            <option value="" disabled>
+              Escolha…
+            </option>
+            {empreiteiras.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nome}
+              </option>
+            ))}
+            <option value="nova">Criar uma empreiteira nova…</option>
+            <option value="propria">
+              Espaço próprio, batizado com o e-mail dela
+            </option>
+          </select>
           <span className="ajuda-campo">
-            O espaço de trabalho dela: obras, orçamentos, transcrições e preços
-            ficam aqui dentro, e ninguém de fora vê. Em branco, ela ganha um
-            espaço novo batizado com o próprio e-mail.
+            O espaço de trabalho dela: obras, orçamentos, vistorias, transcrições
+            e preços ficam aqui dentro, e ninguém de fora vê. Escolher uma
+            empreiteira existente dá acesso a tudo que já está lá dentro.
           </span>
         </label>
+
+        {empreiteira === "nova" && (
+          <label className="flex flex-col gap-1.5">
+            <span className="rotulo-campo">Nome da empreiteira nova *</span>
+            <input
+              name="empreiteiraNova"
+              placeholder="Construtora Silva"
+              autoFocus
+              className="campo"
+            />
+            <span className="ajuda-campo">
+              Nasce vazia. Quem for convidado para ela não vê nada do que já
+              existe nas outras.
+            </span>
+          </label>
+        )}
 
         <label className="flex flex-col gap-1.5">
           <span className="rotulo-campo">Quem é</span>
