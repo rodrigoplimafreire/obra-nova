@@ -399,6 +399,50 @@ automatizado. A coluna "coberto" diz qual script prova cada bloco.
 
 ---
 
+## 16b · Diário de atividades (Entrega 1)
+
+*Conferido no navegador em 17/09/2026, com um diário de teste criado e apagado
+no banco depois. A tela `/admin/diario` **não** foi conferida logada — só que
+ela existe e derruba para o login sem sessão.*
+
+| Entrada | Saída esperada |
+| --- | --- |
+| Primeira visita a `/admin/diario` | `garantirDiario()` cria o diário do autor na org ativa, com token e **sem** senha |
+| `publicarDia` sem senha no diário | `"Defina uma senha em Acesso ao link…"` — mesma trava do orçamento |
+| `publicarDia` de um dia sem nada escrito | `"Não há nada escrito neste dia para publicar."` |
+| `publicarDia` de dia já publicado | Nova linha em `dia_publicacoes` com `versao + 1`; o token **não** muda |
+| `salvarDia` depois de publicar | Só o rascunho muda; o link continua servindo a fotografia anterior |
+| `tirarDiaDoAr` | Apaga as publicações **daquele dia**; o rascunho fica, os outros dias continuam no ar |
+| `salvarAjustes` com senha de menos de 6 caracteres | `"A senha precisa de ao menos 6 caracteres."` |
+| `salvarAjustes` com o campo de senha vazio | Senha removida — e a publicação volta a travar |
+| `revogarAcesso` com o token que a tela mostra | Token novo; o endereço antigo passa a responder 404 |
+| `revogarAcesso` com token defasado (outra aba) | `"O endereço já foi trocado. Recarregue a página antes de revogar."` |
+| `/d/<token>` inexistente | **404**, igual a diário não publicado |
+| `/d/<token>` com senha, sem cookie | Gate; nem a lista de datas publicadas sai do servidor |
+| Senha certa no gate | Cookie `dia_gate_<token>`, `path: "/"`, 30 dias |
+| `/d/<token>` sem `?dia` e com publicação de hoje | Abre em hoje |
+| `/d/<token>` sem `?dia` e sem a de hoje | Abre na mais recente, com o aviso "Ainda não há relatório de hoje" |
+| `?dia=` de data sem publicação | "Nenhum relatório publicado neste dia." e o botão "Ver o último relatório" |
+| `?dia=` de data cujo rascunho existe e não foi publicado | Igual ao anterior — **rascunho nunca aparece no link** |
+| `?dia=2026-02-31` ou lixo | Ignorado; cai na regra de abertura padrão |
+| `?mes=2026-10` com `?dia=2026-09-15` | O calendário anda o mês, o relatório aberto **não** muda |
+| Setas do rodapé, em dia sem publicação | Comparam por data, não por posição: só aparece a que existe de verdade |
+| Seção sem nenhum item | Não aparece — igual à regra das sete seções da proposta |
+
+**Bordas**
+
+- **A página não depende de JavaScript.** Nenhum componente de `/d/[token]` é
+  `"use client"`, o calendário é grade de `<a>` e o "Ver calendário" do celular
+  é `<details>`. A rota também não tem `loading.tsx`, pelo mesmo motivo de
+  `/p/[token]` — ver o comentário na página.
+- Contraste medido no navegador: dia sem publicação e cabeçalho da semana em
+  `cinza-500` (4,84:1). `cinza-400` dá 2,98:1 e reprova na AA — foi medido, não
+  suposto.
+- As datas saem de `hojeNaEmpreiteira()`, em `src/lib/tempo.ts`, e não do fuso
+  do servidor nem do navegador.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

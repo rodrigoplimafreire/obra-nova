@@ -1,8 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { liberado, liberar } from "@/lib/acesso/gate";
 import { registrarAbertura, senhaConfere } from "./publico";
 
 /**
@@ -14,20 +14,13 @@ import { registrarAbertura, senhaConfere } from "./publico";
  * token e o revalida do zero, sem confiar em nada que o navegador mande.
  */
 
-const PREFIXO_DO_COOKIE = "orc_gate_";
-
 /**
  * Cookie por token, não um só para o site: uma pessoa pode receber dois
- * orçamentos, e destravar um não pode destravar o outro. `httpOnly` porque o
- * JavaScript da página não tem nada que fazer com ele.
- *
- * O isolamento entre orçamentos está no **nome** do cookie, não no `path` —
- * e é por isso que o `path` é a raiz. Ele já foi `/p/${token}`, e isso
- * quebrava o domínio da RD: lá o cliente abre `orcamentos.rd.eng.br/nome/`,
- * que um rewrite da Vercel serve a partir de `/p/nome`. O caminho da barra do
- * navegador nunca batia com o do cookie, ele não voltava em requisição
- * nenhuma, e o cliente redigitava a senha a cada visita.
+ * orçamentos, e destravar um não pode destravar o outro. O desenho do cookie
+ * — e a razão de o `path` ser a raiz — mora em `@/lib/acesso/gate`.
  */
+const PREFIXO_DO_COOKIE = "orc_gate_";
+
 export async function entrarNoOrcamento(
   _anterior: { erro?: string } | null,
   form: FormData,
@@ -39,14 +32,7 @@ export async function entrarNoOrcamento(
     return { erro: "Senha incorreta." };
   }
 
-  const jar = await cookies();
-  jar.set(`${PREFIXO_DO_COOKIE}${token}`, "1", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  await liberar(PREFIXO_DO_COOKIE, token);
 
   // A abertura conta aqui, depois do gate: quem não passou da senha não leu a
   // proposta, e o robô de preview do WhatsApp nunca passa.
@@ -57,8 +43,7 @@ export async function entrarNoOrcamento(
 }
 
 export async function gateLiberado(token: string): Promise<boolean> {
-  const jar = await cookies();
-  return jar.get(`${PREFIXO_DO_COOKIE}${token}`)?.value === "1";
+  return liberado(PREFIXO_DO_COOKIE, token);
 }
 
 /**

@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { orgAtual } from "./sessao";
+import { hojeNaEmpreiteira } from "@/lib/tempo";
 import type { Enums } from "@/lib/database.types";
 
 /**
@@ -11,11 +12,9 @@ import type { Enums } from "@/lib/database.types";
  * checklist das 16h30 apareceria vazio, na data errada.
  */
 
+/** Reexportado com o nome do módulo; o cálculo mora em `@/lib/tempo`. */
 export function hojeNaObra(): string {
-  // en-CA porque devolve YYYY-MM-DD, que é o formato de `date` no Postgres.
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date());
+  return hojeNaEmpreiteira();
 }
 
 export type ResumoDeObra = {

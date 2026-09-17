@@ -335,6 +335,7 @@ aprovado**, com escala decrescente ou teto. Nada implementado;
 | `PRD-PIPELINE.md` | pipeline, tempo por etapa, precificação comercial |
 | `PRD-VISTORIA.md` | vistoria; a §0 confere as premissas contra o código |
 | `PRD-UX-VISTORIAS.md` | simplificação da UX da vistoria; §0 conferida em 16/09/2026. **Reverte a exigência de biblioteca validada** do `PRD-VISTORIA.md` — ler a §0.3 antes de agir |
+| `PRD-DIARIO.md` | diário de atividades com link fixo e senha; §0 conferida em 17/09/2026. **Cuidado com o nome:** "relatório" ali é o do dia, não o semanal da obra (`relatorios`) |
 | `PLANO-PORTAL-CLIENTE.md` | portal do cliente final, fase a fase |
 | `servicos-candidatos.md` | saída do minerador, aguardando revisão do Reginato |
 | `supabase/README.md` | o que o schema garante, e por quê |

@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { orgAtual } from "./sessao";
+import { hojeNaEmpreiteira } from "@/lib/tempo";
 
 /**
  * A visão do dia: o que atravessa os dois módulos.
@@ -34,17 +35,10 @@ export type VisaoDoDia = {
   temObra: boolean;
 };
 
-function hojeEmSaoPaulo(): string {
-  // `sv-SE` dá ISO (AAAA-MM-DD) sem precisar montar a string à mão.
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "America/Sao_Paulo",
-  }).format(new Date());
-}
-
 export async function carregarVisaoDoDia(): Promise<VisaoDoDia> {
   const sb = supabaseAdmin();
   const org = await orgAtual();
-  const hoje = hojeEmSaoPaulo();
+  const hoje = hojeNaEmpreiteira();
 
   const { data: orcamentos } = await sb
     .from("orc_orcamentos")

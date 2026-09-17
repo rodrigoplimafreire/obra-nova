@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SeletorDeEmpreiteira } from "./seletor-de-empreiteira";
 import { ProvedorDaTrilha } from "./trilha";
+import { Dialogo } from "@/components/comum/dialogo";
 import { Logotipo } from "@/components/marca";
 import type { OrgAcessivel } from "@/lib/admin/sessao";
 
@@ -40,14 +42,29 @@ import type { OrgAcessivel } from "@/lib/admin/sessao";
  * `prefixos` em vez de um startsWith no href: cada item declara os caminhos que
  * são dele, porque /admin é prefixo de tudo que vem depois.
  */
-const ITENS = [
+type Destino = {
+  href: string;
+  rotulo: string;
+  icone: () => React.ReactElement;
+  prefixos: string[];
+};
+
+/**
+ * Os quatro que ficam na barra do celular.
+ *
+ * São os de rotina em aparelho: o resumo do dia, a obra, a visita e o
+ * documento. Barra inferior é alvo de 64px, e a partir de cinco colunas o
+ * rótulo começa a quebrar — o nono destino não entrou empurrando os outros,
+ * entrou atrás do "Mais".
+ */
+const PRINCIPAIS: Destino[] = [
   {
     href: "/admin",
     rotulo: "Painel",
     icone: Bussola,
     // Só a raiz: `/admin` é prefixo de tudo, então casar por prefixo deixaria
     // o Painel aceso em qualquer tela.
-    prefixos: [] as string[],
+    prefixos: [],
   },
   {
     href: "/admin/obras",
@@ -55,16 +72,6 @@ const ITENS = [
     icone: Capacete,
     prefixos: ["/admin/obras"],
   },
-  // Antes de Orçamentos porque é antes na vida: o pedido chega, entra no
-  // funil, e só depois vira documento.
-  {
-    href: "/admin/pipeline",
-    rotulo: "Pipeline",
-    icone: Funil,
-    prefixos: ["/admin/pipeline"],
-  },
-  // Entre Pipeline e Orçamentos porque é onde cai na vida: o pedido entra no
-  // funil, a visita levanta o que tem para fazer, e só depois vira documento.
   {
     href: "/admin/vistorias",
     rotulo: "Vistorias",
@@ -76,6 +83,25 @@ const ITENS = [
     rotulo: "Orçamentos",
     icone: Prancheta,
     prefixos: ["/admin/orcamentos"],
+  },
+];
+
+/**
+ * O que mora atrás do "Mais".
+ *
+ * Não é "o que importa menos": é o que não se abre com o aparelho na mão no
+ * meio da obra. Pipeline e Preços são trabalho de mesa, Transcrições é a
+ * porta de entrada de um áudio avulso, e o Diário é escrito uma vez por dia.
+ * Na lateral do desktop, onde sobra altura, os nove continuam à vista.
+ */
+const EXTRAS: Destino[] = [
+  // Antes de Orçamentos na ordem da lateral porque é antes na vida: o pedido
+  // chega, entra no funil, e só depois vira documento.
+  {
+    href: "/admin/pipeline",
+    rotulo: "Pipeline",
+    icone: Funil,
+    prefixos: ["/admin/pipeline"],
   },
   {
     href: "/admin/transcricoes",
@@ -90,11 +116,33 @@ const ITENS = [
     prefixos: ["/admin/precos"],
   },
   {
+    href: "/admin/diario",
+    rotulo: "Diário",
+    icone: Caderno,
+    prefixos: ["/admin/diario"],
+  },
+  {
     href: "/admin/perfil",
     rotulo: "Perfil",
     icone: Pessoa,
     prefixos: ["/admin/perfil"],
   },
+];
+
+/**
+ * A lateral do desktop mostra tudo, na ordem do fluxo de trabalho — e não na
+ * ordem da barra do celular, que é ordem de frequência em aparelho.
+ */
+const ITENS: Destino[] = [
+  PRINCIPAIS[0],
+  PRINCIPAIS[1],
+  EXTRAS[0],
+  PRINCIPAIS[2],
+  PRINCIPAIS[3],
+  EXTRAS[1],
+  EXTRAS[2],
+  EXTRAS[3],
+  EXTRAS[4],
 ];
 
 /** As iniciais do e-mail, para o avatar do documento (36px, arroio). */
@@ -122,12 +170,14 @@ export function Casca({
   children: React.ReactNode;
 }) {
   const caminho = usePathname();
+  const [gaveta, setGaveta] = useState(false);
 
-  const ativo = (item: (typeof ITENS)[number]) =>
+  const ativo = (item: Destino) =>
     caminho === item.href || item.prefixos.some((p) => caminho.startsWith(p));
 
   const secao = ITENS.find(ativo) ?? null;
   const noPerfil = caminho.startsWith("/admin/perfil");
+  const emExtra = EXTRAS.some(ativo);
 
   return (
     <ProvedorDaTrilha>
@@ -245,8 +295,8 @@ export function Casca({
               lista longa se ela acompanhar o documento, e é justamente numa
               lista longa que dá vontade de trocar de seção. */}
           <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-nevoa bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
-            <ul className="grid grid-cols-6">
-              {ITENS.map((item) => {
+            <ul className="grid grid-cols-5">
+              {PRINCIPAIS.map((item) => {
                 const Icone = item.icone;
                 const selecionado = ativo(item);
                 return (
@@ -275,12 +325,98 @@ export function Casca({
                   </li>
                 );
               })}
+
+              {/* O quinto alvo não é um destino, é a gaveta. Acende igual aos
+                  outros quando a tela aberta está lá dentro: senão a barra
+                  diria que não se está em lugar nenhum. */}
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setGaveta(true)}
+                  aria-expanded={gaveta}
+                  className={`-mt-px flex h-16 w-full flex-col items-center justify-center gap-1.5 border-t-2 transition ${
+                    emExtra
+                      ? "border-amarelo text-tinta"
+                      : "border-transparent text-cinza-400"
+                  }`}
+                >
+                  <Grade />
+                  <span
+                    className={`text-[0.625rem] leading-none ${
+                      emExtra ? "font-semibold" : ""
+                    }`}
+                  >
+                    Mais
+                  </span>
+                </button>
+              </li>
             </ul>
           </nav>
+
+          <Gaveta
+            aberta={gaveta}
+            aoFechar={() => setGaveta(false)}
+            ativo={ativo}
+          />
           </div>
         </div>
       )}
     </ProvedorDaTrilha>
+  );
+}
+
+/**
+ * A gaveta do "Mais".
+ *
+ * Um `<dialog>` pelo componente que o painel já usa: foco preso dentro, Esc
+ * fechando e o resto da página inerte saem de graça, e no celular ele já sobe
+ * como folha de baixo — que é a forma certa para uma gaveta acionada no pé da
+ * tela.
+ */
+function Gaveta({
+  aberta,
+  aoFechar,
+  ativo,
+}: {
+  aberta: boolean;
+  aoFechar: () => void;
+  ativo: (item: Destino) => boolean;
+}) {
+  return (
+    <Dialogo
+      aberto={aberta}
+      aoFechar={aoFechar}
+      titulo="Mais"
+      descricao="O resto do aplicativo."
+      estreito
+    >
+      <ul className="grid grid-cols-3 gap-2">
+        {EXTRAS.map((item) => {
+          const Icone = item.icone;
+          const selecionado = ativo(item);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                // Fechar no clique, e não num efeito que observa a rota: a
+                // gaveta só se sai por aqui, e setState dentro de efeito é o
+                // que o lint do projeto barra.
+                onClick={aoFechar}
+                aria-current={selecionado ? "page" : undefined}
+                className={`flex h-24 flex-col items-center justify-center gap-2 rounded-cartao border px-2 text-center transition ${
+                  selecionado
+                    ? "border-tinta bg-papel text-tinta"
+                    : "border-nevoa text-fumaca hover:border-concreto hover:text-tinta"
+                }`}
+              >
+                <Icone />
+                <span className="text-xs leading-tight">{item.rotulo}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </Dialogo>
   );
 }
 
@@ -384,6 +520,32 @@ function Etiqueta() {
     <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3h6a1 1 0 0 1 1 1v6l-9.3 9.3a1 1 0 0 1-1.4 0L3.7 14.7a1 1 0 0 1 0-1.4L12 3Z" />
       <circle cx="15.5" cy="7.5" r="1.3" />
+    </svg>
+  );
+}
+
+/** Caderno: o dia escrito à mão, que é o que o Diário é. */
+function Caderno() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM4 17h14M9 8h5M9 12h5" />
+    </svg>
+  );
+}
+
+/** A grade de nove pontos: o gesto universal de "o resto do aplicativo". */
+function Grade() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-current" aria-hidden>
+      <circle cx="6" cy="6" r="1.7" />
+      <circle cx="12" cy="6" r="1.7" />
+      <circle cx="18" cy="6" r="1.7" />
+      <circle cx="6" cy="12" r="1.7" />
+      <circle cx="12" cy="12" r="1.7" />
+      <circle cx="18" cy="12" r="1.7" />
+      <circle cx="6" cy="18" r="1.7" />
+      <circle cx="12" cy="18" r="1.7" />
+      <circle cx="18" cy="18" r="1.7" />
     </svg>
   );
 }

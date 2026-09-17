@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { empreiteiraDaOrg, type Empreiteira } from "@/lib/admin/empreiteira";
+import { confere } from "@/lib/acesso/gate";
 import { lerDocumento, type DocumentoPublicado } from "./publicacao";
 
 /**
@@ -119,8 +120,7 @@ export async function senhaConfere(
     .eq("token", token)
     .maybeSingle();
 
-  if (!data?.senha) return false;
-  return data.senha.trim() === tentativa.trim();
+  return confere(data?.senha, tentativa);
 }
 
 /**

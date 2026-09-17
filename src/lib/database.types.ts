@@ -1270,15 +1270,116 @@ type TabelasDePipeline = {
 };
 
 /**
+ * Diário de atividades. Prefixo `dia_` como os outros módulos.
+ *
+ * Cuidado com o nome: "relatório" aqui é o do dia, e não tem parentesco com
+ * `relatorios`, que é o semanal da obra. Ver `PRD-DIARIO.md` §1.
+ */
+type TabelasDeDiario = {
+  /**
+   * O canal. Um por autor e empreiteira, e é **ele** que carrega o token —
+   * por isso o endereço não muda quando o dia muda.
+   */
+  dia_diarios: {
+    Row: {
+      id: string;
+      org_id: string;
+      autor_id: string;
+      /** Quem assina, no cabeçalho da página. O Auth só tem e-mail. */
+      autor_nome: string | null;
+      titulo: string | null;
+      token: string;
+      /** Texto puro, como no orçamento. Ver `PRD-DIARIO.md` §7. */
+      senha: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      org_id: string;
+      autor_id: string;
+      autor_nome?: string | null;
+      titulo?: string | null;
+      token?: string;
+      senha?: string | null;
+    };
+    Update: {
+      autor_nome?: string | null;
+      titulo?: string | null;
+      token?: string;
+      senha?: string | null;
+      updated_at?: string;
+    };
+  };
+
+  /** O dia. Uma linha por diário e data, garantido por índice único. */
+  dia_relatorios: {
+    Row: {
+      id: string;
+      diario_id: string;
+      dia: string;
+      /** Uma linha por item, como `orgs.normas_tecnicas`. */
+      realizado: string | null;
+      em_andamento: string | null;
+      pendencias: string | null;
+      proximos_passos: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      diario_id: string;
+      dia: string;
+      realizado?: string | null;
+      em_andamento?: string | null;
+      pendencias?: string | null;
+      proximos_passos?: string | null;
+    };
+    Update: {
+      realizado?: string | null;
+      em_andamento?: string | null;
+      pendencias?: string | null;
+      proximos_passos?: string | null;
+      updated_at?: string;
+    };
+  };
+
+  /** A fotografia congelada que o link serve. Editar o rascunho não a altera. */
+  dia_publicacoes: {
+    Row: {
+      id: string;
+      relatorio_id: string;
+      versao: number;
+      dados: unknown;
+      publicado_em: string;
+      publicado_por: string | null;
+    };
+    Insert: {
+      id?: string;
+      relatorio_id: string;
+      versao: number;
+      dados: unknown;
+      publicado_em?: string;
+      publicado_por?: string | null;
+    };
+    Update: { dados?: unknown };
+  };
+};
+
+/**
  * O supabase-js exige `Relationships` em cada tabela para resolver os tipos de
  * select. Como aqui não há select aninhado, um array vazio basta.
  */
 export type Database = {
   public: {
     Tables: {
-      [K in keyof (Tabelas & TabelasDeOrcamento & TabelasDePipeline)]: (Tabelas &
+      [K in keyof (Tabelas &
         TabelasDeOrcamento &
-        TabelasDePipeline)[K] & { Relationships: [] };
+        TabelasDePipeline &
+        TabelasDeDiario)]: (Tabelas &
+        TabelasDeOrcamento &
+        TabelasDePipeline &
+        TabelasDeDiario)[K] & { Relationships: [] };
     };
     Views: {
       /**
