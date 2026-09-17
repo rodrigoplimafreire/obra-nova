@@ -122,14 +122,33 @@ export async function listarDias(diarioId: string): Promise<DiaDoDiario[]> {
   });
 }
 
+export type RegistroDoDia = {
+  id: string;
+  tipo: "texto" | "audio";
+  texto: string | null;
+  status: "pendente" | "transcrevendo" | "pronto" | "falhou";
+  erro: string | null;
+  duracaoMs: number | null;
+  criadoEm: string;
+};
+
 export type DiaNoPainel = {
   dia: string;
   rascunho: RascunhoDoDia;
   publicadoEm: string | null;
   versao: number | null;
+  /**
+   * Muda a cada escrita no dia. A tela usa como chave dos campos de texto:
+   * sem ela, o React reaproveita o `<textarea>` e o resumo recém-gerado não
+   * aparece — o valor antigo continua no DOM.
+   */
+  atualizadoEm: string | null;
+  /** Há correção à mão depois do último resumo. Ver `gerarResumoDoDia`. */
+  editadoDepoisDoResumo: boolean;
+  registros: RegistroDoDia[];
 };
 
-/** O rascunho de uma data, para a tela de escrever. */
+/** O rascunho de uma data, com os registros que o alimentam. */
 export async function carregarDia(
   diarioId: string,
   dia: string,
@@ -138,22 +157,39 @@ export async function carregarDia(
 
   const { data: relatorio } = await sb
     .from("dia_relatorios")
-    .select("id, realizado, em_andamento, pendencias, proximos_passos")
+    .select(
+      "id, realizado, em_andamento, pendencias, proximos_passos, editado_em, resumo_em, updated_at",
+    )
     .eq("diario_id", diarioId)
     .eq("dia", dia)
     .maybeSingle();
 
   if (!relatorio) {
-    return { dia, rascunho: { ...RASCUNHO_VAZIO }, publicadoEm: null, versao: null };
+    return {
+      dia,
+      rascunho: { ...RASCUNHO_VAZIO },
+      publicadoEm: null,
+      versao: null,
+      atualizadoEm: null,
+      editadoDepoisDoResumo: false,
+      registros: [],
+    };
   }
 
-  const { data: publicacao } = await sb
-    .from("dia_publicacoes")
-    .select("versao, publicado_em")
-    .eq("relatorio_id", relatorio.id)
-    .order("versao", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: publicacao }, { data: registros }] = await Promise.all([
+    sb
+      .from("dia_publicacoes")
+      .select("versao, publicado_em")
+      .eq("relatorio_id", relatorio.id)
+      .order("versao", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    sb
+      .from("dia_registros")
+      .select("id, tipo, texto, status, erro, duracao_ms, created_at")
+      .eq("relatorio_id", relatorio.id)
+      .order("created_at"),
+  ]);
 
   return {
     dia,
@@ -165,6 +201,21 @@ export async function carregarDia(
     },
     publicadoEm: publicacao?.publicado_em ?? null,
     versao: publicacao?.versao ?? null,
+    atualizadoEm: relatorio.updated_at,
+    editadoDepoisDoResumo:
+      Boolean(relatorio.editado_em) &&
+      (!relatorio.resumo_em ||
+        new Date(relatorio.editado_em as string).getTime() >
+          new Date(relatorio.resumo_em).getTime()),
+    registros: (registros ?? []).map((r) => ({
+      id: r.id,
+      tipo: r.tipo,
+      texto: r.texto,
+      status: r.status,
+      erro: r.erro,
+      duracaoMs: r.duracao_ms,
+      criadoEm: r.created_at,
+    })),
   };
 }
 

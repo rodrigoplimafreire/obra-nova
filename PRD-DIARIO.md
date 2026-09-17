@@ -100,7 +100,7 @@ Comportamento esperado na §16b de `TESTES-DE-COMPORTAMENTO.md`.
 **Fim da entrega:** o Reginato abre um link no celular, digita a senha, lê o
 dia de hoje e navega para ontem.
 
-### Entrega 2 — Áudio e IA
+### Entrega 2 — Áudio e IA · **no ar em 17/09/2026**
 
 5. `dia_registros`: texto ou áudio, vários por dia, gravados no instante em que
    entram.
@@ -109,6 +109,12 @@ dia de hoje e navega para ontem.
 8. "Gerar resumo": a IA organiza os registros do dia nas quatro seções, sob as
    regras da §5 do PRD, que viram prompt.
 9. Edição manual preservada até a pessoa confirmar a substituição.
+
+O que foi construído além da lista: `npm run verificar:diario`, que chama a IA
+de verdade contra um material armado para as armadilhas da §5 — uma frase no
+futuro, uma pendência sem dono, um nome, um número e um áudio não transcrito.
+É o único jeito de saber se a regra que mais importa continua valendo, porque
+ela não se verifica lendo código. Ver **D10**.
 
 ### Entrega 3 — Acesso e compartilhamento
 
@@ -187,6 +193,21 @@ Pipeline antes de Orçamentos —, não a de frequência.
 
 *A barra estava em `grid-cols-6` com oito itens, ou seja, já quebrava em duas
 fileiras antes do Diário existir.*
+
+**D10 · A §5 do PRD vira teste, não só prompt.** Escrever as regras no prompt e
+torcer não é verificação: o modelo muda, a Groq troca o catálogo, e a regra que
+mais importa — planejamento não vira atividade concluída — falha em silêncio,
+com o texto saindo bonito e errado. `npm run verificar:diario` cria um diário
+de teste, chama a IA e confere o resultado item a item, apagando tudo no fim.
+Foi ele que pegou o primeiro erro real: "amanhã eu vou publicar" saía como
+`A definir`, e quem lê entende "ninguém assumiu". O nome do autor passou a
+entrar no prompt — dizer de quem é a primeira pessoa do texto não é inventar
+responsável.
+
+**D11 · O nome de quem assina entra no prompt, o resto não.** A IA recebe os
+registros do dia e o nome do autor. Não recebe orçamento, obra, cliente nem
+histórico: material a mais é material para ela misturar, e o PRD pede para
+organizar o que foi fornecido, não para cruzar fontes.
 
 ---
 

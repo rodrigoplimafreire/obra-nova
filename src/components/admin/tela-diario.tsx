@@ -7,12 +7,15 @@ import { Cabecalho, Conteudo, Secao } from "./cabecalho";
 import { Dialogo } from "@/components/comum/dialogo";
 import { ItemDeMenu, Menu, SeparadorDeMenu } from "@/components/comum/menu";
 import {
+  gerarResumoDoDia,
   publicarDia,
   revogarAcesso,
   salvarAjustes,
   salvarDia,
   tirarDiaDoAr,
+  type SaidaDoResumoDoDia,
 } from "@/lib/diario/acoes";
+import { RegistrosDoDiario } from "./registros-do-diario";
 import { copiarTexto } from "@/lib/clipboard";
 import { SECOES } from "@/lib/diario/tipos";
 import type { Diario, DiaDoDiario, DiaNoPainel } from "@/lib/diario/dados";
@@ -83,6 +86,27 @@ export function TelaDoDiario({
   const [ajustando, setAjustando] = useState(false);
   const [revogando, setRevogando] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [gerando, setGerando] = useState(false);
+  const [resumo, setResumo] = useState<SaidaDoResumoDoDia | null>(null);
+
+  /**
+   * Gerar o resumo, e perguntar antes de atropelar mão humana.
+   *
+   * A primeira chamada volta com `precisaConfirmar` quando o texto foi
+   * editado depois do último resumo. Aí a tela mostra o diálogo, e só a
+   * segunda chamada — a confirmada — substitui.
+   */
+  async function gerar(confirmado: boolean) {
+    setGerando(true);
+    setResumo(null);
+    try {
+      const saida = await gerarResumoDoDia(atual.dia, confirmado);
+      setResumo(saida);
+      if (saida.ok) router.refresh();
+    } finally {
+      setGerando(false);
+    }
+  }
 
   const [salvo, salvar, salvando] = useActionState<Resultado | null, FormData>(
     salvarDia,
@@ -189,48 +213,72 @@ export function TelaDoDiario({
           </p>
         )}
 
-        <Secao titulo="O dia">
+        {/* A data manda na tela inteira — nos registros e no resumo —, então
+            ela fica acima das duas, e não dentro de uma delas. */}
+        <div className="mt-6 mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-sans text-lg leading-tight font-semibold text-tinta first-letter:uppercase">
+              {comoData(atual.dia, DIA_LONGO)}
+            </p>
+            <p className="rotulo mt-1">
+              {atual.publicadoEm
+                ? `no ar desde ${HORA.format(new Date(atual.publicadoEm))}${
+                    desatualizado ? " · há edição não publicada" : ""
+                  }`
+                : "ainda não publicado"}
+            </p>
+          </div>
+
+          {/* Trocar de data é navegação, não estado: o `<input type=date>`
+              empurra para a mesma tela noutro endereço. */}
+          <div className="flex shrink-0 items-center gap-2">
+            {atual.dia !== hoje && (
+              <Link href="/admin/diario" className="btn btn-sutil btn-compacto">
+                Hoje
+              </Link>
+            )}
+            <input
+              type="date"
+              aria-label="Data do relatório"
+              // `key` na data: sem ela o campo guarda a data anterior ao
+              // navegar, e a tela passa a mostrar um dia e o seletor outro.
+              key={atual.dia}
+              defaultValue={atual.dia}
+              max={hoje}
+              onChange={(e) => {
+                if (e.target.value) {
+                  router.push(`/admin/diario?dia=${e.target.value}`);
+                }
+              }}
+              className="campo w-auto"
+            />
+          </div>
+        </div>
+
+        <RegistrosDoDiario dia={atual.dia} registros={atual.registros} />
+
+        <Secao titulo="O relatório do dia">
           <form action={salvar} className="cartao px-5 py-5">
             <input type="hidden" name="dia" value={atual.dia} />
 
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-sans text-lg leading-tight font-semibold text-tinta first-letter:uppercase">
-                  {comoData(atual.dia, DIA_LONGO)}
-                </p>
-                <p className="rotulo mt-1">
-                  {atual.publicadoEm
-                    ? `no ar desde ${HORA.format(new Date(atual.publicadoEm))}${
-                        desatualizado ? " · há edição não publicada" : ""
-                      }`
-                    : "ainda não publicado"}
-                </p>
-              </div>
-
-              {/* Trocar de data é navegação, não estado: o `<input type=date>`
-                  empurra para a mesma tela noutro endereço. */}
-              <div className="flex shrink-0 items-center gap-2">
-                {atual.dia !== hoje && (
-                  <Link
-                    href="/admin/diario"
-                    className="btn btn-sutil btn-compacto"
-                  >
-                    Hoje
-                  </Link>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-cinza-100 pb-3">
+              <p className="text-xs leading-relaxed text-cinza">
+                {atual.registros.length === 0
+                  ? "A IA organiza os registros do dia, aqui em cima, nas quatro seções."
+                  : `${atual.registros.length} ${atual.registros.length === 1 ? "registro" : "registros"} no dia.`}
+                {atual.editadoDepoisDoResumo && atual.registros.length > 0 && (
+                  <> Este texto foi editado à mão depois do último resumo.</>
                 )}
-                <input
-                  type="date"
-                  aria-label="Data do relatório"
-                  defaultValue={atual.dia}
-                  max={hoje}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      router.push(`/admin/diario?dia=${e.target.value}`);
-                    }
-                  }}
-                  className="campo w-auto"
-                />
-              </div>
+              </p>
+
+              <button
+                type="button"
+                onClick={() => void gerar(false)}
+                disabled={gerando || atual.registros.length === 0}
+                className="btn btn-secundario btn-compacto shrink-0"
+              >
+                {gerando ? "Organizando…" : "Gerar resumo"}
+              </button>
             </div>
 
             <div className="flex flex-col gap-5">
@@ -245,9 +293,14 @@ export function TelaDoDiario({
                   <textarea
                     id={chave}
                     name={chave}
-                    // `key` na data: sem ela o React reusa o textarea ao trocar
-                    // de dia e o texto do dia anterior fica na tela.
-                    key={`${atual.dia}-${chave}`}
+                    /**
+                     * A chave leva a data **e** o instante da última escrita.
+                     * Só a data não basta: depois de gerar o resumo o React
+                     * reaproveitaria o mesmo `<textarea>`, e o valor antigo
+                     * continuaria no DOM — a IA teria escrito e a tela não
+                     * mostraria.
+                     */
+                    key={`${atual.dia}-${atual.atualizadoEm ?? "novo"}-${chave}`}
                     defaultValue={atual.rascunho[chave]}
                     rows={4}
                     className="campo"
@@ -290,17 +343,31 @@ export function TelaDoDiario({
               )}
             </div>
 
-            {/* Um recado por vez, do último ato. Três linhas de estado
-                empilhadas seriam três coisas para ler antes de saber se deu
-                certo. */}
-            {(publicado?.erro || retirado?.erro || salvo?.erro) && (
+            {/* Um recado por vez, do último ato. Quatro linhas de estado
+                empilhadas seriam quatro coisas para ler antes de saber se deu
+                certo. O do resumo que pede confirmação não entra aqui: ele
+                abre o diálogo, logo abaixo. */}
+            {(publicado?.erro ||
+              retirado?.erro ||
+              salvo?.erro ||
+              (resumo?.erro && !resumo.precisaConfirmar)) && (
               <p className="aviso aviso-erro mt-4">
-                {publicado?.erro ?? retirado?.erro ?? salvo?.erro}
+                {publicado?.erro ??
+                  retirado?.erro ??
+                  salvo?.erro ??
+                  resumo?.erro}
               </p>
             )}
             {!publicado?.erro && publicado?.ok && (
               <p className="aviso aviso-ok mt-4">
                 Publicado. O link continua o mesmo.
+              </p>
+            )}
+            {resumo?.ok && (
+              <p className="aviso aviso-ok mt-4">
+                Resumo escrito a partir de {resumo.registros}{" "}
+                {resumo.registros === 1 ? "registro" : "registros"}. Leia antes
+                de publicar.
               </p>
             )}
           </form>
@@ -364,6 +431,42 @@ export function TelaDoDiario({
         token={diario.token}
         link={link}
       />
+
+      {/* A confirmação de substituir o texto escrito à mão. Ela existe porque
+          a §5 do PRD exige preservar a edição manual até alguém confirmar —
+          e porque perder um parágrafo revisado para uma geração automática é
+          o tipo de erro que faz a pessoa parar de usar o botão. */}
+      <Dialogo
+        aberto={Boolean(resumo?.precisaConfirmar)}
+        aoFechar={() => setResumo(null)}
+        titulo="Substituir o que você escreveu?"
+        descricao="Este dia foi editado à mão depois do último resumo."
+        estreito
+      >
+        <p className="text-sm leading-relaxed text-grafite">
+          Gerar de novo reescreve as quatro seções a partir dos registros, e o
+          texto que está lá agora se perde. Os registros do dia não são
+          tocados.
+        </p>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setResumo(null)}
+            className="btn btn-secundario"
+          >
+            Manter o meu texto
+          </button>
+          <button
+            type="button"
+            onClick={() => void gerar(true)}
+            disabled={gerando}
+            className="btn btn-primario"
+          >
+            {gerando ? "Organizando…" : "Substituir"}
+          </button>
+        </div>
+      </Dialogo>
     </>
   );
 }

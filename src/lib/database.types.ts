@@ -1323,6 +1323,10 @@ type TabelasDeDiario = {
       em_andamento: string | null;
       pendencias: string | null;
       proximos_passos: string | null;
+      /** Carimba a mão humana. Ver `resumo_em`. */
+      editado_em: string | null;
+      /** Carimba a mão da IA. Se `editado_em` for depois, avisar antes de substituir. */
+      resumo_em: string | null;
       created_at: string;
       updated_at: string;
     };
@@ -1340,7 +1344,53 @@ type TabelasDeDiario = {
       em_andamento?: string | null;
       pendencias?: string | null;
       proximos_passos?: string | null;
+      editado_em?: string | null;
+      resumo_em?: string | null;
       updated_at?: string;
+    };
+  };
+
+  /**
+   * O material bruto do dia: o que foi digitado e o que foi falado.
+   *
+   * Nasce no instante em que entra, antes de qualquer resumo — é isto que
+   * cumpre "salvar rascunhos automaticamente" sem temporizador, e é o que
+   * garante que falha de transcrição ou de IA não apague nada.
+   */
+  dia_registros: {
+    Row: {
+      id: string;
+      relatorio_id: string;
+      tipo: DiaRegistroTipo;
+      /** Para `texto`, o que se digitou; para `audio`, a transcrição. */
+      texto: string | null;
+      storage_path: string | null;
+      mime_type: string | null;
+      duracao_ms: number | null;
+      tamanho_bytes: number | null;
+      /** Só vale para áudio: texto nasce `pronto`. */
+      status: DiaRegistroStatus;
+      erro: string | null;
+      criado_por: string | null;
+      created_at: string;
+    };
+    Insert: {
+      id?: string;
+      relatorio_id: string;
+      tipo: DiaRegistroTipo;
+      texto?: string | null;
+      storage_path?: string | null;
+      mime_type?: string | null;
+      duracao_ms?: number | null;
+      tamanho_bytes?: number | null;
+      status?: DiaRegistroStatus;
+      erro?: string | null;
+      criado_por?: string | null;
+    };
+    Update: {
+      texto?: string | null;
+      status?: DiaRegistroStatus;
+      erro?: string | null;
     };
   };
 
@@ -1365,6 +1415,9 @@ type TabelasDeDiario = {
     Update: { dados?: unknown };
   };
 };
+
+type DiaRegistroTipo = "texto" | "audio";
+type DiaRegistroStatus = "pendente" | "transcrevendo" | "pronto" | "falhou";
 
 /**
  * O supabase-js exige `Relationships` em cada tabela para resolver os tipos de
@@ -1425,6 +1478,10 @@ export type Database = {
       orc_fonte_de_preco: OrcFonte;
       orc_situacao: OrcSituacao;
       orc_evento_tipo: OrcEventoTipo;
+      // `text` com `check` no banco, não enum: a lista ainda vai mexer com a
+      // Entrega 3, e trocar um `check` é migração, trocar enum é ritual.
+      dia_registro_tipo: DiaRegistroTipo;
+      dia_registro_status: DiaRegistroStatus;
     };
     CompositeTypes: Record<never, never>;
   };

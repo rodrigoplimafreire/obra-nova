@@ -4,6 +4,9 @@ import { TelaDoDiario } from "@/components/admin/tela-diario";
 
 export const dynamic = "force-dynamic";
 
+/** Transcrever e resumir chamam provedor externo; ver a página do orçamento. */
+export const maxDuration = 60;
+
 export default async function Diario({
   searchParams,
 }: {

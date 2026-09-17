@@ -41,13 +41,17 @@ export function Composer({
   enviarImagem,
   ocupado,
   // No canteiro o que se quer é a foto, que é a prova do serviço; em outras
-  // telas pode ser o áudio. Só troca a cor de destaque e o texto do campo — os
-  // mesmos três ícones aparecem nos dois casos.
+  // telas pode ser o áudio. Só troca a cor de destaque e o texto do campo.
   destaque = "audio",
 }: {
   enviarTexto: (texto: string) => Promise<void>;
   enviarAudio: (bloco: BlocoGravado) => Promise<void>;
-  enviarImagem: (arquivo: File) => Promise<void>;
+  /**
+   * Opcional, e a ausência é o sinal: sem ela a câmera e o clipe somem do
+   * pill. É o caso do Diário, que aceita áudio e texto e mais nada — botão
+   * que não faz nada é pior que botão que não existe.
+   */
+  enviarImagem?: (arquivo: File) => Promise<void>;
   ocupado: boolean;
   destaque?: "audio" | "foto";
 }) {
@@ -209,7 +213,13 @@ export function Composer({
         <div className="flex items-end gap-2">
           {/* Um pill só: o campo cresce, o clipe e a câmera moram dentro dele,
               encostados na borda direita — a mesma composição do WhatsApp. */}
-          <div className="flex min-w-0 flex-1 items-end gap-0.5 rounded-lg border border-nevoa bg-white py-1.5 pr-1.5 pl-4">
+          <div
+            // Sem os botões dentro, o respiro da direita passa a ser o mesmo
+            // da esquerda: 1.5 existe para encostar o ícone na borda.
+            className={`flex min-w-0 flex-1 items-end gap-0.5 rounded-lg border border-nevoa bg-white py-1.5 pl-4 ${
+              enviarImagem ? "pr-1.5" : "pr-4"
+            }`}
+          >
             <textarea
               ref={taRef}
               value={texto}
@@ -238,6 +248,8 @@ export function Composer({
                 `capture` abre a câmera de trás direto, sem a folha de escolha;
                 sem ele, o seletor mostra galeria e arquivos. No desktop
                 `capture` é ignorado e os dois caem no mesmo diálogo. */}
+            {enviarImagem && (
+              <>
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
@@ -288,6 +300,8 @@ export function Composer({
                 if (arquivo) void enviarImagem(arquivo);
               }}
             />
+              </>
+            )}
           </div>
 
           {texto.trim() || !microfonePossivel ? (

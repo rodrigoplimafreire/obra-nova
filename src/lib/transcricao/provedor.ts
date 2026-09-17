@@ -103,10 +103,13 @@ function nomeDoArquivo(mimeType: string | null, nomeOriginal?: string | null): s
  * fora de ASCII. Testado — "portugues" passa, "português" quebra. O texto
  * orienta o reconhecimento e não aparece na transcrição.
  *
- * São dois porque o que se dita é diferente. No canteiro o assunto é o que foi
+ * São três porque o que se dita é diferente. No canteiro o assunto é o que foi
  * executado; no orçamento é quanto custa, e aí unidade e valor passam a ser as
- * palavras que não podem sair erradas: metro quadrado e metro linear soam
- * iguais ditados depressa, e a diferença é o preço.
+ * palavras que não podem sair erradas — metro quadrado e metro linear soam
+ * iguais ditados depressa, e a diferença é o preço. No diário não se dita nem
+ * medida nem preço: dita-se o que andou, o que travou e quem ficou de fazer o
+ * quê. O vocabulário da obra ali só atrapalharia, empurrando "alvenaria" para
+ * cima de qualquer palavra parecida.
  */
 const VOCABULARIO = {
   obra:
@@ -118,6 +121,11 @@ const VOCABULARIO = {
     "laje, ferragem, rufo em zinco, forro de PVC, telhado, esquadria, " +
     "eletrica, hidraulica, pintura. Medidas em metro quadrado, metro linear, " +
     "unidade e verba. Quantidade, valor unitario e total em reais.",
+  diario:
+    "Relato de trabalho do dia em portugues do Brasil: o que foi entregue, o " +
+    "que esta em andamento, o que ficou pendente e os proximos passos. " +
+    "Nomes de pessoas, prazos, datas, reuniao, cliente, orcamento, proposta, " +
+    "obra, vistoria, tela, link, ajuste, correcao, teste e publicacao.",
 } as const;
 
 export type Contexto = keyof typeof VOCABULARIO;

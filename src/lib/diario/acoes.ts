@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { diaValido } from "@/lib/tempo";
 import { montarDia } from "./publicacao";
+import { garantirRelatorioDoDia } from "./relatorio";
+import { gerarResumo } from "./resumo";
 import { linhas } from "./tipos";
 import type { Resultado } from "@/lib/admin/tipos";
 
@@ -16,12 +18,16 @@ import type { Resultado } from "@/lib/admin/tipos";
  */
 
 /** O diário de quem está logado. Toda ação passa por aqui antes de escrever. */
-async function meuDiario(): Promise<{ id: string; token: string } | null> {
+async function meuDiario(): Promise<{
+  id: string;
+  token: string;
+  autor_nome: string | null;
+} | null> {
   const { orgId, id: usuarioId } = await exigirAdmin();
 
   const { data } = await supabaseAdmin()
     .from("dia_diarios")
-    .select("id, token")
+    .select("id, token, autor_nome")
     .eq("org_id", orgId)
     .eq("autor_id", usuarioId)
     .maybeSingle();
@@ -58,26 +64,109 @@ export async function salvarDia(
     proximos_passos: String(form.get("proximosPassos") ?? "").trim() || null,
   };
 
-  const sb = supabaseAdmin();
+  const relatorioId = await garantirRelatorioDoDia(diario.id, dia);
+  if (!relatorioId) return { ok: false, erro: "Falha ao abrir o dia." };
 
-  const { data: existente } = await sb
+  const agora = new Date().toISOString();
+
+  const { error } = await supabaseAdmin()
     .from("dia_relatorios")
-    .select("id")
-    .eq("diario_id", diario.id)
-    .eq("dia", dia)
-    .maybeSingle();
-
-  const { error } = existente
-    ? await sb
-        .from("dia_relatorios")
-        .update({ ...campos, updated_at: new Date().toISOString() })
-        .eq("id", existente.id)
-    : await sb.from("dia_relatorios").insert({ diario_id: diario.id, dia, ...campos });
+    .update({
+      ...campos,
+      // Carimba a mão humana. É o que faz "Gerar resumo" perguntar antes de
+      // substituir: salvar é reivindicar o texto, mesmo sem ter mudado nada.
+      editado_em: agora,
+      updated_at: agora,
+    })
+    .eq("id", relatorioId);
 
   if (error) return { ok: false, erro: error.message };
 
   revalidar();
   return { ok: true };
+}
+
+export type SaidaDoResumoDoDia = Resultado & {
+  /** A IA substituiria texto corrigido à mão. A tela pergunta antes. */
+  precisaConfirmar?: boolean;
+  registros?: number;
+};
+
+/**
+ * A IA organiza os registros do dia nas quatro seções.
+ *
+ * **Não publica nada, e não atropela mão humana.** Cai no rascunho, para ser
+ * lido antes; e se o texto que está lá foi editado depois do último resumo, a
+ * primeira chamada volta pedindo confirmação em vez de sobrescrever. É a
+ * última regra da §5 do PRD — "preservar edições manuais até o usuário
+ * confirmar sua substituição" — e é a mesma disciplina do `editado_em` das
+ * transcrições avulsas.
+ */
+export async function gerarResumoDoDia(
+  dia: string,
+  confirmado = false,
+): Promise<SaidaDoResumoDoDia> {
+  const diario = await meuDiario();
+  if (!diario) return { ok: false, erro: "Diário não encontrado." };
+  if (!diaValido(dia)) return { ok: false, erro: "Data inválida." };
+
+  const sb = supabaseAdmin();
+
+  const relatorioId = await garantirRelatorioDoDia(diario.id, dia);
+  if (!relatorioId) return { ok: false, erro: "Falha ao abrir o dia." };
+
+  const { data: relatorio } = await sb
+    .from("dia_relatorios")
+    .select("realizado, em_andamento, pendencias, proximos_passos, editado_em, resumo_em")
+    .eq("id", relatorioId)
+    .maybeSingle();
+
+  const temTexto = Boolean(
+    relatorio?.realizado ||
+      relatorio?.em_andamento ||
+      relatorio?.pendencias ||
+      relatorio?.proximos_passos,
+  );
+
+  const editadoDepois =
+    Boolean(relatorio?.editado_em) &&
+    (!relatorio?.resumo_em ||
+      new Date(relatorio.editado_em as string).getTime() >
+        new Date(relatorio.resumo_em).getTime());
+
+  if (temTexto && editadoDepois && !confirmado) {
+    return {
+      ok: false,
+      precisaConfirmar: true,
+      erro: "O texto deste dia foi editado à mão. Gerar de novo substitui o que você escreveu.",
+    };
+  }
+
+  const saida = await gerarResumo(relatorioId, diario.autor_nome);
+  if (!saida.ok) return { ok: false, erro: saida.erro };
+
+  const agora = new Date().toISOString();
+  const junta = (itens: string[]) => (itens.length ? itens.join("\n") : null);
+
+  const { error } = await sb
+    .from("dia_relatorios")
+    .update({
+      realizado: junta(saida.secoes.realizado),
+      em_andamento: junta(saida.secoes.emAndamento),
+      pendencias: junta(saida.secoes.pendencias),
+      proximos_passos: junta(saida.secoes.proximosPassos),
+      resumo_em: agora,
+      // O texto passa a ser da IA de novo: a próxima geração não precisa
+      // perguntar, a não ser que alguém salve por cima antes dela.
+      editado_em: null,
+      updated_at: agora,
+    })
+    .eq("id", relatorioId);
+
+  if (error) return { ok: false, erro: error.message };
+
+  revalidar();
+  return { ok: true, registros: saida.registros };
 }
 
 /**

@@ -21,6 +21,7 @@ npm run verificar:colagem           # o parser de orçamento colado
 npm run verificar:valor-fechado
 npm run verificar:falas
 npm run verificar:org
+npm run verificar:diario        # datas, travas do banco e a IA do resumo
 ```
 
 O resto deste documento é o comportamento que **ainda não tem** teste
@@ -440,6 +441,46 @@ ela existe e derruba para o login sem sessão.*
   suposto.
 - As datas saem de `hojeNaEmpreiteira()`, em `src/lib/tempo.ts`, e não do fuso
   do servidor nem do navegador.
+
+---
+
+## 16c · Diário — registros e resumo (Entrega 2)
+
+*Coberto por `npm run verificar:diario`, que chama a IA de verdade e se limpa
+sozinho. As linhas de IA abaixo foram observadas rodando o script, não deduzidas
+do prompt.*
+
+| Entrada | Saída esperada |
+| --- | --- |
+| Primeiro registro de um dia que não existe | `garantirRelatorioDoDia` cria a linha; a chave única impede duas |
+| `registrarTextoDoDiario` com texto em branco | `"Escreva alguma coisa."` |
+| Áudio acima de 25 MB | `"Áudio acima do limite de 25 MB."` |
+| Extensão ou mime fora da lista | Recusado antes de gerar a URL assinada |
+| Áudio registrado, transcrição falha | Registro fica com `status: falhou` e o **arquivo continua no Storage**; a lista oferece "Tentar de novo" |
+| `apagarRegistro` | Apaga a linha **e** o arquivo no Storage; o resumo já escrito não é refeito |
+| Insert de `tipo: audio` sem `storage_path` | Recusado pelo `check` do banco (23514) |
+| Insert de `tipo` fora de `texto`/`audio` | Recusado pelo `check` do banco (23514) |
+| `gerarResumoDoDia` num dia sem registro com texto | Recusa **antes** de chamar a IA: `"Não há registro com texto neste dia…"` |
+| Registro de áudio ainda `pendente` ou `falhou` | **Não entra** no material da IA |
+| `gerarResumoDoDia` com texto editado à mão depois do último resumo | `{ ok: false, precisaConfirmar: true }` — a tela pergunta, não substitui |
+| A mesma chamada com `confirmado: true` | Substitui as quatro seções, carimba `resumo_em` e limpa `editado_em` |
+| `salvarDia` | Carimba `editado_em` — salvar é reivindicar o texto |
+| Material diz "amanhã eu vou publicar" | Sai em **próximos passos**, nunca em realizado |
+| Material diz "tá pela metade" | Sai em **em andamento**, nunca em realizado |
+| Pendência sem dono no material | Sai com `"A definir"` |
+| Próximo passo na primeira pessoa | Sai com o nome do autor, **não** com "A definir" |
+| Nome próprio e número no material | Preservados como vieram |
+| Resumo gerado | Cai no **rascunho**. Publicar continua sendo ato humano |
+
+**Bordas**
+
+- O resumo escrito pela IA **não publica nada**, e a tela diz "Leia antes de
+  publicar". É a última regra da §5 do PRD.
+- A transcrição do diário usa o vocabulário `diario`, não o da obra: ali não se
+  dita medida nem preço, e "alvenaria" empurrada para cima de palavra parecida
+  seria ruído.
+- O `Composer` do diário vai **sem** `enviarImagem`, e com isso a câmera e o
+  clipe somem do pill. O PRD aceita áudio e texto, e só.
 
 ---
 
