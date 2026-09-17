@@ -452,7 +452,7 @@
   .pastilha-ativa:hover:not(:disabled) {
     background: var(--color-tinta);
     border-color: var(--color-tinta);
-    color: var(--color-cal);
+    color: var(--color-papel);
   }
 
   /* A linha de serviço é toda clicável: o alvo é a linha inteira, não um
@@ -495,7 +495,7 @@
   .botao-microfone-gravando {
     background: var(--color-tinta);
     border-color: var(--color-tinta);
-    color: var(--color-cal);
+    color: var(--color-papel);
   }
   /* Pulsa enquanto grava. É o sinal de que o aparelho está ouvindo, e o
      motivo é concreto: no canteiro não dá para confiar no silêncio da tela. */
