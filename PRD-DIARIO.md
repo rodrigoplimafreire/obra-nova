@@ -127,6 +127,43 @@ leitura de ferramentas parecidas mostrou que faltavam: o **endereço próprio**
 (`diario.rd.eng.br/rodrigo`, ver **D12**) e o **refino da página de leitura**
 (**D13**).
 
+### Entrega 4 — Menos digitar, mais tocar
+
+Pedida pelo Rodrigo em 18/09/2026, depois de usar a tela: *"que ela fique
+menos digitável e mais seletiva"*.
+
+**O diagnóstico.** O diário é a escrita mais repetitiva que existe — os mesmos
+projetos, as mesmas pessoas, os mesmos verbos, todo dia. A voz já tira parte
+do trabalho de entrada, mas a **revisão continua sendo datilografia**: mover
+"ajuste do contraste" de *Em andamento* para *Realizado* é recortar de um
+campo e colar em outro. Esse é o gesto mais frequente do diário e o mais caro
+da tela. E há uma repetição que ninguém devia digitar duas vezes: **o que
+estava em andamento ontem é o assunto de hoje.**
+
+Quatro camadas, nesta ordem, porque as três últimas só existem em cima da
+primeira — enquanto a seção for um bloco de texto, qualquer uma delas vira
+gambiarra de parsing.
+
+**4a · Item em vez de bloco de texto.** As quatro seções deixam de ser
+`textarea` com a convenção "um item por linha" e viram lista de itens
+(`dia_itens`). Cada item tem seção, e trocar de seção é um toque. É a mais
+cara: mexe no banco e no que a publicação congela.
+
+**4b · Trazer ontem para hoje, por toque.** Ao abrir o dia, o que ontem estava
+em *Em andamento* e em *Pendências* aparece como sugestão, com três toques
+possíveis: **concluí**, **continua**, **saiu**. Um dia normal fecha sem uma
+tecla.
+
+**4c · Responsável como pastilha escolhida.** Um elenco pequeno por diário, e
+um seletor no item. "A definir" vira opção da lista em vez de convenção de
+texto. Hoje o nome é texto livre, e texto livre com nome próprio erra: a
+transcrição escreve "Reginaldo" e a pastilha da página vira outra pessoa.
+
+**4d · Revisar o resumo por aceite, não por edição.** "Gerar resumo" para de
+escrever direto nos campos e passa a propor itens em cartões — **aceitar**,
+**trocar de seção**, **descartar**, mais um "aceitar tudo". Ler e aprovar
+deixa de ser reescrever.
+
 ---
 
 ## 4. Decisões
@@ -251,6 +288,20 @@ E uma quarta, que veio de olhar o caso de uso em vez do concorrente: quase
 toda consulta é "hoje" ou "ontem", e abrir calendário para isso é atrito em
 cima do caso comum. A **fita dos últimos dias** resolve o comum num toque, e o
 calendário volta a ser o que ele é bom: achar data distante.
+
+**D14 · A sugestão de ontem nunca entra sozinha.** É a regra que sustenta a
+Entrega 4 inteira, e a única que não pode dobrar por conveniência de tela. Se
+um item reaparecer como "realizado" sem alguém ter tocado, é exatamente a
+mentira que a §5 do PRD proíbe: planejamento virando entrega. A tela sugere; o
+dedo decide. Por isso a sugestão vive **fora** do relatório do dia até ser
+aceita — ela não é um item com estado "pendente de confirmação", ela ainda não
+é um item.
+
+**D15 · O item guarda de onde veio.** `dia_itens.origem` (`ia` / `humano`) é a
+mesma coluna que `orc_itens` tem, pelo mesmo motivo: separar o que a máquina
+escreveu do que a pessoa escreveu não é enfeite, é o que permite saber depois
+se a IA está ajudando ou atrapalhando. Um item da IA que a pessoa editou passa
+a ser `humano` — mão humana marca a linha.
 
 ---
 

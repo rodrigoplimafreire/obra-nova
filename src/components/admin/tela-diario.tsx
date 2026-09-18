@@ -11,26 +11,29 @@ import {
   publicarDia,
   revogarAcesso,
   salvarAjustes,
-  salvarDia,
   tirarDiaDoAr,
   type SaidaDoResumoDoDia,
 } from "@/lib/diario/acoes";
+import { ItensDoDia } from "./itens-do-dia";
 import { RegistrosDoDiario } from "./registros-do-diario";
 import { copiarTexto } from "@/lib/clipboard";
 import { enderecoDoDiario, HOST_DO_DIARIO } from "@/lib/diario/apelido";
-import { SECOES } from "@/lib/diario/tipos";
 import type { Diario, DiaDoDiario, DiaNoPainel } from "@/lib/diario/dados";
 import type { Resultado } from "@/lib/admin/tipos";
 
 /**
  * Escrever o dia e publicar.
  *
- * **Salvar e publicar são dois atos, e a tela não deixa confundir.** Salvar
- * guarda o rascunho e não muda nada no link; publicar tira a fotografia que o
- * leitor passa a ver. É a exigência do PRD ("novos registros não alteram
- * automaticamente o conteúdo publicado") aparecendo como dois botões com
- * destaques diferentes — e é por isso que o botão de publicar diz "Publicar
- * atualização" quando já existe publicação daquele dia.
+ * **Editar e publicar são dois atos, e a tela não deixa confundir.** Cada item
+ * se salva sozinho ao ser mexido, e nada disso toca o link; publicar tira a
+ * fotografia que o leitor passa a ver. É a exigência do PRD ("novos registros
+ * não alteram automaticamente o conteúdo publicado") virando duas escritas
+ * separadas — e é por isso que o botão diz "Publicar atualização" quando já
+ * existe publicação daquele dia.
+ *
+ * Não há botão "Salvar": ele existia para mandar quatro `textarea` de uma vez,
+ * e sumiu junto com elas na Entrega 4a. Botão de salvar numa tela que já salva
+ * sozinha é convite para a pessoa achar que perdeu o que escreveu.
  *
  * A data viaja na URL (`?dia=`), não em estado do React: recarregar a página,
  * voltar no navegador e mandar o endereço para si mesmo continuam funcionando.
@@ -62,13 +65,6 @@ function comoData(dia: string, formato: Intl.DateTimeFormat): string {
   return formato.format(new Date(`${dia}T12:00:00Z`));
 }
 
-/** O texto de cada seção, com o exemplo que diz o formato esperado. */
-const AJUDA: Record<string, string> = {
-  realizado: "O que ficou pronto. Um item por linha.",
-  emAndamento: "O que começou e continua. Um item por linha.",
-  pendencias: "O que está travado, com responsável e prazo quando houver.",
-  proximosPassos: "O que vem em seguida, por responsável.",
-};
 
 export function TelaDoDiario({
   diario,
@@ -109,10 +105,6 @@ export function TelaDoDiario({
     }
   }
 
-  const [salvo, salvar, salvando] = useActionState<Resultado | null, FormData>(
-    salvarDia,
-    null,
-  );
   const [publicado, publicar, publicando] = useActionState<
     Resultado | null,
     FormData
@@ -123,8 +115,8 @@ export function TelaDoDiario({
   );
 
   useEffect(() => {
-    if (salvo?.ok || publicado?.ok || retirado?.ok) router.refresh();
-  }, [salvo, publicado, retirado, router]);
+    if (publicado?.ok || retirado?.ok) router.refresh();
+  }, [publicado, retirado, router]);
 
   // Com apelido, o link é o da empreiteira; sem ele, continua sendo o do
   // token — que nunca deixa de valer.
@@ -343,16 +335,14 @@ export function TelaDoDiario({
         <RegistrosDoDiario dia={atual.dia} registros={atual.registros} />
 
         <Secao titulo="O relatório do dia">
-          <form action={salvar} className="cartao px-5 py-5">
-            <input type="hidden" name="dia" value={atual.dia} />
-
+          <div className="cartao px-5 py-5">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-cinza-100 pb-3">
               <p className="text-xs leading-relaxed text-cinza">
                 {atual.registros.length === 0
                   ? "A IA organiza os registros do dia, aqui em cima, nas quatro seções."
                   : `${atual.registros.length} ${atual.registros.length === 1 ? "registro" : "registros"} no dia.`}
                 {atual.editadoDepoisDoResumo && atual.registros.length > 0 && (
-                  <> Este texto foi editado à mão depois do último resumo.</>
+                  <> Algum item foi mexido à mão depois do último resumo.</>
                 )}
               </p>
 
@@ -366,47 +356,18 @@ export function TelaDoDiario({
               </button>
             </div>
 
-            <div className="flex flex-col gap-5">
-              {SECOES.map(({ chave, rotulo }) => (
-                <div key={chave}>
-                  <label htmlFor={chave} className="rotulo-campo">
-                    {rotulo}
-                  </label>
-                  <p className="mt-0.5 mb-2 text-xs text-cinza">
-                    {AJUDA[chave]}
-                  </p>
-                  <textarea
-                    id={chave}
-                    name={chave}
-                    /**
-                     * A chave leva a data **e** o instante da última escrita.
-                     * Só a data não basta: depois de gerar o resumo o React
-                     * reaproveitaria o mesmo `<textarea>`, e o valor antigo
-                     * continuaria no DOM — a IA teria escrito e a tela não
-                     * mostraria.
-                     */
-                    key={`${atual.dia}-${atual.atualizadoEm ?? "novo"}-${chave}`}
-                    defaultValue={atual.rascunho[chave]}
-                    rows={4}
-                    className="campo"
-                  />
-                </div>
-              ))}
-            </div>
+            <ItensDoDia dia={atual.dia} itens={atual.itens} />
 
-            <div className="mt-6 flex flex-wrap items-center gap-2">
-              <button
-                type="submit"
-                disabled={salvando}
-                className="btn btn-secundario"
-              >
-                {salvando ? "Salvando…" : "Salvar rascunho"}
-              </button>
+            {/* Publicar é um `form` porque a ação recebe `FormData`. Os itens
+                já se salvam sozinhos, um a um — não há rascunho a enviar
+                junto, e por isso o botão "Salvar" deixou de existir. */}
+            <form className="mt-6 flex flex-wrap items-center gap-2">
+              <input type="hidden" name="dia" value={atual.dia} />
 
               <button
                 type="submit"
                 formAction={publicar}
-                disabled={publicando || !diario.temSenha}
+                disabled={publicando || !diario.temSenha || atual.itens.length === 0}
                 className="btn btn-primario"
               >
                 {publicando
@@ -426,21 +387,17 @@ export function TelaDoDiario({
                   {tirando ? "Retirando…" : "Tirar do ar"}
                 </button>
               )}
-            </div>
+            </form>
 
-            {/* Um recado por vez, do último ato. Quatro linhas de estado
-                empilhadas seriam quatro coisas para ler antes de saber se deu
+            {/* Um recado por vez, do último ato. Três linhas de estado
+                empilhadas seriam três coisas para ler antes de saber se deu
                 certo. O do resumo que pede confirmação não entra aqui: ele
                 abre o diálogo, logo abaixo. */}
             {(publicado?.erro ||
               retirado?.erro ||
-              salvo?.erro ||
               (resumo?.erro && !resumo.precisaConfirmar)) && (
               <p className="aviso aviso-erro mt-4">
-                {publicado?.erro ??
-                  retirado?.erro ??
-                  salvo?.erro ??
-                  resumo?.erro}
+                {publicado?.erro ?? retirado?.erro ?? resumo?.erro}
               </p>
             )}
             {!publicado?.erro && publicado?.ok && (
@@ -455,7 +412,7 @@ export function TelaDoDiario({
                 de publicar.
               </p>
             )}
-          </form>
+          </div>
         </Secao>
 
         <Secao titulo="Histórico">

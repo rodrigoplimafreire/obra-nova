@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { separarResponsavel, type Secao } from "./tipos";
 
 /**
  * O resumo do dia, escrito a partir dos registros.
@@ -55,24 +56,49 @@ Responda SOMENTE com um objeto JSON válido, sem markdown, sem comentários:
   "proximosPassos": ["Responsável: o que vem em seguida"]
 }`;
 
-export type QuatroSecoes = {
-  realizado: string[];
-  emAndamento: string[];
-  pendencias: string[];
-  proximosPassos: string[];
+/** O que a IA devolve, já pronto para virar linha de `dia_itens`. */
+export type ItemSugerido = {
+  secao: Secao;
+  texto: string;
+  responsavel: string | null;
 };
 
-function lista(v: unknown): string[] {
+/**
+ * A IA responde quatro listas, uma por seção, e não uma lista com o nome da
+ * seção dentro de cada item.
+ *
+ * Testado dos dois jeitos: pedindo o campo `secao` por item, o modelo inventa
+ * nome de seção ("bloqueios", "concluido") e metade vira lixo. Quatro chaves
+ * fixas no JSON não deixam margem — a seção é a chave, e chave errada
+ * simplesmente não é lida.
+ */
+function itensDa(v: unknown, secao: Secao, comResponsavel: boolean): ItemSugerido[] {
   if (!Array.isArray(v)) return [];
-  return v
-    .map((i) => (typeof i === "string" ? i.trim() : ""))
+
+  return v.flatMap((entrada): ItemSugerido[] => {
+    if (typeof entrada !== "string") return [];
+
     // O modelo às vezes devolve o marcador junto; a tela já desenha o dela.
-    .map((i) => i.replace(/^[-*•]\s*/, ""))
-    .filter(Boolean);
+    const linha = entrada.trim().replace(/^[-*•]\s*/, "");
+    if (!linha) return [];
+
+    if (!comResponsavel) return [{ secao, texto: linha, responsavel: null }];
+
+    // "Reginato: conferir a proposta" vira dono e tarefa. O prompt pede este
+    // formato justamente para a coluna existir sem adivinhação depois. O
+    // `separarResponsavel` é o mesmo juiz que a página usa na publicação
+    // antiga — um critério só para "isto é nome de gente?".
+    const { texto, responsavel } = separarResponsavel({
+      texto: linha,
+      responsavel: null,
+    });
+
+    return [{ secao, texto, responsavel }];
+  });
 }
 
 export type SaidaDoResumo =
-  | { ok: true; secoes: QuatroSecoes; registros: number }
+  | { ok: true; itens: ItemSugerido[]; registros: number }
   | { ok: false; erro: string };
 
 export async function gerarResumo(
@@ -173,12 +199,12 @@ export async function gerarResumo(
     return {
       ok: true,
       registros: uteis.length,
-      secoes: {
-        realizado: lista(o.realizado),
-        emAndamento: lista(o.emAndamento),
-        pendencias: lista(o.pendencias),
-        proximosPassos: lista(o.proximosPassos),
-      },
+      itens: [
+        ...itensDa(o.realizado, "realizado", false),
+        ...itensDa(o.emAndamento, "em_andamento", false),
+        ...itensDa(o.pendencias, "pendencias", true),
+        ...itensDa(o.proximosPassos, "proximos_passos", true),
+      ],
     };
   } catch (e) {
     const expirou = e instanceof Error && e.name === "TimeoutError";

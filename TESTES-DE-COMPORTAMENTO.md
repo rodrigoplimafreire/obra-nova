@@ -524,6 +524,45 @@ conferido com `curl -H "Host: diario.rd.eng.br"` contra o servidor local.*
 
 ---
 
+## 16e · Diário — itens no lugar de blocos de texto (Entrega 4a)
+
+*Coberto por `npm run verificar:diario`. A página foi conferida no navegador
+com uma publicação no formato novo.*
+
+| Entrada | Saída esperada |
+| --- | --- |
+| `adicionarItem` com texto em branco | `"Escreva alguma coisa."` |
+| `adicionarItem` com seção fora da lista | `"Seção inválida."` |
+| `moverItem` para outra seção | Vai para o **fim** da seção de destino — quem move para "realizado" acabou de fechar aquilo |
+| `editarItem` num item da IA | `origem` passa a `humano` — mão humana marca a linha |
+| Qualquer ação de item | Carimba `editado_em` no dia; mexer num item é reivindicar o texto |
+| `gerarResumoDoDia` com item mexido depois do último resumo | `precisaConfirmar` — a tela pergunta antes |
+| `gerarResumoDoDia` confirmado | **Substitui** os itens, não soma: somar duplicaria tudo a cada geração |
+| `publicarDia` sem nenhum item | `"Não há nada escrito neste dia para publicar."` |
+| Item de seção sem responsável (realizado, em andamento) | `responsavel` fica nulo, e a página não desenha pastilha |
+| Publicação antiga (lista de strings, `emAndamento` em camelCase) | Continua legível — `lerDia` aceita as duas gerações |
+| `"Reginato: conferir"` em publicação antiga | Vira pastilha `Reginato` na leitura |
+| `"Conferi tudo: a tabela, a proposta"` | **Não** vira pastilha — verbo conjugado não é nome |
+| `"José da Silva: medir"` | Vira pastilha, com a partícula minúscula aceita |
+| `"A definir: decidir"` | Vira pastilha, em cinza e itálico |
+
+**Bordas**
+
+- **Não existe botão "Salvar".** Cada item se grava sozinho ao ser mexido; o
+  botão existia para mandar quatro `textarea` de uma vez e sumiu com elas.
+  Botão de salvar numa tela que já salva sozinha faz a pessoa achar que perdeu
+  o que escreveu.
+- O texto do item salva **ao sair do campo**, não a cada tecla: uma chamada
+  por caractere entupiria a rede e carimbaria `editado_em` mil vezes.
+- `origem` **não** vai para a fotografia publicada. Se a linha saiu da IA ou do
+  teclado é assunto de dentro de casa.
+- A conversão das quatro colunas em itens rodou na migração, com o `\r` das
+  linhas removido e o responsável extraído do texto em pendências e próximos
+  passos. As colunas foram derrubadas: duas fontes de verdade para o mesmo
+  conteúdo é convite para divergirem.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

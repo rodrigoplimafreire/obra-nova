@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { empreiteiraDaOrg, type Empreiteira } from "@/lib/admin/empreiteira";
 import { lerDia } from "./publicacao";
-import { RASCUNHO_VAZIO, type DiaPublicado, type RascunhoDoDia } from "./tipos";
+import type { DiaPublicado, ItemDoDia } from "./tipos";
 
 /**
  * Leitura do diário, para o painel e para a página de acompanhamento.
@@ -131,7 +131,7 @@ export type RegistroDoDia = {
 
 export type DiaNoPainel = {
   dia: string;
-  rascunho: RascunhoDoDia;
+  itens: ItemDoDia[];
   publicadoEm: string | null;
   versao: number | null;
   /**
@@ -145,7 +145,7 @@ export type DiaNoPainel = {
   registros: RegistroDoDia[];
 };
 
-/** O rascunho de uma data, com os registros que o alimentam. */
+/** O dia no painel: os itens do relatório e os registros que os alimentam. */
 export async function carregarDia(
   diarioId: string,
   dia: string,
@@ -154,9 +154,7 @@ export async function carregarDia(
 
   const { data: relatorio } = await sb
     .from("dia_relatorios")
-    .select(
-      "id, realizado, em_andamento, pendencias, proximos_passos, editado_em, resumo_em, updated_at",
-    )
+    .select("id, editado_em, resumo_em, updated_at")
     .eq("diario_id", diarioId)
     .eq("dia", dia)
     .maybeSingle();
@@ -164,7 +162,7 @@ export async function carregarDia(
   if (!relatorio) {
     return {
       dia,
-      rascunho: { ...RASCUNHO_VAZIO },
+      itens: [],
       publicadoEm: null,
       versao: null,
       atualizadoEm: null,
@@ -173,29 +171,37 @@ export async function carregarDia(
     };
   }
 
-  const [{ data: publicacao }, { data: registros }] = await Promise.all([
-    sb
-      .from("dia_publicacoes")
-      .select("versao, publicado_em")
-      .eq("relatorio_id", relatorio.id)
-      .order("versao", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    sb
-      .from("dia_registros")
-      .select("id, tipo, texto, status, erro, duracao_ms, created_at")
-      .eq("relatorio_id", relatorio.id)
-      .order("created_at"),
-  ]);
+  const [{ data: publicacao }, { data: registros }, { data: itens }] =
+    await Promise.all([
+      sb
+        .from("dia_publicacoes")
+        .select("versao, publicado_em")
+        .eq("relatorio_id", relatorio.id)
+        .order("versao", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      sb
+        .from("dia_registros")
+        .select("id, tipo, texto, status, erro, duracao_ms, created_at")
+        .eq("relatorio_id", relatorio.id)
+        .order("created_at"),
+      sb
+        .from("dia_itens")
+        .select("id, secao, texto, responsavel, origem")
+        .eq("relatorio_id", relatorio.id)
+        .order("posicao")
+        .order("created_at"),
+    ]);
 
   return {
     dia,
-    rascunho: {
-      realizado: relatorio.realizado ?? "",
-      emAndamento: relatorio.em_andamento ?? "",
-      pendencias: relatorio.pendencias ?? "",
-      proximosPassos: relatorio.proximos_passos ?? "",
-    },
+    itens: (itens ?? []).map((i) => ({
+      id: i.id,
+      secao: i.secao,
+      texto: i.texto,
+      responsavel: i.responsavel,
+      origem: i.origem,
+    })),
     publicadoEm: publicacao?.publicado_em ?? null,
     versao: publicacao?.versao ?? null,
     atualizadoEm: relatorio.updated_at,

@@ -6,7 +6,12 @@ import {
   semanasDoMes,
 } from "@/lib/diario/calendario";
 import { mesVizinho } from "@/lib/tempo";
-import type { DiaPublicado } from "@/lib/diario/tipos";
+import {
+  semDono,
+  separarResponsavel,
+  type DiaPublicado,
+  type ItemPublicado,
+} from "@/lib/diario/tipos";
 import type { Empreiteira } from "@/lib/admin/empreiteira";
 
 /**
@@ -60,31 +65,6 @@ const HORA = new Intl.DateTimeFormat("pt-BR", {
 /** `2026-09-17` vira uma data legível sem passar pelo fuso do navegador. */
 function comoData(dia: string, formato: Intl.DateTimeFormat): string {
   return formato.format(new Date(`${dia}T12:00:00Z`));
-}
-
-/**
- * "Reginato: confirmar o preço do rufo" vira dono + tarefa.
- *
- * A IA escreve nesse formato de propósito (ver o prompt em `resumo.ts`), para
- * quem lê achar o próprio nome sem ler a frase inteira. Quando a linha não
- * vier assim — texto digitado à mão, ou um dia em que o modelo escapou do
- * formato — ela aparece inteira, sem dono. Nunca adivinhamos um responsável a
- * partir da pontuação.
- */
-function separarResponsavel(item: string): { dono: string | null; tarefa: string } {
-  const casou = item.match(/^([^:]{2,40}):\s*(.+)$/);
-  if (!casou) return { dono: null, tarefa: item };
-
-  const dono = casou[1].trim();
-  // Um dono é um nome, não uma oração. Mais de quatro palavras é frase com
-  // dois-pontos no meio, e quebrá-la em chip estragaria a leitura.
-  if (dono.split(/\s+/).length > 4) return { dono: null, tarefa: item };
-
-  return { dono, tarefa: casou[2].trim() };
-}
-
-function semDono(dono: string): boolean {
-  return /^a\s+definir$/i.test(dono);
 }
 
 export function PaginaDoDiario({
@@ -295,13 +275,13 @@ function Relatorio({
           <Lista titulo="Realizado" itens={relatorio.realizado} tom="feito" />
           <Lista
             titulo="Em andamento"
-            itens={relatorio.emAndamento}
+            itens={relatorio.em_andamento}
             tom="andando"
           />
           <Pendencias itens={relatorio.pendencias} />
           <Lista
             titulo="Próximos passos"
-            itens={relatorio.proximosPassos}
+            itens={relatorio.proximos_passos}
             tom="proximo"
             comDono
           />
@@ -379,7 +359,7 @@ function Lista({
   comDono = false,
 }: {
   titulo: string;
-  itens: string[];
+  itens: ItemPublicado[];
   tom: keyof typeof TOM;
   comDono?: boolean;
 }) {
@@ -389,10 +369,12 @@ function Lista({
     <section>
       <h3 className="rotulo mb-3">{titulo}</h3>
       <ul className="flex flex-col gap-2.5">
-        {itens.map((item, i) => {
-          const { dono, tarefa } = comDono
-            ? separarResponsavel(item)
-            : { dono: null, tarefa: item };
+        {itens.map((bruto, i) => {
+          // `separarResponsavel` só age em publicação antiga, de quando o dono
+          // morava dentro do texto. A coluna vence sempre que existir.
+          const { texto, responsavel } = comDono
+            ? separarResponsavel(bruto)
+            : bruto;
 
           return (
             <li key={i} className="flex gap-3">
@@ -400,8 +382,8 @@ function Lista({
                 className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${TOM[tom]}`}
               />
               <span className="min-w-0 leading-relaxed text-grafite">
-                {dono && <Dono nome={dono} />}
-                {tarefa}
+                {responsavel && <Dono nome={responsavel} />}
+                {texto}
               </span>
             </li>
           );
@@ -418,15 +400,15 @@ function Lista({
  * funcionam, o bloqueio é o que sobe na página, não o que se perde no meio de
  * uma lista igual às outras.
  */
-function Pendencias({ itens }: { itens: string[] }) {
+function Pendencias({ itens }: { itens: ItemPublicado[] }) {
   if (itens.length === 0) return null;
 
   return (
     <section>
       <h3 className="rotulo mb-3">Pendências</h3>
       <ul className="flex flex-col gap-2.5">
-        {itens.map((item, i) => {
-          const { dono, tarefa } = separarResponsavel(item);
+        {itens.map((bruto, i) => {
+          const { texto, responsavel } = separarResponsavel(bruto);
           return (
             <li
               key={i}
@@ -435,8 +417,8 @@ function Pendencias({ itens }: { itens: string[] }) {
               {/* No cartão o dono fica na linha de cima, e não colado no
                   texto: numa pendência de duas linhas, a segunda voltava para
                   a margem e o nome ficava boiando no meio da frase. */}
-              {dono && <Dono nome={dono} bloco />}
-              <span className="leading-relaxed text-grafite">{tarefa}</span>
+              {responsavel && <Dono nome={responsavel} bloco />}
+              <span className="leading-relaxed text-grafite">{texto}</span>
             </li>
           );
         })}

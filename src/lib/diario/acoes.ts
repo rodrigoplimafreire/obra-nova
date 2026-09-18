@@ -8,7 +8,6 @@ import { lerApelido } from "./apelido";
 import { montarDia } from "./publicacao";
 import { garantirRelatorioDoDia } from "./relatorio";
 import { gerarResumo } from "./resumo";
-import { linhas } from "./tipos";
 import type { Resultado } from "@/lib/admin/tipos";
 
 /**
@@ -39,52 +38,6 @@ async function meuDiario(): Promise<{
 function revalidar(token?: string) {
   revalidatePath("/admin/diario");
   if (token) revalidatePath(`/d/${token}`);
-}
-
-/**
- * Grava o rascunho do dia.
- *
- * Não publica nada: o que o leitor vê continua sendo a última fotografia até
- * alguém apertar Publicar. É a exigência do PRD ("novos registros não alteram
- * automaticamente o conteúdo publicado") virando duas escritas separadas.
- */
-export async function salvarDia(
-  _anterior: Resultado | null,
-  form: FormData,
-): Promise<Resultado> {
-  const diario = await meuDiario();
-  if (!diario) return { ok: false, erro: "Diário não encontrado." };
-
-  const dia = String(form.get("dia") ?? "");
-  if (!diaValido(dia)) return { ok: false, erro: "Data inválida." };
-
-  const campos = {
-    realizado: String(form.get("realizado") ?? "").trim() || null,
-    em_andamento: String(form.get("emAndamento") ?? "").trim() || null,
-    pendencias: String(form.get("pendencias") ?? "").trim() || null,
-    proximos_passos: String(form.get("proximosPassos") ?? "").trim() || null,
-  };
-
-  const relatorioId = await garantirRelatorioDoDia(diario.id, dia);
-  if (!relatorioId) return { ok: false, erro: "Falha ao abrir o dia." };
-
-  const agora = new Date().toISOString();
-
-  const { error } = await supabaseAdmin()
-    .from("dia_relatorios")
-    .update({
-      ...campos,
-      // Carimba a mão humana. É o que faz "Gerar resumo" perguntar antes de
-      // substituir: salvar é reivindicar o texto, mesmo sem ter mudado nada.
-      editado_em: agora,
-      updated_at: agora,
-    })
-    .eq("id", relatorioId);
-
-  if (error) return { ok: false, erro: error.message };
-
-  revalidar();
-  return { ok: true };
 }
 
 export type SaidaDoResumoDoDia = Resultado & {
@@ -118,16 +71,16 @@ export async function gerarResumoDoDia(
 
   const { data: relatorio } = await sb
     .from("dia_relatorios")
-    .select("realizado, em_andamento, pendencias, proximos_passos, editado_em, resumo_em")
+    .select("editado_em, resumo_em")
     .eq("id", relatorioId)
     .maybeSingle();
 
-  const temTexto = Boolean(
-    relatorio?.realizado ||
-      relatorio?.em_andamento ||
-      relatorio?.pendencias ||
-      relatorio?.proximos_passos,
-  );
+  const { count } = await sb
+    .from("dia_itens")
+    .select("id", { count: "exact", head: true })
+    .eq("relatorio_id", relatorioId);
+
+  const temTexto = (count ?? 0) > 0;
 
   const editadoDepois =
     Boolean(relatorio?.editado_em) &&
@@ -147,24 +100,40 @@ export async function gerarResumoDoDia(
   if (!saida.ok) return { ok: false, erro: saida.erro };
 
   const agora = new Date().toISOString();
-  const junta = (itens: string[]) => (itens.length ? itens.join("\n") : null);
 
-  const { error } = await sb
+  /**
+   * O resumo **substitui** os itens do dia, não soma a eles.
+   *
+   * Somar duplicaria tudo a cada geração, e a pessoa passaria a limpar a
+   * lista à mão — o oposto de uma tela menos digitável. Quem não quer perder
+   * o que escreveu é avisado antes, pelo `precisaConfirmar` acima.
+   */
+  await sb.from("dia_itens").delete().eq("relatorio_id", relatorioId);
+
+  const novos = saida.itens.map((item, i) => ({
+    relatorio_id: relatorioId,
+    secao: item.secao,
+    texto: item.texto,
+    responsavel: item.responsavel,
+    posicao: i + 1,
+    origem: "ia" as const,
+  }));
+
+  if (novos.length > 0) {
+    const { error } = await sb.from("dia_itens").insert(novos);
+    if (error) return { ok: false, erro: error.message };
+  }
+
+  await sb
     .from("dia_relatorios")
     .update({
-      realizado: junta(saida.secoes.realizado),
-      em_andamento: junta(saida.secoes.emAndamento),
-      pendencias: junta(saida.secoes.pendencias),
-      proximos_passos: junta(saida.secoes.proximosPassos),
       resumo_em: agora,
       // O texto passa a ser da IA de novo: a próxima geração não precisa
-      // perguntar, a não ser que alguém salve por cima antes dela.
+      // perguntar, a não ser que alguém mexa num item antes dela.
       editado_em: null,
       updated_at: agora,
     })
     .eq("id", relatorioId);
-
-  if (error) return { ok: false, erro: error.message };
 
   revalidar();
   return { ok: true, registros: saida.registros };
@@ -205,20 +174,21 @@ export async function publicarDia(
 
   const { data: relatorio } = await sb
     .from("dia_relatorios")
-    .select("id, dia, realizado, em_andamento, pendencias, proximos_passos")
+    .select("id, dia")
     .eq("diario_id", diario.id)
     .eq("dia", dia)
     .maybeSingle();
 
   if (!relatorio) return { ok: false, erro: "Escreva o dia antes de publicar." };
 
-  const preenchido =
-    linhas(relatorio.realizado).length +
-    linhas(relatorio.em_andamento).length +
-    linhas(relatorio.pendencias).length +
-    linhas(relatorio.proximos_passos).length;
+  const { data: itens } = await sb
+    .from("dia_itens")
+    .select("id, secao, texto, responsavel, origem")
+    .eq("relatorio_id", relatorio.id)
+    .order("posicao")
+    .order("created_at");
 
-  if (preenchido === 0) {
+  if (!itens?.length) {
     return { ok: false, erro: "Não há nada escrito neste dia para publicar." };
   }
 
@@ -235,7 +205,7 @@ export async function publicarDia(
   const { error } = await sb.from("dia_publicacoes").insert({
     relatorio_id: relatorio.id,
     versao,
-    dados: montarDia(relatorio, diario.autor_nome, versao),
+    dados: montarDia(relatorio.dia, itens, diario.autor_nome, versao),
     publicado_por: usuarioId,
   });
 

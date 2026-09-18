@@ -1325,11 +1325,6 @@ type TabelasDeDiario = {
       id: string;
       diario_id: string;
       dia: string;
-      /** Uma linha por item, como `orgs.normas_tecnicas`. */
-      realizado: string | null;
-      em_andamento: string | null;
-      pendencias: string | null;
-      proximos_passos: string | null;
       /** Carimba a mão humana. Ver `resumo_em`. */
       editado_em: string | null;
       /** Carimba a mão da IA. Se `editado_em` for depois, avisar antes de substituir. */
@@ -1337,22 +1332,50 @@ type TabelasDeDiario = {
       created_at: string;
       updated_at: string;
     };
-    Insert: {
-      id?: string;
-      diario_id: string;
-      dia: string;
-      realizado?: string | null;
-      em_andamento?: string | null;
-      pendencias?: string | null;
-      proximos_passos?: string | null;
-    };
+    Insert: { id?: string; diario_id: string; dia: string };
     Update: {
-      realizado?: string | null;
-      em_andamento?: string | null;
-      pendencias?: string | null;
-      proximos_passos?: string | null;
       editado_em?: string | null;
       resumo_em?: string | null;
+      updated_at?: string;
+    };
+  };
+
+  /**
+   * As linhas do relatório do dia.
+   *
+   * Substituíram as quatro colunas de texto de `dia_relatorios` na Entrega 4a.
+   * O ganho não é de modelagem, é de dedo: trocar um item de seção virou um
+   * toque, em vez de recortar de um campo e colar em outro.
+   */
+  dia_itens: {
+    Row: {
+      id: string;
+      relatorio_id: string;
+      secao: DiaSecao;
+      texto: string;
+      /** Só faz sentido em pendências e próximos passos. Ver `PRD-DIARIO.md`. */
+      responsavel: string | null;
+      posicao: number;
+      /** `ia` ou `humano`. Editar um item da IA o torna humano. */
+      origem: DiaOrigem;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      relatorio_id: string;
+      secao: DiaSecao;
+      texto: string;
+      responsavel?: string | null;
+      posicao?: number;
+      origem?: DiaOrigem;
+    };
+    Update: {
+      secao?: DiaSecao;
+      texto?: string;
+      responsavel?: string | null;
+      posicao?: number;
+      origem?: DiaOrigem;
       updated_at?: string;
     };
   };
@@ -1425,6 +1448,12 @@ type TabelasDeDiario = {
 
 type DiaRegistroTipo = "texto" | "audio";
 type DiaRegistroStatus = "pendente" | "transcrevendo" | "pronto" | "falhou";
+type DiaSecao =
+  | "realizado"
+  | "em_andamento"
+  | "pendencias"
+  | "proximos_passos";
+type DiaOrigem = "ia" | "humano";
 
 /**
  * O supabase-js exige `Relationships` em cada tabela para resolver os tipos de
@@ -1489,6 +1518,8 @@ export type Database = {
       // Entrega 3, e trocar um `check` é migração, trocar enum é ritual.
       dia_registro_tipo: DiaRegistroTipo;
       dia_registro_status: DiaRegistroStatus;
+      dia_secao: DiaSecao;
+      dia_origem: DiaOrigem;
     };
     CompositeTypes: Record<never, never>;
   };

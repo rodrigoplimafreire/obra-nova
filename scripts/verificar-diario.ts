@@ -29,7 +29,12 @@ import {
   lerApelido,
 } from "../src/lib/diario/apelido";
 import { lerDia, montarDia } from "../src/lib/diario/publicacao";
-import { linhas } from "../src/lib/diario/tipos";
+import {
+  linhas,
+  SECOES,
+  semDono,
+  separarResponsavel,
+} from "../src/lib/diario/tipos";
 import {
   diaValido,
   limitesDoMes,
@@ -145,24 +150,84 @@ function conferirFuncoesPuras() {
   console.log("\nA fotografia publicada");
 
   const doc = montarDia(
-    {
-      dia: "2026-09-17",
-      realizado: "fez isto\nfez aquilo",
-      em_andamento: null,
-      pendencias: null,
-      proximos_passos: "amanhã o resto",
-    },
+    "2026-09-17",
+    [
+      { id: "1", secao: "realizado", texto: "fez isto", responsavel: null, origem: "humano" },
+      { id: "2", secao: "realizado", texto: "fez aquilo", responsavel: null, origem: "humano" },
+      { id: "3", secao: "proximos_passos", texto: "o resto", responsavel: "Fulano", origem: "ia" },
+    ],
     "Fulano",
     3,
   );
-  conferir("as seções viram listas", doc.realizado.length === 2);
-  conferir("seção vazia vira lista vazia", doc.emAndamento.length === 0);
+  conferir("os itens viram listas por seção", doc.realizado.length === 2);
+  conferir("seção vazia vira lista vazia", doc.em_andamento.length === 0);
+  conferir(
+    "o responsável vai na fotografia",
+    doc.proximos_passos[0]?.responsavel === "Fulano",
+  );
+  conferir(
+    "a origem NÃO vai na fotografia",
+    !("origem" in (doc.proximos_passos[0] as object)),
+    "ia ou humano é assunto de dentro de casa",
+  );
   conferir("a versão entra na fotografia", doc.versao === 3);
 
   const relido = lerDia(JSON.parse(JSON.stringify(doc)));
   conferir("ida e volta pelo JSON preserva o conteúdo", relido?.realizado.length === 2);
   conferir("lixo não vira documento", lerDia({ nada: true }) === null);
   conferir("`null` não vira documento", lerDia(null) === null);
+
+  /**
+   * A geração anterior gravava strings, com o dono dentro do texto e as duas
+   * últimas seções em camelCase. Publicação antiga não pode virar 404 só
+   * porque o formato evoluiu — ela é o que o link fixo promete continuar
+   * servindo.
+   */
+  const antigo = lerDia({
+    versao: 1,
+    dia: "2026-09-15",
+    autor: "Fulano",
+    realizado: ["fez isto"],
+    emAndamento: [],
+    pendencias: ["Reginato: confirmar o rufo"],
+    proximosPassos: ["A definir: decidir o acabamento"],
+    publicadoEm: "2026-09-15T12:00:00.000Z",
+  });
+  conferir("publicação antiga (strings) continua legível", antigo !== null);
+  conferir(
+    "camelCase antigo cai na seção certa",
+    antigo?.proximos_passos.length === 1,
+  );
+  conferir(
+    "dono dentro do texto vira pastilha na leitura",
+    separarResponsavel(antigo!.pendencias[0]).responsavel === "Reginato",
+  );
+  /**
+   * Contar palavras não bastava: "Conferi tudo" tem duas e virava pastilha,
+   * e o leitor via uma pessoa chamada Conferi Tudo. Nome próprio começa com
+   * maiúscula em todas as palavras; verbo conjugado, não.
+   */
+  const dono = (texto: string) =>
+    separarResponsavel({ texto, responsavel: null }).responsavel;
+
+  conferir(
+    "frase com dois-pontos NÃO vira pastilha",
+    dono("Conferi tudo: a tabela, a proposta e o cronograma") === null,
+  );
+  conferir("nome simples vira pastilha", dono("Reginato: conferir") === "Reginato");
+  conferir(
+    "nome composto vira pastilha",
+    dono("Marcos Vinicius: publicar") === "Marcos Vinicius",
+  );
+  conferir(
+    "nome com partícula vira pastilha",
+    dono("José da Silva: medir") === "José da Silva",
+  );
+  conferir('"A definir" vira pastilha', dono("A definir: decidir") === "A definir");
+  conferir(
+    "oração longa NÃO vira pastilha",
+    dono("Resolvi o problema do rufo hoje: faltava vedação") === null,
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -228,8 +293,19 @@ async function conferirIA(relatorioId: string) {
     `${saida.registros} de 5`,
   );
 
-  const { realizado, emAndamento, pendencias, proximosPassos } = saida.secoes;
-  const tudo = [...realizado, ...emAndamento, ...pendencias, ...proximosPassos];
+  const textosDe = (secao: string) =>
+    saida.itens.filter((i) => i.secao === secao).map((i) => i.texto);
+
+  const realizado = textosDe("realizado");
+  const emAndamento = textosDe("em_andamento");
+  const pendencias = saida.itens.filter((i) => i.secao === "pendencias");
+  const proximosPassos = saida.itens.filter(
+    (i) => i.secao === "proximos_passos",
+  );
+
+  const tudo = saida.itens.map((i) =>
+    i.responsavel ? `${i.responsavel}: ${i.texto}` : i.texto,
+  );
   const juntoMinusculo = tudo.join(" \n ").toLowerCase();
 
   conferir("devolveu alguma coisa", tudo.length > 0, `${tudo.length} itens`);
@@ -250,9 +326,11 @@ async function conferirIA(relatorioId: string) {
     publicarEmRealizado ? `"${realizado.find((i) => /public/i.test(i))}"` : "",
   );
 
-  const publicarAdiante = [...proximosPassos, ...emAndamento, ...pendencias].some(
-    (i) => /public/i.test(i),
-  );
+  const publicarAdiante = [
+    ...emAndamento,
+    ...pendencias.map((i) => i.texto),
+    ...proximosPassos.map((i) => i.texto),
+  ].some((t) => /public/i.test(t));
   conferir(
     "o que é do futuro aparece como próximo passo",
     publicarAdiante,
@@ -279,9 +357,10 @@ async function conferirIA(relatorioId: string) {
   );
 
   conferir(
-    'pendência sem dono sai como "A definir"',
-    /a definir/i.test(pendencias.join(" ")),
-    pendencias.join(" | ") || "(sem pendências)",
+    'pendência sem dono sai com responsável "A definir"',
+    pendencias.some((i) => i.responsavel && semDono(i.responsavel)),
+    pendencias.map((i) => `${i.responsavel}: ${i.texto}`).join(" | ") ||
+      "(sem pendências)",
   );
 
   /**
@@ -289,11 +368,13 @@ async function conferirIA(relatorioId: string) {
    * "A definir" faz o cliente ler "ninguém assumiu" — foi o que o modelo
    * fazia antes de o nome do autor entrar no prompt.
    */
-  const passoDoAutor = proximosPassos.find((i) => /public/i.test(i)) ?? "";
+  const passoDoAutor = proximosPassos.find((i) => /public/i.test(i.texto));
   conferir(
     'o que o autor disse que vai fazer não sai como "A definir"',
-    !/a definir/i.test(passoDoAutor),
-    passoDoAutor || "(sem próximos passos)",
+    Boolean(passoDoAutor) && !semDono(passoDoAutor?.responsavel ?? ""),
+    passoDoAutor
+      ? `${passoDoAutor.responsavel}: ${passoDoAutor.texto}`
+      : "(sem próximos passos)",
   );
 
   conferir(
@@ -311,21 +392,20 @@ async function conferirIA(relatorioId: string) {
    */
   const comDono = [...pendencias, ...proximosPassos];
   conferir(
-    "responsável vem antes dos dois-pontos, para a página virar pastilha",
-    comDono.length > 0 && comDono.every((i) => /^[^:]{2,40}:\s*\S/.test(i)),
-    comDono.join(" | ") || "(nada com responsável)",
+    "responsável sai em coluna própria, e não embutido no texto",
+    comDono.length > 0 && comDono.every((i) => Boolean(i.responsavel)),
+    comDono.map((i) => `${i.responsavel ?? "—"}: ${i.texto}`).join(" | ") ||
+      "(nada com responsável)",
   );
 
   console.log("\n  Saída da IA, para leitura humana:");
-  for (const [nome, itens] of [
-    ["Realizado", realizado],
-    ["Em andamento", emAndamento],
-    ["Pendências", pendencias],
-    ["Próximos passos", proximosPassos],
-  ] as const) {
-    console.log(`    ${nome}:`);
-    for (const i of itens) console.log(`      · ${i}`);
-    if (itens.length === 0) console.log("      (vazio)");
+  for (const { chave, rotulo } of SECOES) {
+    const daqui = saida.itens.filter((i) => i.secao === chave);
+    console.log(`    ${rotulo}:`);
+    for (const i of daqui) {
+      console.log(`      · ${i.responsavel ? `[${i.responsavel}] ` : ""}${i.texto}`);
+    }
+    if (daqui.length === 0) console.log("      (vazio)");
   }
 }
 
