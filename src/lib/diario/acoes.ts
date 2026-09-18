@@ -42,24 +42,24 @@ function revalidar(token?: string) {
 }
 
 export type SaidaDoResumoDoDia = Resultado & {
-  /** A IA substituiria texto corrigido à mão. A tela pergunta antes. */
-  precisaConfirmar?: boolean;
   registros?: number;
+  propostas?: number;
 };
 
 /**
- * A IA organiza os registros do dia nas quatro seções.
+ * A IA organiza os registros do dia e **propõe** as linhas.
  *
- * **Não publica nada, e não atropela mão humana.** Cai no rascunho, para ser
- * lido antes; e se o texto que está lá foi editado depois do último resumo, a
- * primeira chamada volta pedindo confirmação em vez de sobrescrever. É a
- * última regra da §5 do PRD — "preservar edições manuais até o usuário
- * confirmar sua substituição" — e é a mesma disciplina do `editado_em` das
- * transcrições avulsas.
+ * Não escreve no relatório e não publica nada. As propostas ficam ao lado,
+ * para serem aceitas ou descartadas uma a uma — e é isso que faz a última
+ * regra da §5 do PRD ("preservar edições manuais até o usuário confirmar a
+ * substituição") deixar de precisar de diálogo: **o que está escrito nunca é
+ * tocado**, então não há o que confirmar.
+ *
+ * Gerar de novo troca as propostas, não os itens. Quem já aceitou continua
+ * com o que aceitou.
  */
 export async function gerarResumoDoDia(
   dia: string,
-  confirmado = false,
 ): Promise<SaidaDoResumoDoDia> {
   const diario = await meuDiario();
   if (!diario) return { ok: false, erro: "Diário não encontrado." };
@@ -70,33 +70,6 @@ export async function gerarResumoDoDia(
   const relatorioId = await garantirRelatorioDoDia(diario.id, dia);
   if (!relatorioId) return { ok: false, erro: "Falha ao abrir o dia." };
 
-  const { data: relatorio } = await sb
-    .from("dia_relatorios")
-    .select("editado_em, resumo_em")
-    .eq("id", relatorioId)
-    .maybeSingle();
-
-  const { count } = await sb
-    .from("dia_itens")
-    .select("id", { count: "exact", head: true })
-    .eq("relatorio_id", relatorioId);
-
-  const temTexto = (count ?? 0) > 0;
-
-  const editadoDepois =
-    Boolean(relatorio?.editado_em) &&
-    (!relatorio?.resumo_em ||
-      new Date(relatorio.editado_em as string).getTime() >
-        new Date(relatorio.resumo_em).getTime());
-
-  if (temTexto && editadoDepois && !confirmado) {
-    return {
-      ok: false,
-      precisaConfirmar: true,
-      erro: "O texto deste dia foi editado à mão. Gerar de novo substitui o que você escreveu.",
-    };
-  }
-
   const elenco = await listarPessoas(diario.id);
   const saida = await gerarResumo(
     relatorioId,
@@ -105,44 +78,30 @@ export async function gerarResumoDoDia(
   );
   if (!saida.ok) return { ok: false, erro: saida.erro };
 
-  const agora = new Date().toISOString();
+  // Uma geração por vez: a proposta anterior morreu no instante em que
+  // alguém pediu outra. O que já virou item não é tocado.
+  await sb.from("dia_propostas").delete().eq("relatorio_id", relatorioId);
 
-  /**
-   * O resumo **substitui** os itens do dia, não soma a eles.
-   *
-   * Somar duplicaria tudo a cada geração, e a pessoa passaria a limpar a
-   * lista à mão — o oposto de uma tela menos digitável. Quem não quer perder
-   * o que escreveu é avisado antes, pelo `precisaConfirmar` acima.
-   */
-  await sb.from("dia_itens").delete().eq("relatorio_id", relatorioId);
-
-  const novos = saida.itens.map((item, i) => ({
+  const novas = saida.itens.map((item, i) => ({
     relatorio_id: relatorioId,
     secao: item.secao,
     texto: item.texto,
     responsavel: item.responsavel,
     posicao: i + 1,
-    origem: "ia" as const,
   }));
 
-  if (novos.length > 0) {
-    const { error } = await sb.from("dia_itens").insert(novos);
+  if (novas.length > 0) {
+    const { error } = await sb.from("dia_propostas").insert(novas);
     if (error) return { ok: false, erro: error.message };
   }
 
   await sb
     .from("dia_relatorios")
-    .update({
-      resumo_em: agora,
-      // O texto passa a ser da IA de novo: a próxima geração não precisa
-      // perguntar, a não ser que alguém mexa num item antes dela.
-      editado_em: null,
-      updated_at: agora,
-    })
+    .update({ resumo_em: new Date().toISOString() })
     .eq("id", relatorioId);
 
   revalidar();
-  return { ok: true, registros: saida.registros };
+  return { ok: true, registros: saida.registros, propostas: novas.length };
 }
 
 /**

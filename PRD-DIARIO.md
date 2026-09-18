@@ -144,22 +144,22 @@ Quatro camadas, nesta ordem, porque as três últimas só existem em cima da
 primeira — enquanto a seção for um bloco de texto, qualquer uma delas vira
 gambiarra de parsing.
 
-**4a · Item em vez de bloco de texto.** As quatro seções deixam de ser
+**4a · Item em vez de bloco de texto** · *no ar em 18/09/2026*. As quatro seções deixam de ser
 `textarea` com a convenção "um item por linha" e viram lista de itens
 (`dia_itens`). Cada item tem seção, e trocar de seção é um toque. É a mais
 cara: mexe no banco e no que a publicação congela.
 
-**4b · Trazer ontem para hoje, por toque.** Ao abrir o dia, o que ontem estava
+**4b · Trazer ontem para hoje, por toque** · *no ar em 18/09/2026*. Ao abrir o dia, o que ontem estava
 em *Em andamento* e em *Pendências* aparece como sugestão, com três toques
 possíveis: **concluí**, **continua**, **saiu**. Um dia normal fecha sem uma
 tecla.
 
-**4c · Responsável como pastilha escolhida.** Um elenco pequeno por diário, e
+**4c · Responsável como pastilha escolhida** · *no ar em 18/09/2026*. Um elenco pequeno por diário, e
 um seletor no item. "A definir" vira opção da lista em vez de convenção de
 texto. Hoje o nome é texto livre, e texto livre com nome próprio erra: a
 transcrição escreve "Reginaldo" e a pastilha da página vira outra pessoa.
 
-**4d · Revisar o resumo por aceite, não por edição.** "Gerar resumo" para de
+**4d · Revisar o resumo por aceite, não por edição** · *no ar em 18/09/2026*. "Gerar resumo" para de
 escrever direto nos campos e passa a propor itens em cartões — **aceitar**,
 **trocar de seção**, **descartar**, mais um "aceitar tudo". Ler e aprovar
 deixa de ser reescrever.
@@ -296,6 +296,23 @@ mentira que a §5 do PRD proíbe: planejamento virando entrega. A tela sugere; o
 dedo decide. Por isso a sugestão vive **fora** do relatório do dia até ser
 aceita — ela não é um item com estado "pendente de confirmação", ela ainda não
 é um item.
+
+**D16 · A IA propõe; ela não escreve no relatório.** Foi o que fez o diálogo
+de confirmação desaparecer. Enquanto gerar o resumo apagava os itens e
+escrevia os dela por cima, a tela **precisava** perguntar "quer mesmo
+substituir o que você escreveu?" — e a pergunta era um remendo para um desenho
+errado. Com a proposta numa tabela ao lado, o que está escrito nunca é tocado,
+e não há o que confirmar. A regra da §5 ("preservar edições manuais até o
+usuário confirmar a substituição") passa a ser cumprida por construção, e não
+por diálogo.
+
+**D17 · A IA não corrige nome próprio.** Descoberto pelo `verificar:diario`,
+que na primeira versão exigia que "Reginaldo" virasse "Reginato" e falhou: o
+modelo recusou, com razão. Trocar um nome que ela não pode conferir é inventar
+responsável — e se Reginaldo for outra pessoa? O elenco no prompt serve para a
+**grafia** de quem foi citado, não para adivinhar quem é quem. Quem desfaz a
+confusão é o dedo: item com responsável fora do elenco fica âmbar no seletor, e
+um toque resolve. A tela marca, não corrige.
 
 **D15 · O item guarda de onde veio.** `dia_itens.origem` (`ia` / `humano`) é a
 mesma coluna que `orc_itens` tem, pelo mesmo motivo: separar o que a máquina

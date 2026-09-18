@@ -165,21 +165,23 @@ export type SugestaoDeOntem = {
   responsavel: string | null;
 };
 
+/** Uma linha que a IA propôs, esperando aceite. */
+export type PropostaDaIA = {
+  id: string;
+  secao: Secao;
+  texto: string;
+  responsavel: string | null;
+};
+
 export type DiaNoPainel = {
   dia: string;
   itens: ItemDoDia[];
+  /** O que a IA propôs e ainda não foi aceito nem descartado. */
+  propostas: PropostaDaIA[];
   /** O que ficou em aberto no último dia com conteúdo antes deste. */
   sugestoes: SugestaoDeOntem[];
   publicadoEm: string | null;
   versao: number | null;
-  /**
-   * Muda a cada escrita no dia. A tela usa como chave dos campos de texto:
-   * sem ela, o React reaproveita o `<textarea>` e o resumo recém-gerado não
-   * aparece — o valor antigo continua no DOM.
-   */
-  atualizadoEm: string | null;
-  /** Há correção à mão depois do último resumo. Ver `gerarResumoDoDia`. */
-  editadoDepoisDoResumo: boolean;
   registros: RegistroDoDia[];
 };
 
@@ -203,16 +205,15 @@ export async function carregarDia(
     return {
       dia,
       itens: [],
+      propostas: [],
       sugestoes: await sugestoesDeOntem(diarioId, dia, null),
       publicadoEm: null,
       versao: null,
-      atualizadoEm: null,
-      editadoDepoisDoResumo: false,
       registros: [],
     };
   }
 
-  const [{ data: publicacao }, { data: registros }, { data: itens }] =
+  const [{ data: publicacao }, { data: registros }, { data: itens }, { data: propostas }] =
     await Promise.all([
       sb
         .from("dia_publicacoes")
@@ -232,6 +233,11 @@ export async function carregarDia(
         .eq("relatorio_id", relatorio.id)
         .order("posicao")
         .order("created_at"),
+      sb
+        .from("dia_propostas")
+        .select("id, secao, texto, responsavel")
+        .eq("relatorio_id", relatorio.id)
+        .order("posicao"),
     ]);
 
   const doDia = (itens ?? []).map((i) => ({
@@ -245,15 +251,10 @@ export async function carregarDia(
   return {
     dia,
     itens: doDia,
+    propostas: propostas ?? [],
     sugestoes: await sugestoesDeOntem(diarioId, dia, relatorio.id, doDia),
     publicadoEm: publicacao?.publicado_em ?? null,
     versao: publicacao?.versao ?? null,
-    atualizadoEm: relatorio.updated_at,
-    editadoDepoisDoResumo:
-      Boolean(relatorio.editado_em) &&
-      (!relatorio.resumo_em ||
-        new Date(relatorio.editado_em as string).getTime() >
-          new Date(relatorio.resumo_em).getTime()),
     registros: (registros ?? []).map((r) => ({
       id: r.id,
       tipo: r.tipo,

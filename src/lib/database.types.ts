@@ -1381,6 +1381,34 @@ type TabelasDeDiario = {
   };
 
   /**
+   * O que a IA propôs para o dia, esperando aceite.
+   *
+   * Não é item: item é o que está escrito no relatório. A proposta vive ao
+   * lado até alguém tocar, pela mesma razão da sugestão de ontem — ver a
+   * decisão D14 do `PRD-DIARIO.md`.
+   */
+  dia_propostas: {
+    Row: {
+      id: string;
+      relatorio_id: string;
+      secao: DiaSecao;
+      texto: string;
+      responsavel: string | null;
+      posicao: number;
+      created_at: string;
+    };
+    Insert: {
+      id?: string;
+      relatorio_id: string;
+      secao: DiaSecao;
+      texto: string;
+      responsavel?: string | null;
+      posicao?: number;
+    };
+    Update: { secao?: DiaSecao };
+  };
+
+  /**
    * O elenco do diário: quem pode ser responsável por um item.
    *
    * Existe para o responsável deixar de ser texto livre. Texto livre com nome

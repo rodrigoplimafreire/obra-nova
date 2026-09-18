@@ -623,6 +623,33 @@ com uma publicação no formato novo.*
 
 ---
 
+## 16h · Diário — a IA propõe, não escreve (Entrega 4d)
+
+| Entrada | Saída esperada |
+| --- | --- |
+| "Gerar resumo" | Grava em `dia_propostas`; **não toca** nos itens do relatório |
+| "Gerar resumo" de novo | Troca as propostas abertas; o que já foi aceito continua no lugar |
+| `aceitarProposta` | Vira item no fim daquela seção, com `origem: ia`; a proposta some |
+| Seletor de seção na proposta | Corrige o lugar **antes** de aceitar — quando a IA erra, erra o lugar, não o conteúdo |
+| `descartarProposta` | Some, e não vira item |
+| "Aceitar todas" | Aceita na ordem em que a IA propôs |
+| "Aceitar todas" sem proposta aberta | `"Não há proposta aberta."` |
+| Publicar com propostas abertas | Publica **só** os itens: proposta não é conteúdo do dia |
+
+**Bordas**
+
+- **O diálogo de confirmação sumiu, e junto com ele o motivo dele.** Antes,
+  gerar apagava os itens e escrevia os da IA por cima, então a tela precisava
+  perguntar "quer mesmo substituir o que você escreveu?". Com a proposta ao
+  lado, o que está escrito nunca é tocado.
+- A proposta fica no banco, não na memória da tela: uma chamada à IA custa, e
+  perdê-la numa recarga faria a pessoa gerar de novo.
+- "Aceitar todas" existe porque o caso comum é a IA acertar. Quem gerou já leu
+  os registros; revisar cinco linhas uma a uma para concordar com as cinco é
+  trabalho sem resultado.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

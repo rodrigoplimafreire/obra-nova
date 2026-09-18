@@ -15,6 +15,7 @@ import {
   type SaidaDoResumoDoDia,
 } from "@/lib/diario/acoes";
 import { ItensDoDia } from "./itens-do-dia";
+import { SugestaoDaIA } from "./sugestao-da-ia";
 import { RegistrosDoDiario } from "./registros-do-diario";
 import { VeioDeOntem } from "./veio-de-ontem";
 import { removerPessoa } from "@/lib/diario/acoes-pessoas";
@@ -96,17 +97,18 @@ export function TelaDoDiario({
   const [resumo, setResumo] = useState<SaidaDoResumoDoDia | null>(null);
 
   /**
-   * Gerar o resumo, e perguntar antes de atropelar mão humana.
+   * Gerar o resumo.
    *
-   * A primeira chamada volta com `precisaConfirmar` quando o texto foi
-   * editado depois do último resumo. Aí a tela mostra o diálogo, e só a
-   * segunda chamada — a confirmada — substitui.
+   * Não pergunta nada, e não precisa: desde a Entrega 4d a IA **propõe** em
+   * vez de escrever, então o que está no relatório nunca é tocado. O diálogo
+   * de "quer mesmo substituir o que você escreveu?" sumiu junto com o motivo
+   * dele.
    */
-  async function gerar(confirmado: boolean) {
+  async function gerar() {
     setGerando(true);
     setResumo(null);
     try {
-      const saida = await gerarResumoDoDia(atual.dia, confirmado);
+      const saida = await gerarResumoDoDia(atual.dia);
       setResumo(saida);
       if (saida.ok) router.refresh();
     } finally {
@@ -354,14 +356,12 @@ export function TelaDoDiario({
                 {atual.registros.length === 0
                   ? "A IA organiza os registros do dia, aqui em cima, nas quatro seções."
                   : `${atual.registros.length} ${atual.registros.length === 1 ? "registro" : "registros"} no dia.`}
-                {atual.editadoDepoisDoResumo && atual.registros.length > 0 && (
-                  <> Algum item foi mexido à mão depois do último resumo.</>
-                )}
+
               </p>
 
               <button
                 type="button"
-                onClick={() => void gerar(false)}
+                onClick={() => void gerar()}
                 disabled={gerando || atual.registros.length === 0}
                 className="btn btn-secundario btn-compacto shrink-0"
               >
@@ -369,7 +369,15 @@ export function TelaDoDiario({
               </button>
             </div>
 
-            <ItensDoDia dia={atual.dia} itens={atual.itens} pessoas={pessoas} />
+            <SugestaoDaIA dia={atual.dia} propostas={atual.propostas} />
+
+            <div className="mt-6">
+              <ItensDoDia
+                dia={atual.dia}
+                itens={atual.itens}
+                pessoas={pessoas}
+              />
+            </div>
 
             {/* Publicar é um `form` porque a ação recebe `FormData`. Os itens
                 já se salvam sozinhos, um a um — não há rascunho a enviar
@@ -406,9 +414,7 @@ export function TelaDoDiario({
                 empilhadas seriam três coisas para ler antes de saber se deu
                 certo. O do resumo que pede confirmação não entra aqui: ele
                 abre o diálogo, logo abaixo. */}
-            {(publicado?.erro ||
-              retirado?.erro ||
-              (resumo?.erro && !resumo.precisaConfirmar)) && (
+            {(publicado?.erro || retirado?.erro || resumo?.erro) && (
               <p className="aviso aviso-erro mt-4">
                 {publicado?.erro ?? retirado?.erro ?? resumo?.erro}
               </p>
@@ -420,9 +426,11 @@ export function TelaDoDiario({
             )}
             {resumo?.ok && (
               <p className="aviso aviso-ok mt-4">
-                Resumo escrito a partir de {resumo.registros}{" "}
-                {resumo.registros === 1 ? "registro" : "registros"}. Leia antes
-                de publicar.
+                {resumo.propostas}{" "}
+                {resumo.propostas === 1 ? "linha proposta" : "linhas propostas"}{" "}
+                a partir de {resumo.registros}{" "}
+                {resumo.registros === 1 ? "registro" : "registros"}. Nada entrou
+                no relatório ainda.
               </p>
             )}
           </div>
@@ -488,41 +496,7 @@ export function TelaDoDiario({
         link={link}
       />
 
-      {/* A confirmação de substituir o texto escrito à mão. Ela existe porque
-          a §5 do PRD exige preservar a edição manual até alguém confirmar —
-          e porque perder um parágrafo revisado para uma geração automática é
-          o tipo de erro que faz a pessoa parar de usar o botão. */}
-      <Dialogo
-        aberto={Boolean(resumo?.precisaConfirmar)}
-        aoFechar={() => setResumo(null)}
-        titulo="Substituir o que você escreveu?"
-        descricao="Este dia foi editado à mão depois do último resumo."
-        estreito
-      >
-        <p className="text-sm leading-relaxed text-grafite">
-          Gerar de novo reescreve as quatro seções a partir dos registros, e o
-          texto que está lá agora se perde. Os registros do dia não são
-          tocados.
-        </p>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setResumo(null)}
-            className="btn btn-secundario"
-          >
-            Manter o meu texto
-          </button>
-          <button
-            type="button"
-            onClick={() => void gerar(true)}
-            disabled={gerando}
-            className="btn btn-primario"
-          >
-            {gerando ? "Organizando…" : "Substituir"}
-          </button>
-        </div>
-      </Dialogo>
     </>
   );
 }
