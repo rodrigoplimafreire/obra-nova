@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { empreiteiraDaOrg, type Empreiteira } from "@/lib/admin/empreiteira";
 import { lerDia } from "./publicacao";
-import type { DiaPublicado, ItemDoDia } from "./tipos";
+import type { DiaPublicado, ItemDoDia, Secao } from "./tipos";
 
 /**
  * Leitura do diário, para o painel e para a página de acompanhamento.
@@ -129,9 +129,28 @@ export type RegistroDoDia = {
   criadoEm: string;
 };
 
+/**
+ * Um item de um dia anterior, oferecido para hoje.
+ *
+ * Ele **não é um item do dia**, e essa distinção é a decisão D14 do PRD: uma
+ * sugestão que já nascesse dentro do relatório, esperando confirmação, é
+ * exatamente o que faz planejamento virar entrega sem ninguém decidir. Aqui
+ * ela vive fora até alguém tocar.
+ */
+export type SugestaoDeOntem = {
+  /** O id do item de origem, que é o que o descarte grava. */
+  id: string;
+  dia: string;
+  secao: Secao;
+  texto: string;
+  responsavel: string | null;
+};
+
 export type DiaNoPainel = {
   dia: string;
   itens: ItemDoDia[];
+  /** O que ficou em aberto no último dia com conteúdo antes deste. */
+  sugestoes: SugestaoDeOntem[];
   publicadoEm: string | null;
   versao: number | null;
   /**
@@ -160,9 +179,12 @@ export async function carregarDia(
     .maybeSingle();
 
   if (!relatorio) {
+    // Sem linha do dia ainda não há descarte possível, então a sugestão sai
+    // inteira. É o caso de abrir o diário de manhã, antes de gravar nada.
     return {
       dia,
       itens: [],
+      sugestoes: await sugestoesDeOntem(diarioId, dia, null),
       publicadoEm: null,
       versao: null,
       atualizadoEm: null,
@@ -193,15 +215,18 @@ export async function carregarDia(
         .order("created_at"),
     ]);
 
+  const doDia = (itens ?? []).map((i) => ({
+    id: i.id,
+    secao: i.secao,
+    texto: i.texto,
+    responsavel: i.responsavel,
+    origem: i.origem,
+  }));
+
   return {
     dia,
-    itens: (itens ?? []).map((i) => ({
-      id: i.id,
-      secao: i.secao,
-      texto: i.texto,
-      responsavel: i.responsavel,
-      origem: i.origem,
-    })),
+    itens: doDia,
+    sugestoes: await sugestoesDeOntem(diarioId, dia, relatorio.id, doDia),
     publicadoEm: publicacao?.publicado_em ?? null,
     versao: publicacao?.versao ?? null,
     atualizadoEm: relatorio.updated_at,
@@ -220,6 +245,95 @@ export async function carregarDia(
       criadoEm: r.created_at,
     })),
   };
+}
+
+/** Normaliza para comparar texto: sem acento, sem caixa, sem pontuação solta. */
+function assinatura(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * O que ficou em aberto no último dia com conteúdo antes deste.
+ *
+ * **Só o último dia**, e não tudo que já ficou aberto alguma vez. Uma
+ * pendência de três semanas atrás reaparecendo hoje viraria uma lista que
+ * ninguém lê e que se descarta no atacado — e sugestão que se ignora em bloco
+ * deixa de ser sugestão. O que continua importando volta a ser dito no dia
+ * seguinte, que é como o diário funciona de verdade.
+ *
+ * Só `em_andamento` e `pendencias`: o que foi realizado ontem está fechado, e
+ * o que era próximo passo vira o assunto do dia por conta própria.
+ */
+export async function sugestoesDeOntem(
+  diarioId: string,
+  dia: string,
+  /** Nulo quando o dia de hoje ainda não tem linha. */
+  relatorioDeHoje: string | null,
+  itensDeHoje: ItemDoDia[] = [],
+): Promise<SugestaoDeOntem[]> {
+  const sb = supabaseAdmin();
+
+  const { data: anteriores } = await sb
+    .from("dia_relatorios")
+    .select("id, dia")
+    .eq("diario_id", diarioId)
+    .lt("dia", dia)
+    .order("dia", { ascending: false })
+    .limit(10);
+
+  if (!anteriores?.length) return [];
+
+  const { data: candidatos } = await sb
+    .from("dia_itens")
+    .select("id, relatorio_id, secao, texto, responsavel")
+    .in(
+      "relatorio_id",
+      anteriores.map((r) => r.id),
+    )
+    .in("secao", ["em_andamento", "pendencias"])
+    .order("posicao");
+
+  if (!candidatos?.length) return [];
+
+  // O dia mais recente **que tem candidato**: pular os dias em que só houve
+  // "realizado" é o que faz a sugestão sobreviver a um fim de semana.
+  const diaPorRelatorio = new Map(anteriores.map((r) => [r.id, r.dia]));
+  const maisRecente = candidatos
+    .map((c) => diaPorRelatorio.get(c.relatorio_id) ?? "")
+    .sort()
+    .pop();
+
+  const deOntem = candidatos.filter(
+    (c) => diaPorRelatorio.get(c.relatorio_id) === maisRecente,
+  );
+
+  const descartados = new Set<string>();
+  if (relatorioDeHoje) {
+    const { data } = await sb
+      .from("dia_descartes")
+      .select("item_origem_id")
+      .eq("relatorio_id", relatorioDeHoje);
+    for (const d of data ?? []) descartados.add(d.item_origem_id);
+  }
+
+  // O que já foi dito hoje não volta a ser oferecido, tenha vindo da sugestão
+  // ou do teclado. Comparar por texto normalizado pega os dois casos.
+  const jaDito = new Set(itensDeHoje.map((i) => assinatura(i.texto)));
+
+  return deOntem
+    .filter((c) => !descartados.has(c.id) && !jaDito.has(assinatura(c.texto)))
+    .map((c) => ({
+      id: c.id,
+      dia: diaPorRelatorio.get(c.relatorio_id) ?? "",
+      secao: c.secao,
+      texto: c.texto,
+      responsavel: c.responsavel,
+    }));
 }
 
 /* -------------------------------------------------------------------------- */

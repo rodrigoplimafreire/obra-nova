@@ -563,6 +563,39 @@ com uma publicação no formato novo.*
 
 ---
 
+## 16f · Diário — o que veio de ontem (Entrega 4b)
+
+*Coberto por `npm run verificar:diario`, contra o banco.*
+
+| Entrada | Saída esperada |
+| --- | --- |
+| Dia anterior com itens em várias seções | Só `em andamento` e `pendências` são oferecidos |
+| Item que ontem estava em `realizado` | **Não** volta — está fechado |
+| Item que ontem estava em `próximos passos` | **Não** volta — ele vira o assunto do dia sozinho |
+| Sugestão aceita | O responsável vem junto, **exceto** em "Concluí" — cobrar de alguém o que já está feito é ruído |
+| "Concluí" | Copia para `realizado` de **hoje**; o item de ontem não é tocado |
+| "Continua" | Copia para a mesma seção de hoje |
+| "Saiu" | Grava em `dia_descartes`; não volta na recarga |
+| "Saiu" duas vezes | A chave primária barra (23505), e a ação trata como sucesso |
+| Texto já presente hoje, com outra caixa ou acento | Não é oferecido de novo |
+| Dia anterior só com `realizado` | Pula para o dia com conteúdo anterior a ele — sobrevive a fim de semana |
+| Nenhuma sugestão | O cartão não aparece |
+
+**Bordas**
+
+- **A sugestão nunca entra sozinha** (decisão D14). Ela vive **fora** do
+  relatório do dia até alguém tocar: um item que já nascesse dentro da lista,
+  esperando confirmação, é o que faz planejamento virar entrega sem ninguém
+  decidir — exatamente o que a §5 do PRD proíbe.
+- Só o **último dia com conteúdo** é considerado, e não tudo que já ficou
+  aberto alguma vez. Uma pendência de três semanas atrás reaparecendo hoje
+  viraria lista que ninguém lê e que se descarta no atacado — e sugestão que
+  se ignora em bloco deixa de ser sugestão.
+- O item de ontem não é alterado por nada disto: aquele dia já foi publicado,
+  e dia publicado não se reescreve.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

@@ -194,6 +194,71 @@ export async function editarItem(dados: {
   return { ok: true };
 }
 
+/**
+ * Aceitar o que veio de ontem.
+ *
+ * Copia o item para hoje, na seção que o toque escolheu: "concluí" manda para
+ * realizado, "continua" mantém a seção de origem. O item de ontem não é
+ * tocado — aquele dia já foi publicado, e dia publicado não se reescreve.
+ *
+ * **Nada disto acontece sozinho**, e é a decisão D14 do PRD: uma sugestão que
+ * entrasse sem toque faria planejamento virar entrega sem ninguém decidir.
+ */
+export async function aceitarSugestao(dados: {
+  dia: string;
+  origemId: string;
+  secao: string;
+}): Promise<Resultado> {
+  const diario = await meuDiario();
+  if (!diario) return { ok: false, erro: "Diário não encontrado." };
+  if (!diaValido(dados.dia)) return { ok: false, erro: "Data inválida." };
+  if (!ehSecao(dados.secao)) return { ok: false, erro: "Seção inválida." };
+
+  const sb = supabaseAdmin();
+
+  const { data: origem } = await sb
+    .from("dia_itens")
+    .select("texto, responsavel")
+    .eq("id", dados.origemId)
+    .maybeSingle();
+  if (!origem) return { ok: false, erro: "Sugestão não encontrada." };
+
+  return adicionarItem({
+    dia: dados.dia,
+    secao: dados.secao,
+    texto: origem.texto,
+    // Quem move para "realizado" está dizendo que fechou: cobrar de alguém o
+    // que já está feito não faz sentido, e a pastilha viraria ruído.
+    responsavel: dados.secao === "realizado" ? null : origem.responsavel,
+  });
+}
+
+/** O "saiu": a sugestão não volta a aparecer neste dia. */
+export async function descartarSugestao(dados: {
+  dia: string;
+  origemId: string;
+}): Promise<Resultado> {
+  const diario = await meuDiario();
+  if (!diario) return { ok: false, erro: "Diário não encontrado." };
+  if (!diaValido(dados.dia)) return { ok: false, erro: "Data inválida." };
+
+  const relatorioId = await garantirRelatorioDoDia(diario.id, dados.dia);
+  if (!relatorioId) return { ok: false, erro: "Falha ao abrir o dia." };
+
+  const { error } = await supabaseAdmin()
+    .from("dia_descartes")
+    .insert({ relatorio_id: relatorioId, item_origem_id: dados.origemId });
+
+  // Descartar duas vezes é o mesmo que descartar uma: a chave primária já
+  // garante isso, e um erro de duplicata aqui não é erro para quem toca.
+  if (error && error.code !== "23505") {
+    return { ok: false, erro: error.message };
+  }
+
+  revalidar();
+  return { ok: true };
+}
+
 export async function removerItem(itemId: string): Promise<Resultado> {
   const relatorioId = await meuItem(itemId);
   if (!relatorioId) return { ok: false, erro: "Item inválido." };

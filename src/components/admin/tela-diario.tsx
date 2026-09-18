@@ -16,6 +16,7 @@ import {
 } from "@/lib/diario/acoes";
 import { ItensDoDia } from "./itens-do-dia";
 import { RegistrosDoDiario } from "./registros-do-diario";
+import { VeioDeOntem } from "./veio-de-ontem";
 import { copiarTexto } from "@/lib/clipboard";
 import { enderecoDoDiario, HOST_DO_DIARIO } from "@/lib/diario/apelido";
 import type { Diario, DiaDoDiario, DiaNoPainel } from "@/lib/diario/dados";
@@ -333,6 +334,10 @@ export function TelaDoDiario({
         </div>
 
         <RegistrosDoDiario dia={atual.dia} registros={atual.registros} />
+
+        {/* Antes das seções, e fora delas: o que veio de ontem ainda não é
+            item do dia. Ver o comentário no componente e a decisão D14. */}
+        <VeioDeOntem dia={atual.dia} sugestoes={atual.sugestoes} />
 
         <Secao titulo="O relatório do dia">
           <div className="cartao px-5 py-5">

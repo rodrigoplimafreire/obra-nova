@@ -1381,6 +1381,23 @@ type TabelasDeDiario = {
   };
 
   /**
+   * O "saiu" da sugestão de ontem.
+   *
+   * Sem memória, descartar duraria até a próxima recarga e a pessoa
+   * descartaria o mesmo item todo dia. O item de ontem não é tocado: aquele
+   * dia já foi publicado, e dia publicado não se reescreve.
+   */
+  dia_descartes: {
+    Row: {
+      relatorio_id: string;
+      item_origem_id: string;
+      created_at: string;
+    };
+    Insert: { relatorio_id: string; item_origem_id: string };
+    Update: Record<never, never>;
+  };
+
+  /**
    * O material bruto do dia: o que foi digitado e o que foi falado.
    *
    * Nasce no instante em que entra, antes de qualquer resumo — é isto que

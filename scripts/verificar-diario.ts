@@ -23,6 +23,7 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { gerarResumo } from "../src/lib/diario/resumo";
+import { sugestoesDeOntem } from "../src/lib/diario/dados";
 import {
   enderecoDoDiario,
   HOST_DO_DIARIO,
@@ -421,7 +422,106 @@ async function conferirDiaVazio(relatorioId: string) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* 3 · As travas do banco                                                      */
+/* 3 · O que veio de ontem                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A regra que sustenta a Entrega 4b: sugerir sem nunca entrar sozinho.
+ *
+ * Aqui se prova o recorte — o que é oferecido, o que não é, e o que para de
+ * ser depois de resolvido. O toque em si é da tela; o que este script guarda
+ * é a lista que a tela recebe.
+ */
+async function conferirSugestoes(diarioId: string) {
+  console.log("\nO que veio de ontem");
+
+  const ontem = "1999-02-01";
+  const hoje = "1999-02-02";
+
+  const { data: rOntem } = await sb
+    .from("dia_relatorios")
+    .insert({ diario_id: diarioId, dia: ontem })
+    .select("id")
+    .single();
+
+  const { data: itens } = await sb
+    .from("dia_itens")
+    .insert([
+      { relatorio_id: rOntem!.id, secao: "realizado", texto: "fechei o orçamento", posicao: 1 },
+      { relatorio_id: rOntem!.id, secao: "em_andamento", texto: "ajuste do contraste", posicao: 1 },
+      { relatorio_id: rOntem!.id, secao: "pendencias", texto: "confirmar o rufo", responsavel: "Reginato", posicao: 1 },
+      { relatorio_id: rOntem!.id, secao: "proximos_passos", texto: "publicar a proposta", posicao: 1 },
+    ])
+    .select("id, secao, texto");
+
+  const emAberto = await sugestoesDeOntem(diarioId, hoje, null);
+  const textos = emAberto.map((s) => s.texto);
+
+  conferir(
+    "só o que ficou em aberto é oferecido",
+    emAberto.length === 2,
+    textos.join(" | "),
+  );
+  conferir("o que foi realizado não volta", !textos.includes("fechei o orçamento"));
+  conferir(
+    "próximo passo não volta — ele vira o assunto do dia sozinho",
+    !textos.includes("publicar a proposta"),
+  );
+  conferir(
+    "o responsável vem junto",
+    emAberto.find((s) => s.texto === "confirmar o rufo")?.responsavel === "Reginato",
+  );
+
+  const { data: rHoje } = await sb
+    .from("dia_relatorios")
+    .insert({ diario_id: diarioId, dia: hoje })
+    .select("id")
+    .single();
+
+  // Aceitar: o item passa a existir hoje, e a sugestão para de ser oferecida.
+  await sb.from("dia_itens").insert({
+    relatorio_id: rHoje!.id,
+    secao: "realizado",
+    texto: "Ajuste do contraste",
+    posicao: 1,
+  });
+
+  const depoisDeAceitar = await sugestoesDeOntem(diarioId, hoje, rHoje!.id, [
+    { id: "x", secao: "realizado", texto: "Ajuste do contraste", responsavel: null, origem: "humano" },
+  ]);
+  conferir(
+    "o que já foi dito hoje não é oferecido de novo",
+    !depoisDeAceitar.some((s) => s.texto === "ajuste do contraste"),
+    "e a comparação ignora caixa e acento",
+  );
+
+  // Descartar: some, e continua sumido na recarga seguinte.
+  const rufo = itens!.find((i) => i.texto === "confirmar o rufo")!;
+  await sb
+    .from("dia_descartes")
+    .insert({ relatorio_id: rHoje!.id, item_origem_id: rufo.id });
+
+  const depoisDeDescartar = await sugestoesDeOntem(diarioId, hoje, rHoje!.id);
+  conferir(
+    "o que foi descartado não volta na recarga",
+    !depoisDeDescartar.some((s) => s.texto === "confirmar o rufo"),
+  );
+
+  const { error: duplicado } = await sb
+    .from("dia_descartes")
+    .insert({ relatorio_id: rHoje!.id, item_origem_id: rufo.id });
+  conferir(
+    "descartar duas vezes é o mesmo que descartar uma",
+    duplicado?.code === "23505",
+    "a chave primária barra, e a ação trata isso como sucesso",
+  );
+
+  // Limpa os dois dias para não poluir as checagens seguintes.
+  await sb.from("dia_relatorios").delete().in("id", [rOntem!.id, rHoje!.id]);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4 · As travas do banco                                                      */
 /* -------------------------------------------------------------------------- */
 
 async function conferirBanco(diarioId: string, dia: string) {
@@ -538,6 +638,7 @@ async function principal() {
       })),
     );
 
+    await conferirSugestoes(diario.id);
     await conferirBanco(diario.id, dia);
     await conferirDiaVazio(relatorioVazio!.id);
     await conferirIA(relatorio!.id);
