@@ -136,6 +136,31 @@ export function TelaDoDiario({
   const registroDoDia = dias.find((d) => d.dia === atual.dia);
   const desatualizado = registroDoDia?.desatualizado ?? false;
 
+  /**
+   * O convite que vai para o WhatsApp.
+   *
+   * Saía como "RD Engenharia: https://…", porque usava o título do diário — e
+   * o título que a pessoa escreve primeiro costuma ser o nome da própria
+   * empreiteira. Quem recebia não sabia o que era aquilo nem quem mandou.
+   *
+   * A senha **não entra aqui**, e é um segundo botão. Não é zelo de
+   * segurança teatral: link e senha na mesma mensagem viajam juntos no
+   * encaminhamento, e a senha existe exatamente para o link encaminhado não
+   * abrir sozinho.
+   */
+  const convite = `https://wa.me/?text=${encodeURIComponent(
+    [
+      `Diário de atividades${diario.autorNome ? ` — ${diario.autorNome}` : ""}`,
+      "Acompanhe por aqui, todo dia:",
+      link,
+      "A senha eu mando na sequência.",
+    ].join("\n"),
+  )}`;
+
+  const envioDaSenha = `https://wa.me/?text=${encodeURIComponent(
+    "A senha do diário é:",
+  )}`;
+
   async function copiar() {
     if (await copiarTexto(link)) {
       setCopiado(true);
@@ -169,15 +194,19 @@ export function TelaDoDiario({
 
               <ItemDeMenu
                 aoClicar={() =>
-                  window.open(
-                    `https://wa.me/?text=${encodeURIComponent(`${diario.titulo ?? "Diário de atividades"}: ${link}`)}`,
-                    "_blank",
-                    "noopener",
-                  )
+                  window.open(convite, "_blank", "noopener")
                 }
                 nota="abre a conversa com o link pronto"
               >
                 Compartilhar no WhatsApp
+              </ItemDeMenu>
+
+              <ItemDeMenu
+                aoClicar={() => window.open(envioDaSenha, "_blank", "noopener")}
+                desabilitado={!diario.temSenha}
+                nota="em mensagem separada, para o link encaminhado não abrir sozinho"
+              >
+                Mandar a senha
               </ItemDeMenu>
 
               <SeparadorDeMenu />
@@ -240,11 +269,7 @@ export function TelaDoDiario({
               <button
                 type="button"
                 onClick={() =>
-                  window.open(
-                    `https://wa.me/?text=${encodeURIComponent(`${diario.titulo ?? "Diário de atividades"}: ${link}`)}`,
-                    "_blank",
-                    "noopener",
-                  )
+                  window.open(convite, "_blank", "noopener")
                 }
                 className="btn btn-primario btn-compacto"
               >

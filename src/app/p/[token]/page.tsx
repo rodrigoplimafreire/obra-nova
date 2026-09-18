@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { carregarOrcamentoPublicado } from "@/lib/orcamento/publico";
 import { gateLiberado } from "@/lib/orcamento/acoes-publico";
 import { lerMarca } from "@/lib/orcamento/marcas";
+import { previewDoLinkPublico } from "@/lib/acesso/preview";
 import { DocumentoDoCliente } from "@/components/orcamento/documento-do-cliente";
 import { GateDoOrcamento } from "@/components/orcamento/gate-do-orcamento";
 
@@ -44,13 +45,26 @@ export async function generateMetadata({
   const { token } = await params;
   const orcamento = await carregarOrcamentoPublicado(token);
 
-  const robots = { index: false, follow: false, nocache: true };
-  if (!orcamento) return { title: "Orçamento", robots };
+  if (!orcamento) {
+    return previewDoLinkPublico({
+      titulo: "Orçamento",
+      descricao: "Este endereço não existe.",
+      empreiteira: null,
+    });
+  }
 
   const { marca, objeto, cliente } = orcamento.documento;
-  const partes = [lerMarca(marca).nome, objeto].filter(Boolean).join(" · ");
+  const nomeDaMarca = lerMarca(marca).nome;
+  const partes = [nomeDaMarca, objeto].filter(Boolean).join(" · ");
 
-  return { title: `${partes} — ${cliente}`, robots };
+  return previewDoLinkPublico({
+    titulo: `${partes} — ${cliente}`,
+    // Sem valor e sem escopo detalhado: o cartão do WhatsApp aparece para
+    // quem estiver no grupo e para quem receber encaminhado, e preço de
+    // proposta não é coisa que se mostre em vitrine.
+    descricao: `Proposta comercial para ${cliente}. Página privada, protegida por senha.`,
+    empreiteira: orcamento.empreiteira.nome ?? nomeDaMarca,
+  });
 }
 
 export default async function PaginaDoOrcamento({

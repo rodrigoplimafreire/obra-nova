@@ -8,6 +8,7 @@ import {
 } from "@/lib/diario/dados";
 import { diarioLiberado } from "@/lib/diario/acoes-publico";
 import { HOST_DO_DIARIO } from "@/lib/diario/apelido";
+import { previewDoLinkPublico } from "@/lib/acesso/preview";
 import { diaValido, hojeNaEmpreiteira, mesDoDia, mesValido } from "@/lib/tempo";
 import { GateDoDiario } from "@/components/diario/gate-do-diario";
 import { PaginaDoDiario } from "@/components/diario/pagina-do-diario";
@@ -40,19 +41,32 @@ export async function generateMetadata({
   const { token } = await params;
   const diario = await carregarDiarioPorToken(token);
 
-  // O link vai por WhatsApp para uma pessoa só. Nada de buscador.
-  const robots = { index: false, follow: false, nocache: true };
-  if (!diario) return { title: "Diário", robots };
+  if (!diario) {
+    return previewDoLinkPublico({
+      titulo: "Diário",
+      descricao: "Este endereço não existe.",
+      empreiteira: null,
+    });
+  }
 
-  // Sem repetir: quando o diário se chama igual à empreiteira, "RD Engenharia
-  // · RD Engenharia" não diz nada duas vezes, diz nada.
-  const partes = [...new Set(
-    [diario.empreiteira.nome, diario.titulo ?? "Diário de atividades"].filter(
-      (p): p is string => Boolean(p),
-    ),
-  )];
+  // O título do diário costuma ser o nome da empreiteira — foi o primeiro que
+  // o Rodrigo escreveu. "RD Engenharia · RD Engenharia" não diz nada duas
+  // vezes, diz nada.
+  const titulo =
+    diario.titulo && diario.titulo !== diario.empreiteira.nome
+      ? diario.titulo
+      : "Diário de atividades";
 
-  return { title: partes.join(" · "), robots };
+  return previewDoLinkPublico({
+    titulo,
+    // Diz quem escreve e que é privado. Não diz uma linha do que está lá
+    // dentro: o cartão do WhatsApp é vitrine, e fica visível para quem
+    // receber encaminhado.
+    descricao: diario.autorNome
+      ? `Acompanhamento diário de ${diario.autorNome}. Página privada, protegida por senha.`
+      : "Acompanhamento diário. Página privada, protegida por senha.",
+    empreiteira: diario.empreiteira.nome,
+  });
 }
 
 /**
