@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { diaValido } from "@/lib/tempo";
+import { lerApelido } from "./apelido";
 import { montarDia } from "./publicacao";
 import { garantirRelatorioDoDia } from "./relatorio";
 import { gerarResumo } from "./resumo";
@@ -294,11 +295,21 @@ export async function salvarAjustes(
   const titulo = String(form.get("titulo") ?? "").trim();
   const autorNome = String(form.get("autorNome") ?? "").trim();
   const senha = String(form.get("senha") ?? "").trim();
+  const apelidoBruto = String(form.get("apelido") ?? "").trim();
 
   // Senha de quatro caracteres é o mesmo que senha nenhuma num link que
-  // circula por WhatsApp.
+  // circula por WhatsApp. E com endereço legível a senha passa a ser a única
+  // barreira — `diario.rd.eng.br/rodrigo` se adivinha, `/d/<32 caracteres>`
+  // não.
   if (senha && senha.length < 6) {
     return { ok: false, erro: "A senha precisa de ao menos 6 caracteres." };
+  }
+
+  let apelido: string | null = null;
+  if (apelidoBruto) {
+    const veredito = lerApelido(apelidoBruto);
+    if (!veredito.ok) return { ok: false, erro: veredito.erro };
+    apelido = veredito.apelido;
   }
 
   const { error } = await supabaseAdmin()
@@ -306,6 +317,7 @@ export async function salvarAjustes(
     .update({
       titulo: titulo || null,
       autor_nome: autorNome || null,
+      apelido,
       // Campo em branco apaga a senha, e sem senha a publicação trava. Deixar
       // "em branco não mexe" esconderia um jeito de nunca conseguir remover.
       senha: senha || null,
@@ -313,6 +325,11 @@ export async function salvarAjustes(
     })
     .eq("id", diario.id);
 
+  // O apelido é único no banco inteiro: duas pessoas querendo `rodrigo` é
+  // caso normal, não erro de programa, e merece frase em vez de código.
+  if (error?.code === "23505") {
+    return { ok: false, erro: `O endereço \`${apelido}\` já está em uso.` };
+  }
   if (error) return { ok: false, erro: error.message };
 
   revalidar(diario.token);
@@ -357,7 +374,15 @@ export async function revogarAcesso(
 
   const { error } = await sb
     .from("dia_diarios")
-    .update({ token: novo, updated_at: new Date().toISOString() })
+    .update({
+      token: novo,
+      // **O apelido cai junto.** Revogar que deixasse `diario.rd.eng.br/rodrigo`
+      // de pé não revogaria nada: o endereço bonito é o que de fato circula, e
+      // é o mais fácil de adivinhar. Quem revoga escolhe um apelido novo
+      // depois, de propósito.
+      apelido: null,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", diario.id);
 
   if (error) return { ok: false, erro: error.message };

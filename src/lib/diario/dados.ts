@@ -17,6 +17,8 @@ import { RASCUNHO_VAZIO, type DiaPublicado, type RascunhoDoDia } from "./tipos";
 export type Diario = {
   id: string;
   token: string;
+  /** O pedaço legível de `diario.rd.eng.br/<apelido>`, quando escolhido. */
+  apelido: string | null;
   titulo: string | null;
   autorNome: string | null;
   temSenha: boolean;
@@ -42,40 +44,35 @@ export async function garantirDiario(): Promise<Diario> {
   const { orgId, id: usuarioId } = await exigirAdmin();
   const sb = supabaseAdmin();
 
+  const COLUNAS = "id, token, apelido, titulo, autor_nome, senha";
+
   const { data: existente } = await sb
     .from("dia_diarios")
-    .select("id, token, titulo, autor_nome, senha")
+    .select(COLUNAS)
     .eq("org_id", orgId)
     .eq("autor_id", usuarioId)
     .maybeSingle();
 
-  if (existente) {
-    return {
-      id: existente.id,
-      token: existente.token,
-      titulo: existente.titulo,
-      autorNome: existente.autor_nome,
-      // A senha em si nunca sai daqui: a tela só precisa saber se existe.
-      temSenha: Boolean(existente.senha),
-    };
-  }
+  const linha =
+    existente ??
+    (
+      await sb
+        .from("dia_diarios")
+        .insert({ org_id: orgId, autor_id: usuarioId })
+        .select(COLUNAS)
+        .single()
+    ).data;
 
-  const { data: criado, error } = await sb
-    .from("dia_diarios")
-    .insert({ org_id: orgId, autor_id: usuarioId })
-    .select("id, token, titulo, autor_nome, senha")
-    .single();
-
-  if (error || !criado) {
-    throw new Error(error?.message ?? "Falha ao criar o diário.");
-  }
+  if (!linha) throw new Error("Falha ao criar o diário.");
 
   return {
-    id: criado.id,
-    token: criado.token,
-    titulo: criado.titulo,
-    autorNome: criado.autor_nome,
-    temSenha: false,
+    id: linha.id,
+    token: linha.token,
+    apelido: linha.apelido,
+    titulo: linha.titulo,
+    autorNome: linha.autor_nome,
+    // A senha em si nunca sai daqui: a tela só precisa saber se existe.
+    temSenha: Boolean(linha.senha),
   };
 }
 
@@ -226,6 +223,7 @@ export async function carregarDia(
 export type DiarioPublico = {
   id: string;
   token: string;
+  apelido: string | null;
   titulo: string | null;
   autorNome: string | null;
   temSenha: boolean;
@@ -233,25 +231,50 @@ export type DiarioPublico = {
 };
 
 /**
- * O diário por token. Devolve `null` para token inexistente, e a rota
- * responde 404 — igual ao orçamento e ao relatório.
+ * Acha o diário pelo que veio na URL: o apelido legível ou o token.
+ *
+ * Os dois caminhos existem de propósito. O token é o endereço que já foi para
+ * o WhatsApp antes de haver domínio próprio, e a Entrega 1 prometeu que ele
+ * não muda; o apelido é o endereço bonito que passou a existir depois.
+ * Prometer endereço fixo e depois trocá-lo seria quebrar a promessa no lugar
+ * onde ela foi feita.
  */
-export async function carregarDiarioPorToken(
-  token: string,
-): Promise<DiarioPublico | null> {
-  if (!token) return null;
+async function acharDiario(identificador: string) {
+  if (!identificador) return null;
+  const sb = supabaseAdmin();
 
-  const { data } = await supabaseAdmin()
+  const COLUNAS = "id, org_id, token, apelido, titulo, autor_nome, senha";
+
+  const { data: porApelido } = await sb
     .from("dia_diarios")
-    .select("id, org_id, token, titulo, autor_nome, senha")
-    .eq("token", token)
+    .select(COLUNAS)
+    .eq("apelido", identificador.toLowerCase())
+    .maybeSingle();
+  if (porApelido) return porApelido;
+
+  const { data: porToken } = await sb
+    .from("dia_diarios")
+    .select(COLUNAS)
+    .eq("token", identificador)
     .maybeSingle();
 
+  return porToken ?? null;
+}
+
+/**
+ * O diário por apelido ou token. Devolve `null` para endereço inexistente, e
+ * a rota responde 404 — igual ao orçamento e ao relatório.
+ */
+export async function carregarDiarioPorToken(
+  identificador: string,
+): Promise<DiarioPublico | null> {
+  const data = await acharDiario(identificador);
   if (!data) return null;
 
   return {
     id: data.id,
     token: data.token,
+    apelido: data.apelido,
     titulo: data.titulo,
     autorNome: data.autor_nome,
     temSenha: Boolean(data.senha),
@@ -259,14 +282,18 @@ export async function carregarDiarioPorToken(
   };
 }
 
-/** A senha guardada, para o gate conferir. Só o gate chama isto. */
-export async function senhaDoDiario(token: string): Promise<string | null> {
-  const { data } = await supabaseAdmin()
-    .from("dia_diarios")
-    .select("senha")
-    .eq("token", token)
-    .maybeSingle();
-  return data?.senha ?? null;
+/**
+ * A senha guardada e o token canônico, para o gate.
+ *
+ * Devolve o token mesmo quando a pessoa entrou pelo apelido: é ele que dá
+ * nome ao cookie, e assim destravar por um endereço destrava pelo outro
+ * dentro do mesmo domínio, em vez de pedir a senha duas vezes.
+ */
+export async function autenticacaoDoDiario(
+  identificador: string,
+): Promise<{ token: string; senha: string | null } | null> {
+  const data = await acharDiario(identificador);
+  return data ? { token: data.token, senha: data.senha } : null;
 }
 
 /**

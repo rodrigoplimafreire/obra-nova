@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -6,6 +7,7 @@ import {
   datasPublicadas,
 } from "@/lib/diario/dados";
 import { diarioLiberado } from "@/lib/diario/acoes-publico";
+import { HOST_DO_DIARIO } from "@/lib/diario/apelido";
 import { diaValido, hojeNaEmpreiteira, mesDoDia, mesValido } from "@/lib/tempo";
 import { GateDoDiario } from "@/components/diario/gate-do-diario";
 import { PaginaDoDiario } from "@/components/diario/pagina-do-diario";
@@ -24,6 +26,10 @@ export const dynamic = "force-dynamic";
  * Sem limite de Suspense o HTML já sai inteiro do servidor, e a página não
  * depende de JavaScript nenhum — que é o que sustenta o calendário navegável
  * por link (decisão D7 do `PRD-DIARIO.md`).
+ *
+ * O `[token]` do nome da pasta é histórico: hoje ele recebe o token **ou** o
+ * apelido, porque `diario.rd.eng.br/rodrigo` é reescrito para cá. Renomear a
+ * pasta trocaria a rota e mataria os links que já circulam.
  */
 
 export async function generateMetadata({
@@ -45,6 +51,25 @@ export async function generateMetadata({
   return { title: partes, robots };
 }
 
+/**
+ * O caminho de onde a página fala de si mesma.
+ *
+ * Toda navegação interna (calendário, setas, voltar ao último) sai daqui. No
+ * domínio da empreiteira o endereço é `/rodrigo`; fora dele é
+ * `/d/<token>`. Sem isto, um clique no calendário jogaria quem está em
+ * `diario.rd.eng.br/rodrigo` para `/d/rodrigo` — funciona, e estraga o
+ * endereço que existe justamente para ser bonito.
+ */
+async function caminhoBase(
+  identificador: string,
+  apelido: string | null,
+): Promise<string> {
+  const host = (await headers()).get("host")?.toLowerCase() ?? "";
+  return host === HOST_DO_DIARIO && apelido
+    ? `/${apelido}`
+    : `/d/${identificador}`;
+}
+
 export default async function Diario({
   params,
   searchParams,
@@ -52,17 +77,19 @@ export default async function Diario({
   params: Promise<{ token: string }>;
   searchParams: Promise<{ dia?: string; mes?: string }>;
 }) {
-  const { token } = await params;
+  const { token: identificador } = await params;
 
-  const diario = await carregarDiarioPorToken(token);
+  const diario = await carregarDiarioPorToken(identificador);
   if (!diario) notFound();
+
+  const base = await caminhoBase(identificador, diario.apelido);
 
   // A senha vem antes de qualquer leitura de conteúdo: sem ela, nem a lista
   // de datas publicadas sai daqui.
-  if (diario.temSenha && !(await diarioLiberado(token))) {
+  if (diario.temSenha && !(await diarioLiberado(diario.token))) {
     return (
       <GateDoDiario
-        token={token}
+        token={identificador}
         titulo={diario.titulo}
         empreiteira={diario.empreiteira}
       />
@@ -106,7 +133,7 @@ export default async function Diario({
 
   return (
     <PaginaDoDiario
-      token={token}
+      base={base}
       titulo={diario.titulo}
       autor={diario.autorNome}
       empreiteira={diario.empreiteira}

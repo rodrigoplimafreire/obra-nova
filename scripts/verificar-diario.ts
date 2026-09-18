@@ -23,6 +23,11 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { gerarResumo } from "../src/lib/diario/resumo";
+import {
+  enderecoDoDiario,
+  HOST_DO_DIARIO,
+  lerApelido,
+} from "../src/lib/diario/apelido";
 import { lerDia, montarDia } from "../src/lib/diario/publicacao";
 import { linhas } from "../src/lib/diario/tipos";
 import {
@@ -98,6 +103,44 @@ function conferirFuncoesPuras() {
     linhas("- um\n* dois\n• três").join("|") === "um|dois|três",
   );
   conferir("`\\r\\n` e `\\n` tratados igual", linhas("um\r\ndois").length === 2);
+
+  console.log("\nO apelido do endereço");
+
+  const ok = (bruto: string) => {
+    const v = lerApelido(bruto);
+    return v.ok ? v.apelido : `RECUSADO: ${v.erro}`;
+  };
+
+  conferir("`Rodrigo` vira `rodrigo`", ok("Rodrigo") === "rodrigo");
+  conferir("acento sai e a letra fica", ok("João Pedro") === "joao-pedro", ok("João Pedro"));
+  conferir("espaço vira hífen", ok("obra nova") === "obra-nova");
+  conferir("hífen repetido colapsa", ok("a---b") === "a-b");
+  conferir("hífen nas pontas some", ok("-rodrigo-") === "rodrigo");
+  conferir("barra é descartada", ok("rd/rodrigo") === "rdrodrigo", ok("rd/rodrigo"));
+  conferir("curto demais é recusado", !lerApelido("ab").ok);
+  conferir("vazio é recusado", !lerApelido("   ").ok);
+  conferir("só pontuação é recusado", !lerApelido("!!!").ok);
+  conferir(
+    "longo demais é recusado",
+    !lerApelido("a".repeat(41)).ok,
+    "41 caracteres",
+  );
+  conferir("`admin` é reservado", !lerApelido("admin").ok);
+  conferir("`api` é reservado", !lerApelido("API").ok);
+  conferir("`d` é reservado (e curto)", !lerApelido("d").ok);
+
+  console.log("\nO endereço que a pessoa copia");
+
+  conferir(
+    "com apelido, sai o domínio da empreiteira",
+    enderecoDoDiario("rodrigo", "TOKEN", "https://app.exemplo") ===
+      `https://${HOST_DO_DIARIO}/rodrigo`,
+  );
+  conferir(
+    "sem apelido, sai o endereço do token",
+    enderecoDoDiario(null, "TOKEN", "https://app.exemplo") ===
+      "https://app.exemplo/d/TOKEN",
+  );
 
   console.log("\nA fotografia publicada");
 
@@ -258,6 +301,21 @@ async function conferirIA(relatorioId: string) {
     !tudo.some((i) => i.includes("—")),
   );
 
+  /**
+   * O responsável vem **antes** dos dois-pontos.
+   *
+   * Não é capricho de redação: a página quebra a linha nesse ponto para
+   * desenhar o nome como pastilha. Se o modelo voltar a escrever o dono no
+   * fim da frase, a pastilha some sem nenhum erro aparecer — o texto continua
+   * certo e a tela fica pior em silêncio.
+   */
+  const comDono = [...pendencias, ...proximosPassos];
+  conferir(
+    "responsável vem antes dos dois-pontos, para a página virar pastilha",
+    comDono.length > 0 && comDono.every((i) => /^[^:]{2,40}:\s*\S/.test(i)),
+    comDono.join(" | ") || "(nada com responsável)",
+  );
+
   console.log("\n  Saída da IA, para leitura humana:");
   for (const [nome, itens] of [
     ["Realizado", realizado],
@@ -331,19 +389,37 @@ async function conferirBanco(diarioId: string, dia: string) {
 async function principal() {
   conferirFuncoesPuras();
 
-  const { data: org } = await sb.from("orgs").select("id").limit(1).single();
-  const { data: membro } = await sb
+  /**
+   * O script cria a **própria org**, e não reusa a primeira do banco.
+   *
+   * `dia_diarios` tem chave única em `(org_id, autor_id)`: assim que o Rodrigo
+   * usar o Diário de verdade, a vaga da org dele está ocupada e um script que
+   * tentasse inserir ali quebraria — foi exatamente o que aconteceu na
+   * primeira vez. Org descartável não disputa vaga com ninguém, e some
+   * inteira no fim, levando o diário junto por cascata.
+   */
+  const { data: usuario } = await sb
     .from("org_members")
     .select("user_id")
-    .eq("org_id", org!.id)
     .limit(1)
     .single();
+
+  const { data: org, error: erroOrg } = await sb
+    .from("orgs")
+    .insert({ name: `verificacao-diario-${crypto.randomUUID()}` })
+    .select("id")
+    .single();
+
+  if (erroOrg || !org) {
+    console.error("Não consegui criar a org de teste:", erroOrg?.message);
+    process.exit(1);
+  }
 
   const { data: diario, error } = await sb
     .from("dia_diarios")
     .insert({
-      org_id: org!.id,
-      autor_id: membro!.user_id,
+      org_id: org.id,
+      autor_id: usuario!.user_id,
       titulo: "VERIFICACAO AUTOMATICA — apagar",
     })
     .select("id")
@@ -351,6 +427,7 @@ async function principal() {
 
   if (error || !diario) {
     console.error("Não consegui criar o diário de teste:", error?.message);
+    await sb.from("orgs").delete().eq("id", org.id);
     process.exit(1);
   }
 
@@ -385,9 +462,10 @@ async function principal() {
     await conferirDiaVazio(relatorioVazio!.id);
     await conferirIA(relatorio!.id);
   } finally {
-    // Cascata: relatórios, registros e publicações vão junto.
-    await sb.from("dia_diarios").delete().eq("id", diario.id);
-    console.log("\nDiário de teste apagado.");
+    // Cascata: a org leva o diário, e o diário leva relatórios, registros e
+    // publicações.
+    await sb.from("orgs").delete().eq("id", org.id);
+    console.log("\nOrg e diário de teste apagados.");
   }
 
   console.log(

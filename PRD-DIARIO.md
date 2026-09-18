@@ -116,11 +116,16 @@ futuro, uma pendência sem dono, um nome, um número e um áudio não transcrito
 É o único jeito de saber se a regra que mais importa continua valendo, porque
 ela não se verifica lendo código. Ver **D10**.
 
-### Entrega 3 — Acesso e compartilhamento
+### Entrega 3 — Acesso e compartilhamento · **no ar em 18/09/2026**
 
 10. Copiar link e compartilhar no WhatsApp.
 11. Trocar a senha.
 12. Revogar o acesso — que **não** é a mesma coisa que tirar do ar (**D8**).
+
+Entraram junto duas coisas que o PRD não pedia com estas palavras, e que a
+leitura de ferramentas parecidas mostrou que faltavam: o **endereço próprio**
+(`diario.rd.eng.br/rodrigo`, ver **D12**) e o **refino da página de leitura**
+(**D13**).
 
 ---
 
@@ -208,6 +213,44 @@ responsável.
 registros do dia e o nome do autor. Não recebe orçamento, obra, cliente nem
 histórico: material a mais é material para ela misturar, e o PRD pede para
 organizar o que foi fornecido, não para cruzar fontes.
+
+**D12 · O endereço próprio convive com o token, não o substitui.**
+`diario.rd.eng.br/rodrigo` é um rewrite por host, como o
+`orcamentos.rd.eng.br` já faz, e a rota de destino continua sendo `/d/[token]`
+— que passou a resolver apelido **ou** token. O link antigo não podia morrer:
+a Entrega 1 prometeu endereço fixo, e trocá-lo seria quebrar a promessa no
+lugar exato onde ela foi feita.
+
+Três consequências que não são óbvias:
+
+- **`afterFiles`, não `beforeFiles`.** `beforeFiles` roda antes de olhar o
+  sistema de arquivos, e `/:apelido` engoliria `/favicon.ico` e o `public/`.
+- **A senha passa a ser a única barreira.** `/d/<32 caracteres>` não se
+  adivinha; `/rodrigo` se adivinha na primeira tentativa. A trava de publicar
+  sem senha, que já existia, deixa de ser zelo e vira o que segura a porta.
+- **Revogar derruba o apelido junto.** Trocar só o token deixaria de pé
+  justamente o endereço que circula e que é fácil de adivinhar — não seria
+  revogação nenhuma.
+
+**D13 · O que a pesquisa de ferramentas parecidas mudou na página.** Lido em
+ferramentas de status assíncrono e em apps de diário de obra (Raken, Houzz
+Pro, ConstructionOnline), três coisas se repetem e duas delas faltavam aqui:
+
+1. **Primeiro o que ficou pronto**, depois o que continua, depois o que
+   travou, por último o que vem. Já era a ordem do PRD; ficou confirmada.
+2. **Bloqueio precisa de peso visual próprio.** Quatro listas idênticas
+   obrigam a ler tudo para descobrir o que pede ação. Pendência passou a ser a
+   única seção desenhada como cartão, com rail âmbar.
+3. **O responsável na frente.** Pendências e próximos passos saem no formato
+   `Responsável: o que precisa acontecer`, e a página desenha o nome como
+   pastilha — quem lê acha o próprio nome sem ler a frase inteira. "A definir"
+   sai em cinza e itálico: é a ausência de dono, e parecer um nome faria
+   procurar por uma pessoa chamada A Definir.
+
+E uma quarta, que veio de olhar o caso de uso em vez do concorrente: quase
+toda consulta é "hoje" ou "ontem", e abrir calendário para isso é atrito em
+cima do caso comum. A **fita dos últimos dias** resolve o comum num toque, e o
+calendário volta a ser o que ele é bom: achar data distante.
 
 ---
 

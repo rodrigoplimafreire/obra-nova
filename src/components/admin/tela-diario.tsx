@@ -17,6 +17,7 @@ import {
 } from "@/lib/diario/acoes";
 import { RegistrosDoDiario } from "./registros-do-diario";
 import { copiarTexto } from "@/lib/clipboard";
+import { enderecoDoDiario, HOST_DO_DIARIO } from "@/lib/diario/apelido";
 import { SECOES } from "@/lib/diario/tipos";
 import type { Diario, DiaDoDiario, DiaNoPainel } from "@/lib/diario/dados";
 import type { Resultado } from "@/lib/admin/tipos";
@@ -125,7 +126,9 @@ export function TelaDoDiario({
     if (salvo?.ok || publicado?.ok || retirado?.ok) router.refresh();
   }, [salvo, publicado, retirado, router]);
 
-  const link = `${urlBase}/d/${diario.token}`;
+  // Com apelido, o link é o da empreiteira; sem ele, continua sendo o do
+  // token — que nunca deixa de valer.
+  const link = enderecoDoDiario(diario.apelido, diario.token, urlBase);
   const noAr = atual.publicadoEm !== null;
   const registroDoDia = dias.find((d) => d.dia === atual.dia);
   const desatualizado = registroDoDia?.desatualizado ?? false;
@@ -532,6 +535,37 @@ function Ajustes({
             placeholder="Seu nome, como aparece no cabeçalho"
             className="campo mt-2"
           />
+          <p className="mt-2 text-xs leading-relaxed text-cinza">
+            Aparece no cabeçalho da página e entra no resumo: é como a IA sabe
+            de quem é o &ldquo;eu&rdquo; dos seus registros.
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="apelido" className="rotulo-campo">
+            Endereço
+          </label>
+          {/* O host fica colado no campo, como prefixo fixo: sem ele a pessoa
+              digita a URL inteira e a validação recusa por causa da barra. */}
+          <div className="mt-2 flex items-stretch">
+            <span className="flex shrink-0 items-center rounded-l-[var(--radius-controle)] border border-r-0 border-concreto bg-papel px-3 font-mono text-xs text-fumaca">
+              {HOST_DO_DIARIO}/
+            </span>
+            <input
+              id="apelido"
+              name="apelido"
+              defaultValue={diario.apelido ?? ""}
+              placeholder="rodrigo"
+              autoComplete="off"
+              spellCheck={false}
+              className="campo min-w-0 flex-1 rounded-l-none font-mono"
+            />
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-cinza">
+            Letras, números e hífen. Em branco, o link continua sendo o
+            endereço longo — e ele nunca deixa de valer, mesmo depois que você
+            escolher um apelido.
+          </p>
         </div>
 
         <div>
@@ -623,8 +657,9 @@ function Revogacao({
     >
       <p className="text-sm leading-relaxed text-grafite">
         O endereço abaixo para de funcionar na hora, para todo mundo que já o
-        tem. Um novo é gerado, e você precisa enviá-lo outra vez. Os relatórios
-        publicados continuam lá, no endereço novo.
+        tem. O apelido também é liberado, senão a parte fácil de adivinhar
+        continuaria de pé e não haveria revogação nenhuma. Você escolhe um novo
+        em seguida e envia outra vez. Os relatórios publicados continuam lá.
       </p>
 
       <p className="mt-4 rounded-sm bg-papel px-4 py-3 font-mono text-xs break-all text-fumaca">

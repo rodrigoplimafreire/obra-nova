@@ -484,6 +484,46 @@ do prompt.*
 
 ---
 
+## 16d · Diário — endereço próprio e leitura (Entrega 3)
+
+*Apelido e endereço cobertos por `npm run verificar:diario`. O rewrite foi
+conferido com `curl -H "Host: diario.rd.eng.br"` contra o servidor local.*
+
+| Entrada | Saída esperada |
+| --- | --- |
+| `diario.rd.eng.br/rodrigo` | 200, serve `/d/rodrigo` sem trocar a barra do navegador |
+| `qualqueroutro.host/rodrigo` | **404** — a reescrita é por host, e não vaza a rota |
+| `diario.rd.eng.br/icon.svg` | 200, o arquivo real ganha (é por isso que é `afterFiles`) |
+| `/d/<token>` depois de escolher apelido | Continua funcionando; o link antigo nunca morre |
+| Gate aberto por apelido | Cookie nomeado pelo **token**; entrar por um endereço destrava o outro no mesmo domínio |
+| `lerApelido("João Pedro")` | `joao-pedro` — acento sai, a letra fica |
+| `lerApelido("rd/rodrigo")` | `rdrodrigo` — barra descartada, senão quebraria a rota |
+| `lerApelido("ab")` / `"   "` / `"!!!"` | Recusado |
+| `lerApelido` com 41 caracteres | Recusado |
+| `lerApelido("admin")`, `"api"`, `"d"` | Recusado — a aplicação já responde por esses nomes |
+| Apelido já usado por outro diário | `"O endereço \`x\` já está em uso."`, não o código do Postgres |
+| `revogarAcesso` | Troca o token **e libera o apelido**; senão a parte fácil de adivinhar continuaria de pé |
+| Diário sem apelido | O link copiado continua sendo `<urlBase>/d/<token>` |
+| Item no formato `Fulano: tarefa` em pendências/próximos passos | O nome vira pastilha, a tarefa fica no corpo |
+| Item com `A definir:` | Pastilha cinza e em itálico — é ausência de dono, não um nome |
+| Item com dois-pontos no meio de uma frase longa (>4 palavras antes) | **Não** vira pastilha; a linha aparece inteira |
+| Item sem dois-pontos | Aparece inteiro, sem dono |
+
+**Bordas**
+
+- A fita dos últimos dias só aparece com mais de uma data publicada, e mostra
+  no máximo 10. Ela existe porque quase toda consulta é "hoje" ou "ontem".
+- "Voltar ao último relatório" some quando já se está nele.
+- Pendência é a única seção em cartão. Peso visual igual nas quatro obrigaria
+  a ler tudo para achar o que pede ação.
+- Contraste medido no navegador: pastilha de dono 13,9:1, pastilha "A definir"
+  5,9:1, fita inativa 6,2:1. Todas passam na AA.
+- **A senha virou a única barreira** depois do endereço legível. A trava que
+  impede publicar sem senha deixou de ser zelo e passou a ser o que segura a
+  porta.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

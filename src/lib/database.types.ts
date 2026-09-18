@@ -1289,6 +1289,11 @@ type TabelasDeDiario = {
       autor_nome: string | null;
       titulo: string | null;
       token: string;
+      /**
+       * O endereço legível, em `diario.rd.eng.br/<apelido>`. Convive com o
+       * token: quem já tem o link antigo continua entrando por ele.
+       */
+      apelido: string | null;
       /** Texto puro, como no orçamento. Ver `PRD-DIARIO.md` §7. */
       senha: string | null;
       created_at: string;
@@ -1301,12 +1306,14 @@ type TabelasDeDiario = {
       autor_nome?: string | null;
       titulo?: string | null;
       token?: string;
+      apelido?: string | null;
       senha?: string | null;
     };
     Update: {
       autor_nome?: string | null;
       titulo?: string | null;
       token?: string;
+      apelido?: string | null;
       senha?: string | null;
       updated_at?: string;
     };

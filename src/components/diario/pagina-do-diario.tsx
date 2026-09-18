@@ -21,6 +21,13 @@ import type { Empreiteira } from "@/lib/admin/empreiteira";
  * Não é purismo. É a decisão D7 do `PRD-DIARIO.md`, e ela existe porque a
  * página do orçamento já ficou em branco em produção por depender de um
  * script para revelar o conteúdo.
+ *
+ * **A hierarquia da leitura** segue o que a pesquisa de ferramentas de status
+ * diz e o PRD já pedia: primeiro o que ficou pronto, depois o que continua,
+ * depois o que travou, por último o que vem. As quatro não têm o mesmo peso
+ * visual de propósito — pendência é a única que pede ação de quem lê, e é a
+ * única desenhada como cartão. Quatro listas idênticas obrigam a ler tudo
+ * para descobrir o que importa.
  */
 
 const DIA_LONGO = new Intl.DateTimeFormat("pt-BR", {
@@ -37,6 +44,11 @@ const DIA_CURTO = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "UTC",
 });
 
+const DIA_DA_SEMANA_CURTO = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "short",
+  timeZone: "UTC",
+});
+
 const HORA = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
@@ -50,8 +62,33 @@ function comoData(dia: string, formato: Intl.DateTimeFormat): string {
   return formato.format(new Date(`${dia}T12:00:00Z`));
 }
 
+/**
+ * "Reginato: confirmar o preço do rufo" vira dono + tarefa.
+ *
+ * A IA escreve nesse formato de propósito (ver o prompt em `resumo.ts`), para
+ * quem lê achar o próprio nome sem ler a frase inteira. Quando a linha não
+ * vier assim — texto digitado à mão, ou um dia em que o modelo escapou do
+ * formato — ela aparece inteira, sem dono. Nunca adivinhamos um responsável a
+ * partir da pontuação.
+ */
+function separarResponsavel(item: string): { dono: string | null; tarefa: string } {
+  const casou = item.match(/^([^:]{2,40}):\s*(.+)$/);
+  if (!casou) return { dono: null, tarefa: item };
+
+  const dono = casou[1].trim();
+  // Um dono é um nome, não uma oração. Mais de quatro palavras é frase com
+  // dois-pontos no meio, e quebrá-la em chip estragaria a leitura.
+  if (dono.split(/\s+/).length > 4) return { dono: null, tarefa: item };
+
+  return { dono, tarefa: casou[2].trim() };
+}
+
+function semDono(dono: string): boolean {
+  return /^a\s+definir$/i.test(dono);
+}
+
 export function PaginaDoDiario({
-  token,
+  base,
   titulo,
   autor,
   empreiteira,
@@ -63,7 +100,8 @@ export function PaginaDoDiario({
   anterior,
   seguinte,
 }: {
-  token: string;
+  /** O caminho de onde a página fala de si mesma. Ver a rota. */
+  base: string;
   titulo: string | null;
   autor: string | null;
   empreiteira: Empreiteira;
@@ -77,9 +115,11 @@ export function PaginaDoDiario({
   seguinte: string | null;
 }) {
   const publicadas = new Set(datas);
+  const maisRecente = datas[0] ?? null;
+
   const calendario = (
     <Calendario
-      token={token}
+      base={base}
       mes={mes}
       hoje={hoje}
       selecionado={selecionado}
@@ -111,6 +151,49 @@ export function PaginaDoDiario({
         </div>
       </header>
 
+      {/**
+       * A fita dos últimos dias.
+       *
+       * Quase toda consulta é "hoje" ou "ontem", e abrir um calendário para
+       * isso é atrito em cima do caso comum. A fita resolve o caso comum num
+       * toque e deixa o calendário para o que ele é bom: achar uma data
+       * distante. É `<a>` puro, como o resto da página.
+       */}
+      {datas.length > 1 && (
+        <nav
+          aria-label="Últimos dias"
+          className="border-b border-nevoa bg-white"
+        >
+          <ul className="mx-auto flex w-full max-w-5xl gap-2 overflow-x-auto px-5 py-3 md:px-8">
+            {datas.slice(0, 10).map((d) => {
+              const atual = d === selecionado;
+              return (
+                <li key={d} className="shrink-0">
+                  <Link
+                    href={`${base}?dia=${d}`}
+                    aria-current={atual ? "page" : undefined}
+                    className={`flex min-w-16 flex-col items-center rounded-sm border px-3 py-2 transition ${
+                      atual
+                        ? "border-tinta bg-tinta text-papel"
+                        : "border-nevoa text-fumaca hover:border-concreto hover:text-tinta"
+                    }`}
+                  >
+                    <span className="font-mono text-[0.6rem] tracking-widest uppercase">
+                      {d === hoje
+                        ? "hoje"
+                        : comoData(d, DIA_DA_SEMANA_CURTO).replace(".", "")}
+                    </span>
+                    <span className="mt-0.5 text-sm font-semibold tabular-nums">
+                      {comoData(d, DIA_CURTO)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
+
       <div className="mx-auto w-full max-w-5xl px-5 py-7 md:px-8 md:py-10">
         {/* No celular o relatório é o que importa, e o calendário fica atrás
             de um toque. No desktop os dois convivem em duas colunas. */}
@@ -132,14 +215,14 @@ export function PaginaDoDiario({
 
           <div className="min-w-0 flex-1">
             <Relatorio
-              token={token}
+              base={base}
               hoje={hoje}
               selecionado={selecionado}
               relatorio={relatorio}
               anterior={anterior}
               seguinte={seguinte}
               temAlgumaPublicacao={datas.length > 0}
-              maisRecente={datas[0] ?? null}
+              maisRecente={maisRecente}
             />
           </div>
         </div>
@@ -161,7 +244,7 @@ export function PaginaDoDiario({
 }
 
 function Relatorio({
-  token,
+  base,
   hoje,
   selecionado,
   relatorio,
@@ -170,7 +253,7 @@ function Relatorio({
   temAlgumaPublicacao,
   maisRecente,
 }: {
-  token: string;
+  base: string;
   hoje: string;
   selecionado: string;
   relatorio: DiaPublicado | null;
@@ -180,6 +263,7 @@ function Relatorio({
   maisRecente: string | null;
 }) {
   const ehHoje = selecionado === hoje;
+  const noMaisRecente = selecionado === maisRecente;
 
   return (
     <article>
@@ -200,18 +284,27 @@ function Relatorio({
 
       {/* O aviso só aparece quando há o que avisar: existe publicação, mas não
           a de hoje. Quem abre precisa saber que está lendo ontem. */}
-      {!ehHoje && temAlgumaPublicacao && selecionado === maisRecente && (
+      {!ehHoje && temAlgumaPublicacao && noMaisRecente && (
         <p className="aviso aviso-atencao mt-4">
           Ainda não há relatório de hoje. Este é o mais recente.
         </p>
       )}
 
       {relatorio ? (
-        <div className="mt-6 flex flex-col gap-6">
-          <Secao titulo="Realizado" itens={relatorio.realizado} />
-          <Secao titulo="Em andamento" itens={relatorio.emAndamento} />
-          <Secao titulo="Pendências" itens={relatorio.pendencias} />
-          <Secao titulo="Próximos passos" itens={relatorio.proximosPassos} />
+        <div className="mt-6 flex flex-col gap-7">
+          <Lista titulo="Realizado" itens={relatorio.realizado} tom="feito" />
+          <Lista
+            titulo="Em andamento"
+            itens={relatorio.emAndamento}
+            tom="andando"
+          />
+          <Pendencias itens={relatorio.pendencias} />
+          <Lista
+            titulo="Próximos passos"
+            itens={relatorio.proximosPassos}
+            tom="proximo"
+            comDono
+          />
         </div>
       ) : (
         <div className="mt-6 rounded-lg border border-dashed border-nevoa px-5 py-8 text-center">
@@ -220,25 +313,17 @@ function Relatorio({
               ? "Nenhum relatório publicado neste dia."
               : "Ainda não há relatório publicado neste diário."}
           </p>
-          {temAlgumaPublicacao && maisRecente && maisRecente !== selecionado && (
-            <Link
-              href={`/d/${token}?dia=${maisRecente}`}
-              className="btn btn-secundario btn-compacto mt-4 inline-flex"
-            >
-              Ver o último relatório
-            </Link>
-          )}
         </div>
       )}
 
       {temAlgumaPublicacao && (
         <nav
           aria-label="Outros dias"
-          className="mt-8 flex items-center justify-between gap-3 border-t border-nevoa pt-5"
+          className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-nevoa pt-5"
         >
           {anterior ? (
             <Link
-              href={`/d/${token}?dia=${anterior}`}
+              href={`${base}?dia=${anterior}`}
               className="btn btn-secundario btn-compacto"
             >
               ← {comoData(anterior, DIA_CURTO)}
@@ -247,9 +332,20 @@ function Relatorio({
             <span />
           )}
 
+          {/* "Voltar ao último relatório" é ação do PRD, e some quando já se
+              está nele — botão que não leva a lugar nenhum é ruído. */}
+          {!noMaisRecente && maisRecente && (
+            <Link
+              href={`${base}?dia=${maisRecente}`}
+              className="btn btn-sutil btn-compacto order-last w-full justify-center md:order-none md:w-auto"
+            >
+              Voltar ao último relatório
+            </Link>
+          )}
+
           {seguinte ? (
             <Link
-              href={`/d/${token}?dia=${seguinte}`}
+              href={`${base}?dia=${seguinte}`}
               className="btn btn-secundario btn-compacto"
             >
               {comoData(seguinte, DIA_CURTO)} →
@@ -263,33 +359,128 @@ function Relatorio({
   );
 }
 
-/** Seção vazia não aparece — a regra que vale em toda página do produto. */
-function Secao({ titulo, itens }: { titulo: string; itens: string[] }) {
+const TOM = {
+  feito: "bg-emdia",
+  andando: "bg-atencao-forte",
+  proximo: "bg-planejado",
+} as const;
+
+/**
+ * Seção vazia não aparece — a regra que vale em toda página do produto.
+ *
+ * O marcador muda de cor por seção. Não é enfeite: numa página de quatro
+ * listas seguidas, é o que permite achar "o que vem em seguida" sem reler o
+ * título de cada bloco.
+ */
+function Lista({
+  titulo,
+  itens,
+  tom,
+  comDono = false,
+}: {
+  titulo: string;
+  itens: string[];
+  tom: keyof typeof TOM;
+  comDono?: boolean;
+}) {
   if (itens.length === 0) return null;
 
   return (
     <section>
       <h3 className="rotulo mb-3">{titulo}</h3>
-      <ul className="flex flex-col gap-2">
-        {itens.map((item, i) => (
-          <li key={i} className="flex gap-3">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amarelo-tinta" />
-            <span className="leading-relaxed text-grafite">{item}</span>
-          </li>
-        ))}
+      <ul className="flex flex-col gap-2.5">
+        {itens.map((item, i) => {
+          const { dono, tarefa } = comDono
+            ? separarResponsavel(item)
+            : { dono: null, tarefa: item };
+
+          return (
+            <li key={i} className="flex gap-3">
+              <span
+                className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${TOM[tom]}`}
+              />
+              <span className="min-w-0 leading-relaxed text-grafite">
+                {dono && <Dono nome={dono} />}
+                {tarefa}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
 }
 
+/**
+ * Pendência é a única seção desenhada como cartão.
+ *
+ * É a única que pede alguma coisa de quem lê. Nas ferramentas de status que
+ * funcionam, o bloqueio é o que sobe na página, não o que se perde no meio de
+ * uma lista igual às outras.
+ */
+function Pendencias({ itens }: { itens: string[] }) {
+  if (itens.length === 0) return null;
+
+  return (
+    <section>
+      <h3 className="rotulo mb-3">Pendências</h3>
+      <ul className="flex flex-col gap-2.5">
+        {itens.map((item, i) => {
+          const { dono, tarefa } = separarResponsavel(item);
+          return (
+            <li
+              key={i}
+              className="rounded-lg border border-nevoa border-l-[3px] border-l-atencao-forte bg-white px-5 py-4"
+            >
+              {/* No cartão o dono fica na linha de cima, e não colado no
+                  texto: numa pendência de duas linhas, a segunda voltava para
+                  a margem e o nome ficava boiando no meio da frase. */}
+              {dono && <Dono nome={dono} bloco />}
+              <span className="leading-relaxed text-grafite">{tarefa}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * O nome de quem tem a bola.
+ *
+ * "A definir" fica cinza e em itálico de propósito: ele é a ausência de um
+ * responsável, e parecer um nome faria o leitor procurar por uma pessoa
+ * chamada A Definir. A IA só escreve isso quando ninguém foi apontado — ela
+ * não chuta dono, e a tela não finge que há um.
+ */
+function Dono({ nome, bloco = false }: { nome: string; bloco?: boolean }) {
+  const indefinido = semDono(nome);
+
+  return (
+    <span
+      className={`rounded-sm px-1.5 py-0.5 font-mono text-[0.65rem] tracking-wide uppercase ${
+        // `block w-fit` e não `inline-block`: inline não quebra linha, e o
+        // texto continuaria subindo para o lado do nome.
+        bloco ? "mb-1.5 block w-fit" : "mr-2 inline-block align-baseline"
+      } ${
+        indefinido
+          ? "bg-cinza-100 text-cinza italic"
+          : "bg-papel-fundo text-tinta"
+      }`}
+    >
+      {nome}
+    </span>
+  );
+}
+
 function Calendario({
-  token,
+  base,
   mes,
   hoje,
   selecionado,
   publicadas,
 }: {
-  token: string;
+  base: string;
   mes: string;
   hoje: string;
   selecionado: string;
@@ -300,11 +491,11 @@ function Calendario({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <SetaDoMes token={token} mes={mesVizinho(mes, -1)} dia={selecionado} direcao="anterior" />
+        <SetaDoMes base={base} mes={mesVizinho(mes, -1)} dia={selecionado} direcao="anterior" />
         <p className="text-sm font-semibold text-tinta first-letter:uppercase">
           {nomeDoMes(mes)}
         </p>
-        <SetaDoMes token={token} mes={mesVizinho(mes, 1)} dia={selecionado} direcao="seguinte" />
+        <SetaDoMes base={base} mes={mesVizinho(mes, 1)} dia={selecionado} direcao="seguinte" />
       </div>
 
       <table className="w-full table-fixed">
@@ -334,7 +525,7 @@ function Calendario({
                 <td key={j} className="p-0.5 text-center">
                   {dia && (
                     <Celula
-                      token={token}
+                      base={base}
                       dia={dia}
                       ehHoje={dia === hoje}
                       selecionado={dia === selecionado}
@@ -360,16 +551,16 @@ function Calendario({
  *
  * Dia sem publicação **não é link**: clicar num dia vazio e cair numa página
  * que diz "nenhum relatório" é trabalho para descobrir o que a própria grade
- * já mostrava. Ele continua visível, porque some-lo esconderia o calendário.
+ * já mostrava. Ele continua visível, porque sumi-lo esconderia o calendário.
  */
 function Celula({
-  token,
+  base,
   dia,
   ehHoje,
   selecionado,
   publicado,
 }: {
-  token: string;
+  base: string;
   dia: string;
   ehHoje: boolean;
   selecionado: boolean;
@@ -379,7 +570,7 @@ function Celula({
 
   // O dia de hoje ganha um anel; o selecionado, fundo cheio. São dois estados
   // diferentes e precisam continuar distinguíveis quando caem no mesmo dia.
-  const base =
+  const base_ =
     "flex h-9 w-full items-center justify-center rounded-sm text-sm tabular-nums transition";
 
   if (!publicado) {
@@ -390,7 +581,7 @@ function Celula({
         // não texto desabilitado: `cinza-400` mede 2,98:1 sobre branco e
         // reprova na AA. O anel de hoje sobe pelo mesmo motivo — indicador
         // de interface precisa de 3:1, e `concreto` dá 1,75.
-        className={`${base} text-cinza-500 ${ehHoje ? "ring-1 ring-cinza-500" : ""}`}
+        className={`${base_} text-cinza-500 ${ehHoje ? "ring-1 ring-cinza-500" : ""}`}
       >
         {numero}
       </span>
@@ -399,10 +590,10 @@ function Celula({
 
   return (
     <Link
-      href={`/d/${token}?dia=${dia}`}
+      href={`${base}?dia=${dia}`}
       aria-current={selecionado ? "page" : ehHoje ? "date" : undefined}
       aria-label={`Relatório de ${comoData(dia, DIA_LONGO)}`}
-      className={`${base} font-semibold ${
+      className={`${base_} font-semibold ${
         selecionado
           ? "bg-tinta text-papel"
           : `text-tinta hover:bg-papel ${ehHoje ? "ring-1 ring-tinta" : "bg-amarelo-vazado"}`
@@ -414,12 +605,12 @@ function Celula({
 }
 
 function SetaDoMes({
-  token,
+  base,
   mes,
   dia,
   direcao,
 }: {
-  token: string;
+  base: string;
   mes: string;
   /** O dia continua o mesmo: navegar o mês não troca o relatório aberto. */
   dia: string;
@@ -427,7 +618,7 @@ function SetaDoMes({
 }) {
   return (
     <Link
-      href={`/d/${token}?dia=${dia}&mes=${mes}`}
+      href={`${base}?dia=${dia}&mes=${mes}`}
       aria-label={`Mês ${direcao === "anterior" ? "anterior" : "seguinte"}`}
       className="flex h-8 w-8 items-center justify-center rounded-sm text-cinza-500 transition hover:bg-papel hover:text-tinta"
     >

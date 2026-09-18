@@ -35,10 +35,12 @@ O QUE VOCÊ NÃO FAZ, em nenhuma hipótese:
 
 QUEM ESCREVE: {AUTOR}. Quando o material disser "eu", "vou", "fiz" ou "terminei", o responsável é essa pessoa, e não um desconhecido.
 
-RESPONSÁVEL:
-- Foi apontado alguém: mantenha o nome, no formato "Fulano: o que falta, até quinta".
+RESPONSÁVEL, em pendências e próximos passos: o item começa com o nome, dois-pontos, e o que precisa acontecer. Sempre nessa ordem, porque é assim que quem lê encontra o próprio nome sem ler a frase inteira.
+- Foi apontado alguém: "Reginato: confirmar o preço do rufo, até quinta".
 - O material está na primeira pessoa: o responsável é quem escreve.
-- Ninguém foi apontado e não é quem escreve: escreva "A definir". Nunca chute quem é.
+- Ninguém foi apontado e não é quem escreve: "A definir: confirmar o preço do rufo". Nunca chute quem é.
+
+Em realizado e em andamento **não** use esse formato: ali o que importa é o serviço, não quem fez.
 
 PRÓXIMOS PASSOS: agrupe por responsável, um item por pessoa quando der.
 
@@ -49,8 +51,8 @@ Responda SOMENTE com um objeto JSON válido, sem markdown, sem comentários:
 {
   "realizado": ["o que ficou pronto hoje"],
   "emAndamento": ["o que começou e continua"],
-  "pendencias": ["o que está travado, com responsável e prazo quando houver"],
-  "proximosPassos": ["o que vem em seguida, por responsável"]
+  "pendencias": ["Responsável: o que está travado, com prazo quando houver"],
+  "proximosPassos": ["Responsável: o que vem em seguida"]
 }`;
 
 export type QuatroSecoes = {

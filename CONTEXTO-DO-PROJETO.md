@@ -86,6 +86,8 @@ Rodar local: `npm install`, `cp .env.local.example .env.local` (preencher),
 | `/p/[token]` | **o cliente da RD**: o orçamento publicado, com senha e aceite |
 | `/o/[token]`, `/o/[token]/a/[atividadeId]` | **o mestre, no canteiro**: a semana dele |
 | `/rel/[token]` | **o cliente final**: o relatório publicado |
+| `/admin/diario` | o diário de atividades: registros do dia, resumo pela IA e publicação |
+| `/d/[token]` | **quem acompanha**: o diário publicado, por apelido ou token. Em `diario.rd.eng.br/rodrigo` é a mesma rota, por rewrite de host |
 
 `/admin/login` e `/admin/redefinir-senha` ficam fora do grupo `(painel)`.
 
