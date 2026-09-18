@@ -43,6 +43,7 @@ export function Composer({
   // No canteiro o que se quer é a foto, que é a prova do serviço; em outras
   // telas pode ser o áudio. Só troca a cor de destaque e o texto do campo.
   destaque = "audio",
+  semMoldura = false,
 }: {
   enviarTexto: (texto: string) => Promise<void>;
   enviarAudio: (bloco: BlocoGravado) => Promise<void>;
@@ -54,6 +55,16 @@ export function Composer({
   enviarImagem?: (arquivo: File) => Promise<void>;
   ocupado: boolean;
   destaque?: "audio" | "foto";
+  /**
+   * Tira a moldura: sem faixa, sem borda de topo e sem a coluna de 42rem.
+   *
+   * A barra nasceu grudada no rodapé de uma tela de conversa, que ocupa a
+   * altura inteira — lá a faixa e a largura máxima são o que a mantêm
+   * legível. Dentro de um cartão do painel elas viram o contrário: o campo
+   * fica boiando no meio de um cartão largo, com uma faixa cinza em volta que
+   * não separa nada. Quem hospeda passa a mandar no espaçamento.
+   */
+  semMoldura?: boolean;
 }) {
   const [texto, setTexto] = useState("");
   const [gravando, setGravando] = useState(false);
@@ -169,8 +180,14 @@ export function Composer({
   }
 
   return (
-    <div className="shrink-0 border-t border-nevoa/70 bg-papel px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-8 md:pb-5">
-      <div className="mx-auto w-full max-w-2xl">
+    <div
+      className={
+        semMoldura
+          ? "shrink-0"
+          : "shrink-0 border-t border-nevoa/70 bg-papel px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-8 md:pb-5"
+      }
+    >
+      <div className={semMoldura ? "w-full" : "mx-auto w-full max-w-2xl"}>
       {erro && (
         <p className="mb-3 aviso aviso-erro text-sm leading-relaxed text-tinta">
           {erro}

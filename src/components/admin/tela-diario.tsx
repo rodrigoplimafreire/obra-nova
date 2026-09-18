@@ -144,15 +144,16 @@ export function TelaDoDiario({
     <>
       <Cabecalho
         titulo="Diário"
-        meta="Um link só, com a senha, e o histórico por data."
         acoes={
           <>
             <button
               type="button"
-              onClick={copiar}
+              // Aba nova: quem está escrevendo o dia não quer perder o
+              // rascunho da tela para conferir como ele saiu.
+              onClick={() => window.open(link, "_blank", "noopener")}
               className="btn btn-secundario btn-compacto"
             >
-              {copiado ? "Copiado" : "Copiar link"}
+              Ver página
             </button>
 
             <Menu>
@@ -176,17 +177,6 @@ export function TelaDoDiario({
                 Compartilhar no WhatsApp
               </ItemDeMenu>
 
-              <ItemDeMenu
-                // Aba nova: quem está escrevendo o dia não quer perder o
-                // rascunho da tela para conferir como ele saiu.
-                aoClicar={() =>
-                  window.open(`/d/${diario.token}`, "_blank", "noopener")
-                }
-                nota="como o leitor vê"
-              >
-                Ver página
-              </ItemDeMenu>
-
               <SeparadorDeMenu />
 
               <ItemDeMenu
@@ -202,19 +192,94 @@ export function TelaDoDiario({
       />
 
       <Conteudo>
-        {!diario.temSenha && (
-          <p className="aviso aviso-atencao">
-            Este diário ainda não tem senha, e sem senha ele não pode ser
-            publicado — o link circula por WhatsApp e pode ser encaminhado.{" "}
-            <button
-              type="button"
-              onClick={() => setAjustando(true)}
-              className="btn-texto"
-            >
-              Definir agora
-            </button>
+        {/**
+         * O endereço, à vista.
+         *
+         * Ele já existiu só atrás do menu `⋮`, e o resultado foi previsível:
+         * o diário ficou semanas sem apelido, o link bonito respondia 404, e
+         * não havia nada na tela que dissesse isso. O endereço é o produto
+         * desta tela — é o que se manda para quem vai ler. Ele vem primeiro,
+         * com o estado da senha do lado, porque os dois juntos é que dizem se
+         * dá para mandar.
+         */}
+        <section className="cartao px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <div className="min-w-0">
+              <p className="rotulo">Endereço do diário</p>
+
+              {diario.apelido ? (
+                <p className="mt-1.5 font-mono text-sm break-all text-tinta">
+                  {link.replace(/^https?:\/\//, "")}
+                </p>
+              ) : (
+                <p className="mt-1.5 text-sm leading-snug text-fumaca">
+                  Link longo, sem nome.{" "}
+                  <button
+                    type="button"
+                    onClick={() => setAjustando(true)}
+                    className="btn-texto"
+                  >
+                    Escolher um endereço
+                  </button>{" "}
+                  como {HOST_DO_DIARIO}/seu-nome.
+                </p>
+              )}
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={copiar}
+                className="btn btn-secundario btn-compacto"
+              >
+                {copiado ? "Copiado" : "Copiar"}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  window.open(
+                    `https://wa.me/?text=${encodeURIComponent(`${diario.titulo ?? "Diário de atividades"}: ${link}`)}`,
+                    "_blank",
+                    "noopener",
+                  )
+                }
+                className="btn btn-primario btn-compacto"
+              >
+                WhatsApp
+              </button>
+            </div>
+          </div>
+
+          {/* A senha é a outra metade do endereço: sem ela a publicação trava,
+              e com endereço legível ela passa a ser a única barreira. */}
+          <p className="mt-3 border-t border-cinza-100 pt-3 text-xs leading-relaxed text-cinza">
+            {diario.temSenha ? (
+              <>
+                Senha definida. Quem abrir precisa dela, e ela não vem no link —
+                mande separado.{" "}
+                <button
+                  type="button"
+                  onClick={() => setAjustando(true)}
+                  className="btn-texto"
+                >
+                  Trocar
+                </button>
+              </>
+            ) : (
+              <span className="text-atraso">
+                Sem senha, o diário não pode ser publicado — o link circula por
+                WhatsApp e pode ser encaminhado.{" "}
+                <button
+                  type="button"
+                  onClick={() => setAjustando(true)}
+                  className="btn-texto"
+                >
+                  Definir agora
+                </button>
+              </span>
+            )}
           </p>
-        )}
+        </section>
 
         {/* A data manda na tela inteira — nos registros e no resumo —, então
             ela fica acima das duas, e não dentro de uma delas. */}
@@ -223,12 +288,29 @@ export function TelaDoDiario({
             <p className="font-sans text-lg leading-tight font-semibold text-tinta first-letter:uppercase">
               {comoData(atual.dia, DIA_LONGO)}
             </p>
-            <p className="rotulo mt-1">
-              {atual.publicadoEm
-                ? `no ar desde ${HORA.format(new Date(atual.publicadoEm))}${
-                    desatualizado ? " · há edição não publicada" : ""
-                  }`
-                : "ainda não publicado"}
+            {/* Selo, e não texto miúdo: é o estado que decide se o botão da
+                direita diz "Publicar" ou "Publicar atualização". */}
+            <p className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={`selo ${
+                  !atual.publicadoEm
+                    ? "selo-neutro"
+                    : desatualizado
+                      ? "selo-atencao"
+                      : "selo-emdia"
+                }`}
+              >
+                {!atual.publicadoEm
+                  ? "Rascunho"
+                  : desatualizado
+                    ? "Editado depois de publicar"
+                    : "No ar"}
+              </span>
+              {atual.publicadoEm && (
+                <span className="rotulo">
+                  desde {HORA.format(new Date(atual.publicadoEm))}
+                </span>
+              )}
             </p>
           </div>
 

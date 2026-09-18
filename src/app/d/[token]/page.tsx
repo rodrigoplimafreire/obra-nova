@@ -44,11 +44,15 @@ export async function generateMetadata({
   const robots = { index: false, follow: false, nocache: true };
   if (!diario) return { title: "Diário", robots };
 
-  const partes = [diario.empreiteira.nome, diario.titulo ?? "Diário de atividades"]
-    .filter(Boolean)
-    .join(" · ");
+  // Sem repetir: quando o diário se chama igual à empreiteira, "RD Engenharia
+  // · RD Engenharia" não diz nada duas vezes, diz nada.
+  const partes = [...new Set(
+    [diario.empreiteira.nome, diario.titulo ?? "Diário de atividades"].filter(
+      (p): p is string => Boolean(p),
+    ),
+  )];
 
-  return { title: partes, robots };
+  return { title: partes.join(" · "), robots };
 }
 
 /**

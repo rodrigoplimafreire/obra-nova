@@ -157,6 +157,16 @@ export function RegistrosDoDiario({
         </p>
       </div>
 
+      {/* A explicação do ciclo só existe enquanto não há o que ver. Quando a
+          lista enche ela some sozinha — mesma regra do `Vazio` do painel. */}
+      {registros.length === 0 && (
+        <p className="mt-4 px-5 text-sm leading-relaxed text-cinza">
+          Nada registrado ainda neste dia. Toque no microfone e conte o que
+          andou, ou escreva. Depois, em <strong>Gerar resumo</strong>, a IA
+          organiza tudo nas quatro seções — e você lê antes de publicar.
+        </p>
+      )}
+
       {registros.length > 0 && (
         <ul className="mt-4 flex flex-col gap-2 px-5">
           {registros.map((r) => (
@@ -227,11 +237,12 @@ export function RegistrosDoDiario({
 
       {/* Sem `enviarImagem`: o Diário aceita áudio e texto, e só. Ver o
           comentário no Composer e a §5 do PRD-DIARIO.md. */}
-      <div className="mt-4">
+      <div className="mt-4 border-t border-cinza-100 px-5 pt-4 pb-5">
         <Composer
           enviarTexto={enviarTexto}
           enviarAudio={enviarAudio}
           ocupado={ocupado}
+          semMoldura
         />
       </div>
     </section>
