@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { diaValido } from "@/lib/tempo";
 import { lerApelido } from "./apelido";
-import { listarPessoas } from "./dados";
+import { listarPessoas, sugestoesDeOntem } from "./dados";
 import { montarDia } from "./publicacao";
 import { garantirRelatorioDoDia } from "./relatorio";
 import { gerarResumo } from "./resumo";
@@ -70,11 +70,16 @@ export async function gerarResumoDoDia(
   const relatorioId = await garantirRelatorioDoDia(diario.id, dia);
   if (!relatorioId) return { ok: false, erro: "Falha ao abrir o dia." };
 
-  const elenco = await listarPessoas(diario.id);
+  const [elenco, emAberto] = await Promise.all([
+    listarPessoas(diario.id),
+    sugestoesDeOntem(diario.id, dia, relatorioId),
+  ]);
+
   const saida = await gerarResumo(
     relatorioId,
     diario.autor_nome,
     elenco.map((p) => p.nome),
+    emAberto,
   );
   if (!saida.ok) return { ok: false, erro: saida.erro };
 
@@ -82,13 +87,40 @@ export async function gerarResumoDoDia(
   // alguém pediu outra. O que já virou item não é tocado.
   await sb.from("dia_propostas").delete().eq("relatorio_id", relatorioId);
 
-  const novas = saida.itens.map((item, i) => ({
-    relatorio_id: relatorioId,
-    secao: item.secao,
-    texto: item.texto,
-    responsavel: item.responsavel,
-    posicao: i + 1,
-  }));
+  /**
+   * O que ficou em aberto e o material de hoje resolveu entra **com o texto
+   * de ontem**, não com uma reescrita da IA.
+   *
+   * O texto já foi lido e aprovado uma vez; deixar o modelo redigi-lo de novo
+   * é convite para ele mudar o sentido de uma pendência no meio do caminho. A
+   * IA aqui decide o **lugar**, que é o que ela leu no registro de hoje.
+   */
+  const porId = new Map(emAberto.map((i) => [i.id, i]));
+
+  const carregadas = saida.deOntem.flatMap((d) => {
+    const origem = porId.get(d.id);
+    if (!origem) return [];
+    return [
+      {
+        secao: d.secao,
+        texto: origem.texto,
+        // Quem move para realizado fechou: cobrar de alguém o que já está
+        // feito é ruído, igual ao "Concluí" do cartão de ontem.
+        responsavel: d.secao === "realizado" ? null : origem.responsavel,
+        sugestao_id: origem.id,
+      },
+    ];
+  });
+
+  const novas = [
+    ...carregadas,
+    ...saida.itens.map((item) => ({
+      secao: item.secao,
+      texto: item.texto,
+      responsavel: item.responsavel,
+      sugestao_id: null as string | null,
+    })),
+  ].map((p, i) => ({ relatorio_id: relatorioId, ...p, posicao: i + 1 }));
 
   if (novas.length > 0) {
     const { error } = await sb.from("dia_propostas").insert(novas);

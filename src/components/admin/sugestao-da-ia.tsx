@@ -86,6 +86,14 @@ export function SugestaoDaIA({
             }`}
           >
             <span className="min-w-40 flex-1 text-sm leading-snug text-tinta">
+              {/* Diz de onde a linha veio: esta não é nova, é a pendência de
+                  ontem que o registro de hoje resolveu. Aceitar baixa as
+                  duas. */}
+              {p.deOntem && (
+                <span className="mr-2 rounded-sm bg-cinza-100 px-1.5 py-0.5 font-mono text-[0.6rem] tracking-wide text-fumaca uppercase">
+                  de ontem
+                </span>
+              )}
               {p.responsavel && (
                 <span className="mr-2 rounded-sm bg-papel px-1.5 py-0.5 font-mono text-[0.65rem] tracking-wide text-fumaca uppercase">
                   {p.responsavel}

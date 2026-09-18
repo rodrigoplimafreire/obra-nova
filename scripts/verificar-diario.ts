@@ -555,6 +555,107 @@ async function conferirSugestoes(diarioId: string) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* 3b · A IA resolvendo o que ficou em aberto                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A queixa que originou esta parte: "é mais fácil escrever do que sair
+ * marcando um por um". Contar no registro o que aconteceu tem que bastar.
+ *
+ * O que se prova aqui é o par: a IA **baixa** o que o material menciona, e
+ * **não toca** no que ninguém mencionou. A segunda metade é a que importa —
+ * silêncio virando "realizado" é a mentira que a §5 do PRD proíbe.
+ */
+async function conferirResumoComPendencias(diarioId: string) {
+  console.log("\nA IA resolvendo o que ficou em aberto");
+
+  if (!process.env.GROQ_API_KEY) {
+    conferir("GROQ_API_KEY configurada", false);
+    return;
+  }
+
+  const ontem = "1999-03-01";
+  const hoje = "1999-03-02";
+
+  const { data: rOntem } = await sb
+    .from("dia_relatorios")
+    .insert({ diario_id: diarioId, dia: ontem })
+    .select("id")
+    .single();
+
+  const { data: abertos } = await sb
+    .from("dia_itens")
+    .insert([
+      { relatorio_id: rOntem!.id, secao: "em_andamento", texto: "ajuste do contraste das pastilhas", posicao: 1 },
+      { relatorio_id: rOntem!.id, secao: "pendencias", texto: "confirmar o preco do rufo", responsavel: "Reginato", posicao: 1 },
+      // Ninguém vai falar deste hoje. Ele tem que continuar intocado.
+      { relatorio_id: rOntem!.id, secao: "pendencias", texto: "trocar o piso da varanda", responsavel: "Reginato", posicao: 2 },
+    ])
+    .select("id, secao, texto, responsavel");
+
+  const { data: rHoje } = await sb
+    .from("dia_relatorios")
+    .insert({ diario_id: diarioId, dia: hoje })
+    .select("id")
+    .single();
+
+  await sb.from("dia_registros").insert({
+    relatorio_id: rHoje!.id,
+    tipo: "texto",
+    status: "pronto",
+    texto:
+      "Terminei o ajuste do contraste das pastilhas hoje de manha. O preco do rufo o Reginato ainda nao confirmou, continua parado. Tambem comecei a revisar o texto do rodape.",
+  });
+
+  const emAberto = await sugestoesDeOntem(diarioId, hoje, rHoje!.id);
+  const saida = await gerarResumo(rHoje!.id, AUTOR, [AUTOR, "Reginato"], emAberto);
+
+  if (!saida.ok) {
+    conferir("a IA respondeu", false, saida.erro);
+    await sb.from("dia_relatorios").delete().in("id", [rOntem!.id, rHoje!.id]);
+    return;
+  }
+
+  const porId = new Map(emAberto.map((i) => [i.id, i.texto]));
+  const resolvido = new Map(
+    saida.deOntem.map((d) => [porId.get(d.id) ?? "?", d.secao]),
+  );
+
+  conferir(
+    "o que o registro diz que terminou vai para realizado",
+    resolvido.get("ajuste do contraste das pastilhas") === "realizado",
+    resolvido.get("ajuste do contraste das pastilhas") ?? "não resolvido",
+  );
+
+  conferir(
+    "o que continua parado segue em pendências",
+    resolvido.get("confirmar o preco do rufo") === "pendencias",
+    resolvido.get("confirmar o preco do rufo") ?? "não resolvido",
+  );
+
+  conferir(
+    "**o que ninguém mencionou não é tocado**",
+    !resolvido.has("trocar o piso da varanda"),
+    resolvido.get("trocar o piso da varanda") ?? "intocado, como deve ser",
+  );
+
+  conferir(
+    "o assunto novo do dia entra nas listas normais",
+    saida.itens.some((i) => /rodap/i.test(i.texto)),
+    saida.itens.map((i) => i.texto).join(" | "),
+  );
+
+  conferir(
+    "o que veio de ontem não é repetido nas listas",
+    !saida.itens.some((i) => /contraste|rufo/i.test(i.texto)),
+    saida.itens.map((i) => i.texto).join(" | ") || "(listas vazias)",
+  );
+
+  await sb.from("dia_relatorios").delete().in("id", [rOntem!.id, rHoje!.id]);
+  void abertos;
+}
+
+/* -------------------------------------------------------------------------- */
 /* 4 · As travas do banco                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -673,6 +774,7 @@ async function principal() {
     );
 
     await conferirSugestoes(diario.id);
+    await conferirResumoComPendencias(diario.id);
     await conferirBanco(diario.id, dia);
     await conferirDiaVazio(relatorioVazio!.id);
     await conferirIA(relatorio!.id);

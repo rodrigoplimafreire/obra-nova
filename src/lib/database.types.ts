@@ -1395,6 +1395,13 @@ type TabelasDeDiario = {
       texto: string;
       responsavel: string | null;
       posicao: number;
+      /**
+       * O item de um dia anterior que esta proposta resolve.
+       *
+       * Aceitar a proposta descarta a sugestão junto: sem isto, a pessoa
+       * marcava à mão a mesma pendência que acabou de aceitar.
+       */
+      sugestao_id: string | null;
       created_at: string;
     };
     Insert: {
@@ -1404,6 +1411,7 @@ type TabelasDeDiario = {
       texto: string;
       responsavel?: string | null;
       posicao?: number;
+      sugestao_id?: string | null;
     };
     Update: { secao?: DiaSecao };
   };

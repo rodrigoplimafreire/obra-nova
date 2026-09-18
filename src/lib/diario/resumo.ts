@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { separarResponsavel, type Secao } from "./tipos";
+import { ehSecao, separarResponsavel, type Secao } from "./tipos";
 
 /**
  * O resumo do dia, escrito a partir dos registros.
@@ -53,8 +53,40 @@ Responda SOMENTE com um objeto JSON válido, sem markdown, sem comentários:
   "realizado": ["o que ficou pronto hoje"],
   "emAndamento": ["o que começou e continua"],
   "pendencias": ["Responsável: o que está travado, com prazo quando houver"],
-  "proximosPassos": ["Responsável: o que vem em seguida"]
+  "proximosPassos": ["Responsável: o que vem em seguida"],
+  "deOntem": { "1": "realizado", "3": "em_andamento" }
 }`;
+
+/**
+ * O bloco que conta à IA o que ficou em aberto no último dia.
+ *
+ * A regra do meio é a que importa, e é a que faz este bloco existir sem
+ * quebrar a §5 do PRD: **silêncio não é progresso**. Se o material de hoje
+ * não disser nada sobre uma pendência, ela não entra em lugar nenhum — nem
+ * como feita, nem como andando. Fica onde estava, esperando o dedo.
+ */
+function blocoDoQueFicouEmAberto(
+  emAberto: { secao: Secao; texto: string }[],
+): string {
+  if (emAberto.length === 0) return "";
+
+  const lista = emAberto
+    .map((i, n) => `[${n + 1}] (${i.secao}) ${i.texto}`)
+    .join("\n");
+
+  return `
+
+FICOU EM ABERTO NO ÚLTIMO DIA:
+${lista}
+
+Para cada um desses, procure no material de hoje o que aconteceu com ele, e responda em "deOntem", usando o número como chave:
+- o material diz que terminou: "realizado"
+- o material diz que continua, ou que ainda está travado: "em_andamento" ou "pendencias", o que couber
+- o material vai tratar disso depois: "proximos_passos"
+- **o material não fala dele**: não inclua o número. Silêncio não é progresso, e chutar aqui é dizer ao cliente que uma coisa andou sem ninguém ter dito isso.
+
+Não repita nas quatro listas o que você classificou em "deOntem": esses itens já têm texto próprio, e escrevê-los de novo duplicaria a linha.`;
+}
 
 /** O que a IA devolve, já pronto para virar linha de `dia_itens`. */
 export type ItemSugerido = {
@@ -97,9 +129,43 @@ function itensDa(v: unknown, secao: Secao, comResponsavel: boolean): ItemSugerid
   });
 }
 
+/** Uma pendência de ontem que o material de hoje resolveu, e para onde foi. */
+export type DeOntemResolvido = { id: string; secao: Secao };
+
 export type SaidaDoResumo =
-  | { ok: true; itens: ItemSugerido[]; registros: number }
+  | {
+      ok: true;
+      itens: ItemSugerido[];
+      /** O que a IA disse que aconteceu com o que ficou em aberto. */
+      deOntem: DeOntemResolvido[];
+      registros: number;
+    }
   | { ok: false; erro: string };
+
+/**
+ * Lê o `deOntem` que a IA devolveu.
+ *
+ * Chave é o número que entrou no prompt, valor é a seção. Qualquer coisa fora
+ * disso é descartada em silêncio: número que não existe, seção inventada,
+ * valor que não é string. O modelo erra o formato de vez em quando, e um
+ * `deOntem` torto não pode derrubar o resumo inteiro.
+ */
+function lerDeOntem(
+  bruto: unknown,
+  emAberto: { id: string }[],
+): DeOntemResolvido[] {
+  if (!bruto || typeof bruto !== "object" || Array.isArray(bruto)) return [];
+
+  return Object.entries(bruto as Record<string, unknown>).flatMap(
+    ([chave, valor]) => {
+      const n = Number(chave);
+      const origem = emAberto[n - 1];
+      if (!origem || !Number.isInteger(n)) return [];
+      if (typeof valor !== "string" || !ehSecao(valor)) return [];
+      return [{ id: origem.id, secao: valor }];
+    },
+  );
+}
 
 export async function gerarResumo(
   relatorioId: string,
@@ -121,6 +187,14 @@ export async function gerarResumo(
    * dizer como se escreve o nome de quem o material já citou.
    */
   elenco: string[] = [],
+  /**
+   * O que ficou em aberto no último dia com conteúdo.
+   *
+   * Sem isto a IA não sabia que existia pendência de ontem, e a pessoa tinha
+   * que marcar cada uma à mão depois de já ter contado, no registro, o que
+   * havia acontecido com ela. Era a queixa que originou esta mudança.
+   */
+  emAberto: { id: string; secao: Secao; texto: string }[] = [],
 ): Promise<SaidaDoResumo> {
   const chave = process.env.GROQ_API_KEY;
   if (!chave) return { ok: false, erro: "GROQ_API_KEY não está configurada." };
@@ -178,7 +252,8 @@ export async function gerarResumo(
                 ) +
                 (elenco.length
                   ? `\n\nNOMES CONHECIDOS, escritos assim: ${elenco.join(", ")}. Quando o material citar uma dessas pessoas, use exatamente essa grafia, inclusive a caixa. NÃO troque um nome por outro parecido: se o material trouxer um nome que não está na lista, use-o como veio, mesmo que soe como um da lista. Corrigir nome que você não pode conferir é inventar responsável.`
-                  : ""),
+                  : "") +
+                blocoDoQueFicouEmAberto(emAberto),
             },
             { role: "user", content: material },
           ],
@@ -212,6 +287,7 @@ export async function gerarResumo(
     return {
       ok: true,
       registros: uteis.length,
+      deOntem: lerDeOntem(o.deOntem, emAberto),
       itens: [
         ...itensDa(o.realizado, "realizado", false),
         ...itensDa(o.emAndamento, "em_andamento", false),

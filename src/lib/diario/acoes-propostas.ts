@@ -58,6 +58,8 @@ async function virarItem(
     secao: Secao;
     texto: string;
     responsavel: string | null;
+    /** A pendência de ontem que esta linha resolve, quando vier de uma. */
+    sugestao_id: string | null;
   },
 ): Promise<string | null> {
   const sb = supabaseAdmin();
@@ -83,6 +85,19 @@ async function virarItem(
 
   if (error) return error.message;
 
+  /**
+   * A pendência de ontem sai da lista junto.
+   *
+   * Sem isto, aceitar "ajuste do contraste" resolvia o relatório e deixava a
+   * mesma linha de pé em "Ficou em aberto", para ser marcada de novo à mão.
+   * Era a queixa: mais fácil escrever do que sair marcando um por um.
+   */
+  if (proposta.sugestao_id) {
+    await sb
+      .from("dia_descartes")
+      .insert({ relatorio_id: relatorioId, item_origem_id: proposta.sugestao_id });
+  }
+
   await sb.from("dia_propostas").delete().eq("id", proposta.id);
   return null;
 }
@@ -93,7 +108,7 @@ export async function aceitarProposta(id: string): Promise<Resultado> {
 
   const { data: proposta } = await supabaseAdmin()
     .from("dia_propostas")
-    .select("id, secao, texto, responsavel")
+    .select("id, secao, texto, responsavel, sugestao_id")
     .eq("id", id)
     .maybeSingle();
   if (!proposta) return { ok: false, erro: "Proposta não encontrada." };
@@ -172,7 +187,7 @@ export async function aceitarTodasAsPropostas(
 
   const { data: propostas } = await sb
     .from("dia_propostas")
-    .select("id, secao, texto, responsavel")
+    .select("id, secao, texto, responsavel, sugestao_id")
     .eq("relatorio_id", relatorio.id)
     .order("posicao");
 

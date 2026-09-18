@@ -171,6 +171,8 @@ export type PropostaDaIA = {
   secao: Secao;
   texto: string;
   responsavel: string | null;
+  /** Veio de uma pendência de ontem que o material de hoje resolveu. */
+  deOntem: boolean;
 };
 
 export type DiaNoPainel = {
@@ -235,7 +237,7 @@ export async function carregarDia(
         .order("created_at"),
       sb
         .from("dia_propostas")
-        .select("id, secao, texto, responsavel")
+        .select("id, secao, texto, responsavel, sugestao_id")
         .eq("relatorio_id", relatorio.id)
         .order("posicao"),
     ]);
@@ -251,7 +253,13 @@ export async function carregarDia(
   return {
     dia,
     itens: doDia,
-    propostas: propostas ?? [],
+    propostas: (propostas ?? []).map((p) => ({
+      id: p.id,
+      secao: p.secao,
+      texto: p.texto,
+      responsavel: p.responsavel,
+      deOntem: p.sugestao_id !== null,
+    })),
     sugestoes: await sugestoesDeOntem(diarioId, dia, relatorio.id, doDia),
     publicadoEm: publicacao?.publicado_em ?? null,
     versao: publicacao?.versao ?? null,

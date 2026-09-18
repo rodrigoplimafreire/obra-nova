@@ -381,7 +381,13 @@ export function TelaDoDiario({
                 {atual.registros.length === 0
                   ? "A IA organiza os registros do dia, aqui em cima, nas quatro seções."
                   : `${atual.registros.length} ${atual.registros.length === 1 ? "registro" : "registros"} no dia.`}
-
+                {atual.sugestoes.length > 0 && atual.registros.length > 0 && (
+                  <>
+                    {" "}
+                    Ela lê também {atual.sugestoes.length} em aberto de ontem, e
+                    baixa os que você tiver mencionado.
+                  </>
+                )}
               </p>
 
               <button

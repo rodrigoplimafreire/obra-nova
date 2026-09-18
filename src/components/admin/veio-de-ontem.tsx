@@ -133,9 +133,14 @@ export function VeioDeOntem({
         ))}
       </ul>
 
+      {/* O caminho curto, e o que a pessoa esperava que existisse: contar no
+          registro o que aconteceu, e deixar a IA baixar a linha. Marcar um a
+          um continua aqui para quem não quer gerar nada. */}
       <p className="mt-3 text-xs leading-relaxed text-cinza">
-        Nada disto entra no dia sozinho. O que você não tocar simplesmente não
-        aparece no relatório.
+        Você não precisa marcar um por um: se contar nos registros o que
+        aconteceu com estes, <strong>Gerar resumo</strong> traz cada um para a
+        seção certa e baixa a linha daqui. O que ninguém mencionar fica onde
+        está — silêncio não é progresso.
       </p>
     </section>
   );

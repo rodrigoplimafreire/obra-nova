@@ -650,6 +650,38 @@ com uma publicação no formato novo.*
 
 ---
 
+## 16i · Diário — o resumo resolve o que ficou em aberto
+
+*Coberto por `npm run verificar:diario`, com a IA chamada de verdade.*
+
+| Entrada | Saída esperada |
+| --- | --- |
+| Registro diz que uma pendência de ontem **terminou** | A IA a devolve em `deOntem` como `realizado` |
+| Registro diz que ela **continua parada** | Volta como `pendencias` |
+| **Nenhum registro fala dela** | **Não é tocada.** Fica onde estava, esperando o dedo |
+| Pendência carregada para hoje | Entra com o **texto de ontem**, não com uma reescrita da IA |
+| Pendência carregada para `realizado` | Perde o responsável — cobrar de alguém o que já está feito é ruído |
+| Assunto novo do dia | Entra nas quatro listas normais |
+| Item classificado em `deOntem` | **Não** é repetido nas listas — seria a mesma linha duas vezes |
+| Aceitar uma proposta marcada "de ontem" | Vira item **e** baixa a sugestão de "Ficou em aberto" |
+| `deOntem` com número inexistente ou seção inventada | Descartado em silêncio; o resumo não cai por causa disso |
+
+**Bordas**
+
+- **Silêncio não é progresso.** É a regra que permite este bloco existir sem
+  quebrar a §5 do PRD. Se o material não disser nada sobre uma pendência, ela
+  não entra em lugar nenhum — nem como feita, nem como andando.
+- **O botão de enviar registro não resolve nada sozinho**, e não pode: de
+  "mexi no contraste" não se deduz se terminou ou continua, e marcar como
+  concluído o que ainda anda é a mentira que o produto recusa. Quem sabe é a
+  IA, porque a pessoa disse no registro — e por isso a sincronização mora no
+  "Gerar resumo".
+- O texto carregado é o de ontem, verbatim. Ele já foi lido e aprovado uma
+  vez; deixar o modelo redigi-lo de novo é convite para mudar o sentido de uma
+  pendência no meio do caminho. A IA decide o **lugar**, não o texto.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

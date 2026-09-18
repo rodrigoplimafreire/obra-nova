@@ -314,6 +314,27 @@ responsável — e se Reginaldo for outra pessoa? O elenco no prompt serve para 
 confusão é o dedo: item com responsável fora do elenco fica âmbar no seletor, e
 um toque resolve. A tela marca, não corrige.
 
+**D18 · O botão de enviar registro não resolve pendência; o resumo resolve.**
+Queixa do Rodrigo em 18/09/2026, usando a tela: escrever o dia não mexia em
+"Ficou em aberto", e marcar um por um saía mais caro que redigitar. A
+sincronização passou a existir, mas **não no envio**: de "mexi no contraste
+das pastilhas" não se deduz se terminou ou se continua, e marcar como
+concluído o que ainda anda é a mentira que este produto recusa. Quem sabe é a
+IA, porque a pessoa disse no registro.
+
+Então a IA passou a receber, junto com os registros de hoje, o que ficou em
+aberto no último dia, e a responder o que aconteceu com cada um. Três regras
+sustentam isso:
+
+- **Silêncio não é progresso.** Pendência que ninguém mencionou não entra em
+  lugar nenhum. Fica onde estava.
+- **O texto carregado é o de ontem, verbatim.** Ele já foi lido e aprovado uma
+  vez; deixar o modelo redigi-lo de novo muda o sentido de uma pendência no
+  meio do caminho. A IA decide o lugar, não o texto.
+- **Aceitar baixa os dois.** A proposta guarda de qual pendência nasceu, e
+  aceitá-la descarta a sugestão junto — senão a pessoa marcava à mão a mesma
+  linha que acabou de aceitar, que era exatamente a queixa.
+
 **D15 · O item guarda de onde veio.** `dia_itens.origem` (`ia` / `humano`) é a
 mesma coluna que `orc_itens` tem, pelo mesmo motivo: separar o que a máquina
 escreveu do que a pessoa escreveu não é enfeite, é o que permite saber depois
