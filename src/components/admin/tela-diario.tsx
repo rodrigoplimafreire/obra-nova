@@ -17,9 +17,15 @@ import {
 import { ItensDoDia } from "./itens-do-dia";
 import { RegistrosDoDiario } from "./registros-do-diario";
 import { VeioDeOntem } from "./veio-de-ontem";
+import { removerPessoa } from "@/lib/diario/acoes-pessoas";
 import { copiarTexto } from "@/lib/clipboard";
 import { enderecoDoDiario, HOST_DO_DIARIO } from "@/lib/diario/apelido";
-import type { Diario, DiaDoDiario, DiaNoPainel } from "@/lib/diario/dados";
+import type {
+  Diario,
+  DiaDoDiario,
+  DiaNoPainel,
+  Pessoa,
+} from "@/lib/diario/dados";
 import type { Resultado } from "@/lib/admin/tipos";
 
 /**
@@ -72,12 +78,14 @@ export function TelaDoDiario({
   hoje,
   atual,
   dias,
+  pessoas,
   urlBase,
 }: {
   diario: Diario;
   hoje: string;
   atual: DiaNoPainel;
   dias: DiaDoDiario[];
+  pessoas: Pessoa[];
   urlBase: string;
 }) {
   const router = useRouter();
@@ -361,7 +369,7 @@ export function TelaDoDiario({
               </button>
             </div>
 
-            <ItensDoDia dia={atual.dia} itens={atual.itens} />
+            <ItensDoDia dia={atual.dia} itens={atual.itens} pessoas={pessoas} />
 
             {/* Publicar é um `form` porque a ação recebe `FormData`. Os itens
                 já se salvam sozinhos, um a um — não há rascunho a enviar
@@ -469,6 +477,7 @@ export function TelaDoDiario({
         aberto={ajustando}
         aoFechar={() => setAjustando(false)}
         diario={diario}
+        pessoas={pessoas}
         link={link}
       />
 
@@ -523,11 +532,13 @@ function Ajustes({
   aberto,
   aoFechar,
   diario,
+  pessoas,
   link,
 }: {
   aberto: boolean;
   aoFechar: () => void;
   diario: Diario;
+  pessoas: Pessoa[];
   link: string;
 }) {
   const router = useRouter();
@@ -655,7 +666,62 @@ function Ajustes({
           </button>
         </div>
       </form>
+
+      {/* Fora do `<form>` de propósito: `<form>` aninhado não existe, e um
+          botão de remover ali dentro submeteria os ajustes junto. */}
+      <Elenco pessoas={pessoas} />
     </Dialogo>
+  );
+}
+
+/**
+ * Quem pode responder por um item.
+ *
+ * A lista nasce do uso — do nome de quem assina e do que já estava escrito nos
+ * dias anteriores — e cresce pelo "Outro…" do seletor. Aqui só se tira, que é
+ * o que o uso não resolve sozinho: a conversão trouxe "Rodrigo" e "Rodrigo
+ * Peixoto" como duas pessoas, e só quem escreve sabe que são a mesma.
+ */
+function Elenco({ pessoas }: { pessoas: Pessoa[] }) {
+  const router = useRouter();
+  const [removendo, setRemovendo] = useState<string | null>(null);
+
+  if (pessoas.length === 0) return null;
+
+  return (
+    <section className="mt-6 border-t border-cinza-100 pt-5">
+      <p className="rotulo-campo">Quem responde</p>
+      <p className="mt-1 mb-3 text-xs leading-relaxed text-cinza">
+        A lista que o seletor de responsável oferece, e os nomes que a IA usa.
+        Tirar alguém daqui não mexe nos dias já escritos.
+      </p>
+
+      <ul className="flex flex-wrap gap-1.5">
+        {pessoas.map((p) => (
+          <li key={p.id}>
+            <span className="inline-flex items-center gap-1.5 rounded-sm bg-papel py-1 pr-1 pl-2.5 text-sm text-tinta">
+              {p.nome}
+              <button
+                type="button"
+                disabled={removendo === p.id}
+                onClick={async () => {
+                  setRemovendo(p.id);
+                  await removerPessoa(p.id);
+                  setRemovendo(null);
+                  router.refresh();
+                }}
+                aria-label={`Tirar ${p.nome} da lista`}
+                className="rounded-sm px-1 text-cinza-500 transition hover:text-atraso"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth={2} strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

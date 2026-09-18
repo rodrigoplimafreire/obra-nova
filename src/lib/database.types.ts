@@ -1381,6 +1381,30 @@ type TabelasDeDiario = {
   };
 
   /**
+   * O elenco do diário: quem pode ser responsável por um item.
+   *
+   * Existe para o responsável deixar de ser texto livre. Texto livre com nome
+   * próprio erra — a transcrição escreve "Reginaldo", a pastilha vira outra
+   * pessoa, e quem lê procura o próprio nome e não acha.
+   */
+  dia_pessoas: {
+    Row: {
+      id: string;
+      diario_id: string;
+      nome: string;
+      posicao: number;
+      created_at: string;
+    };
+    Insert: {
+      id?: string;
+      diario_id: string;
+      nome: string;
+      posicao?: number;
+    };
+    Update: { nome?: string; posicao?: number };
+  };
+
+  /**
    * O "saiu" da sugestão de ontem.
    *
    * Sem memória, descartar duraria até a próxima recarga e a pessoa

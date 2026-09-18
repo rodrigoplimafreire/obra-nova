@@ -8,7 +8,15 @@ import {
   moverItem,
   removerItem,
 } from "@/lib/diario/acoes-itens";
-import { ROTULO_DA_SECAO, SECOES, type ItemDoDia, type Secao } from "@/lib/diario/tipos";
+import { adicionarPessoa } from "@/lib/diario/acoes-pessoas";
+import {
+  A_DEFINIR,
+  ROTULO_DA_SECAO,
+  SECOES,
+  type ItemDoDia,
+  type Secao,
+} from "@/lib/diario/tipos";
+import type { Pessoa } from "@/lib/diario/dados";
 
 /**
  * O relatório do dia, item a item.
@@ -26,9 +34,11 @@ import { ROTULO_DA_SECAO, SECOES, type ItemDoDia, type Secao } from "@/lib/diari
 export function ItensDoDia({
   dia,
   itens,
+  pessoas,
 }: {
   dia: string;
   itens: ItemDoDia[];
+  pessoas: Pessoa[];
 }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -66,6 +76,7 @@ export function ItensDoDia({
                   key={item.id}
                   item={item}
                   comResponsavel={comResponsavel}
+                  pessoas={pessoas}
                   ocupado={ocupado === item.id}
                   aoMover={(secao) =>
                     executar(item.id, () => moverItem(item.id, secao))
@@ -110,6 +121,7 @@ export function ItensDoDia({
 function Linha({
   item,
   comResponsavel,
+  pessoas,
   ocupado,
   aoMover,
   aoEditar,
@@ -117,6 +129,7 @@ function Linha({
 }: {
   item: ItemDoDia;
   comResponsavel: boolean;
+  pessoas: Pessoa[];
   ocupado: boolean;
   aoMover: (secao: Secao) => void;
   aoEditar: (texto: string, responsavel: string | null) => void;
@@ -140,13 +153,18 @@ function Linha({
       }`}
     >
       {comResponsavel && (
-        <input
-          value={responsavel}
-          onChange={(e) => setResponsavel(e.target.value)}
-          onBlur={salvarSeMudou}
-          placeholder="Quem"
-          aria-label="Responsável"
-          className="w-24 shrink-0 rounded-sm bg-papel px-2 py-1 font-mono text-[0.7rem] text-tinta uppercase outline-none focus:ring-2 focus:ring-tinta"
+        <Responsavel
+          valor={responsavel}
+          pessoas={pessoas}
+          desabilitado={ocupado}
+          aoEscolher={(novo) => {
+            setResponsavel(novo);
+            // Escolher é um ato fechado, então salva na hora — diferente do
+            // texto, que espera a pessoa terminar de pensar.
+            if (novo !== (item.responsavel ?? "")) {
+              aoEditar(texto.trim() || item.texto, novo || null);
+            }
+          }}
         />
       )}
 
@@ -192,6 +210,115 @@ function Linha({
         </svg>
       </button>
     </div>
+  );
+}
+
+/**
+ * Quem responde pelo item.
+ *
+ * Um `<select>` com o elenco, e não um campo de texto: o nome digitado errado
+ * vira outra pessoa na pastilha da página, e quem lê procura o próprio nome e
+ * não acha. "Outro…" abre o campo e cadastra de uma vez, para o elenco crescer
+ * sozinho com o uso em vez de exigir um cadastro antes.
+ */
+function Responsavel({
+  valor,
+  pessoas,
+  desabilitado,
+  aoEscolher,
+}: {
+  valor: string;
+  pessoas: Pessoa[];
+  desabilitado: boolean;
+  aoEscolher: (nome: string) => void;
+}) {
+  const router = useRouter();
+  const [novo, setNovo] = useState(false);
+  const [nome, setNome] = useState("");
+
+  // O nome gravado no item pode não estar no elenco: alguém o removeu depois,
+  // ou a IA transcreveu "Reginaldo" onde era "Reginato". Ele continua na
+  // lista, porque o item não se reescreve sozinho.
+  const nomes = [...new Set([...pessoas.map((p) => p.nome), ...(valor ? [valor] : [])])];
+
+  /**
+   * O nome que não está no elenco é marcado, e não corrigido.
+   *
+   * A IA se recusa a trocar um nome por outro parecido, e com razão: e se
+   * Reginaldo for outra pessoa? Quem sabe é quem escreve, e a tela só precisa
+   * mostrar onde olhar — um toque no seletor resolve.
+   */
+  const desconhecido =
+    Boolean(valor) &&
+    valor !== A_DEFINIR &&
+    !pessoas.some((p) => p.nome.toLowerCase() === valor.toLowerCase());
+
+  if (novo) {
+    return (
+      <input
+        autoFocus
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+        onBlur={async () => {
+          const limpo = nome.trim();
+          setNovo(false);
+          setNome("");
+          if (!limpo) return;
+          const saida = await adicionarPessoa(limpo);
+          if (saida.ok) {
+            aoEscolher(limpo);
+            router.refresh();
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") {
+            setNovo(false);
+            setNome("");
+          }
+        }}
+        placeholder="Nome"
+        aria-label="Nome de quem responde"
+        className="w-28 shrink-0 rounded-sm border border-tinta bg-white px-2 py-1 text-xs outline-none"
+      />
+    );
+  }
+
+  return (
+    <select
+      value={valor}
+      disabled={desabilitado}
+      onChange={(e) => {
+        if (e.target.value === "__novo__") return setNovo(true);
+        aoEscolher(e.target.value);
+      }}
+      aria-label={
+        desconhecido
+          ? `Responsável: ${valor}, que não está na sua lista`
+          : "Responsável"
+      }
+      title={
+        desconhecido
+          ? `"${valor}" não está na sua lista. Se for outro nome para alguém que já existe, escolha o certo aqui.`
+          : undefined
+      }
+      className={`w-28 shrink-0 rounded-sm border px-2 py-1 text-xs ${
+        desconhecido
+          ? "border-atencao-forte bg-atencao-fundo text-atencao"
+          : valor
+            ? "border-concreto bg-papel text-tinta"
+            : "border-concreto bg-white text-cinza-500"
+      }`}
+    >
+      <option value="">Sem dono</option>
+      <option value={A_DEFINIR}>{A_DEFINIR}</option>
+      {nomes.map((n) => (
+        <option key={n} value={n}>
+          {n}
+        </option>
+      ))}
+      <option value="__novo__">Outro…</option>
+    </select>
   );
 }
 

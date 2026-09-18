@@ -596,6 +596,33 @@ com uma publicação no formato novo.*
 
 ---
 
+## 16g · Diário — o elenco (Entrega 4c)
+
+| Entrada | Saída esperada |
+| --- | --- |
+| Diário recém-criado | O elenco nasce com quem assina, mais os nomes já usados nos itens |
+| `adicionarPessoa` com menos de 2 caracteres | `"Escreva o nome de quem responde."` |
+| `adicionarPessoa` com mais de 40 | Recusado |
+| `adicionarPessoa("A definir")` | Recusado: já existe, e não é uma pessoa |
+| `adicionarPessoa` com nome repetido em outra caixa | Não duplica, e **não** é erro para quem toca |
+| `removerPessoa` | Sai da lista; **os itens que já apontam para o nome não mudam** |
+| Item com responsável fora do elenco | O seletor fica âmbar, com o nome à vista — a tela marca, não corrige |
+| "Outro…" no seletor | Abre campo, cadastra e já escolhe |
+| Material citando nome do elenco | A IA usa a grafia do elenco, inclusive a caixa |
+| Material citando nome **parecido** com um do elenco | A IA **preserva** o que veio. Trocar nome que ela não pode conferir é inventar responsável |
+
+**Bordas**
+
+- O elenco não é cadastro de usuários: ninguém aqui tem conta. É uma lista de
+  nomes para a pastilha sair sempre igual e para a IA receber a grafia certa.
+- **A IA não corrige nome próprio.** A primeira versão do teste exigia que
+  "Reginaldo" virasse "Reginato", e o modelo recusou — com razão: e se
+  Reginaldo for outra pessoa? Quem desfaz a confusão é o dedo, no seletor.
+- O responsável fica gravado no item como **texto**, não como referência. Tirar
+  alguém do elenco não pode reescrever dia publicado.
+
+---
+
 ## 17 · Número e moeda (transversal)
 
 *Esta tabela foi conferida rodando as funções, não deduzida do código.*

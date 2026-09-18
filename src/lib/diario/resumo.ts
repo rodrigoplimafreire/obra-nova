@@ -112,6 +112,15 @@ export async function gerarResumo(
    * do texto que ele está lendo.
    */
   autor: string | null,
+  /**
+   * O elenco do diário.
+   *
+   * Entra no prompt porque transcrição erra nome próprio: "Reginato" vira
+   * "Reginaldo", a pastilha da página vira outra pessoa, e quem lê procura o
+   * próprio nome e não acha. Dar a lista não é dizer de quem é a tarefa — é
+   * dizer como se escreve o nome de quem o material já citou.
+   */
+  elenco: string[] = [],
 ): Promise<SaidaDoResumo> {
   const chave = process.env.GROQ_API_KEY;
   if (!chave) return { ok: false, erro: "GROQ_API_KEY não está configurada." };
@@ -162,10 +171,14 @@ export async function gerarResumo(
               role: "system",
               // Sem nome cadastrado, "a pessoa que escreve" — que ainda
               // distingue o autor de um terceiro sem nomear ninguém.
-              content: INSTRUCOES.replace(
-                "{AUTOR}",
-                autor?.trim() || "a pessoa que escreve este diário",
-              ),
+              content:
+                INSTRUCOES.replace(
+                  "{AUTOR}",
+                  autor?.trim() || "a pessoa que escreve este diário",
+                ) +
+                (elenco.length
+                  ? `\n\nNOMES CONHECIDOS, escritos assim: ${elenco.join(", ")}. Quando o material citar uma dessas pessoas, use exatamente essa grafia, inclusive a caixa. NÃO troque um nome por outro parecido: se o material trouxer um nome que não está na lista, use-o como veio, mesmo que soe como um da lista. Corrigir nome que você não pode conferir é inventar responsável.`
+                  : ""),
             },
             { role: "user", content: material },
           ],

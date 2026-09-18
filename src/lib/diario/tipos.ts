@@ -11,6 +11,14 @@ export type Secao = Enums<"dia_secao">;
 export type Origem = Enums<"dia_origem">;
 
 /**
+ * "A definir" não é gente: é a ausência de dono, e a tela sempre a oferece.
+ *
+ * Fica aqui, e não junto das ações do elenco, porque arquivo com `"use
+ * server"` só pode exportar função assíncrona.
+ */
+export const A_DEFINIR = "A definir";
+
+/**
  * As quatro seções do PRD, na ordem em que a página as mostra — que é a
  * ordem que a pesquisa de ferramentas de status confirma: primeiro o que
  * ficou pronto, por último o que vem.

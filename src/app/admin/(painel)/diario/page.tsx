@@ -1,4 +1,9 @@
-import { carregarDia, garantirDiario, listarDias } from "@/lib/diario/dados";
+import {
+  carregarDia,
+  garantirDiario,
+  listarDias,
+  listarPessoas,
+} from "@/lib/diario/dados";
 import { diaValido, hojeNaEmpreiteira } from "@/lib/tempo";
 import { TelaDoDiario } from "@/components/admin/tela-diario";
 
@@ -18,9 +23,10 @@ export default async function Diario({
   const hoje = hojeNaEmpreiteira();
   const dia = pedido && diaValido(pedido) ? pedido : hoje;
 
-  const [atual, dias] = await Promise.all([
+  const [atual, dias, pessoas] = await Promise.all([
     carregarDia(diario.id, dia),
     listarDias(diario.id),
+    listarPessoas(diario.id),
   ]);
 
   return (
@@ -29,6 +35,7 @@ export default async function Diario({
       hoje={hoje}
       atual={atual}
       dias={dias}
+      pessoas={pessoas}
       urlBase={process.env.NEXT_PUBLIC_SITE_URL ?? ""}
     />
   );

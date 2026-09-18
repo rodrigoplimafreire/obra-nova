@@ -14,6 +14,8 @@ import type { DiaPublicado, ItemDoDia, Secao } from "./tipos";
  * servidor.
  */
 
+export type Pessoa = { id: string; nome: string };
+
 export type Diario = {
   id: string;
   token: string;
@@ -74,6 +76,23 @@ export async function garantirDiario(): Promise<Diario> {
     // A senha em si nunca sai daqui: a tela só precisa saber se existe.
     temSenha: Boolean(linha.senha),
   };
+}
+
+/**
+ * O elenco, na ordem em que a tela oferece.
+ *
+ * `posicao` antes do nome: quem escreve o diário entra com `-1` e fica sempre
+ * no topo, porque é o responsável mais frequente de todos.
+ */
+export async function listarPessoas(diarioId: string): Promise<Pessoa[]> {
+  const { data } = await supabaseAdmin()
+    .from("dia_pessoas")
+    .select("id, nome")
+    .eq("diario_id", diarioId)
+    .order("posicao")
+    .order("nome");
+
+  return data ?? [];
 }
 
 /** As datas que já têm relatório, da mais recente para a mais antiga. */

@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
 import { diaValido } from "@/lib/tempo";
 import { lerApelido } from "./apelido";
+import { listarPessoas } from "./dados";
 import { montarDia } from "./publicacao";
 import { garantirRelatorioDoDia } from "./relatorio";
 import { gerarResumo } from "./resumo";
@@ -96,7 +97,12 @@ export async function gerarResumoDoDia(
     };
   }
 
-  const saida = await gerarResumo(relatorioId, diario.autor_nome);
+  const elenco = await listarPessoas(diario.id);
+  const saida = await gerarResumo(
+    relatorioId,
+    diario.autor_nome,
+    elenco.map((p) => p.nome),
+  );
   if (!saida.ok) return { ok: false, erro: saida.erro };
 
   const agora = new Date().toISOString();

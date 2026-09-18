@@ -266,6 +266,14 @@ const MATERIAL = [
   },
   {
     tipo: "audio" as const,
+    status: "pronto" as const,
+    // "Reginaldo" é o erro que a transcrição comete de verdade. Com o elenco
+    // no prompt, a IA tem que devolver "Reginato".
+    texto:
+      "O Reginaldo ficou de mandar as fotos da obra de Caucaia ainda esta semana.",
+  },
+  {
+    tipo: "audio" as const,
     // Transcrição que não ficou pronta: não pode entrar no material.
     status: "falhou" as const,
     texto: "SEGREDO_QUE_NAO_PODE_VAZAR",
@@ -280,7 +288,9 @@ async function conferirIA(relatorioId: string) {
     return;
   }
 
-  const saida = await gerarResumo(relatorioId, AUTOR);
+  // O elenco entra no prompt: "Reginato" é a grafia certa, e o material de
+  // teste traz "Reginaldo" de propósito, como uma transcrição erraria.
+  const saida = await gerarResumo(relatorioId, AUTOR, [AUTOR, "Reginato"]);
 
   if (!saida.ok) {
     conferir("a IA respondeu", false, saida.erro);
@@ -290,8 +300,8 @@ async function conferirIA(relatorioId: string) {
   conferir("a IA respondeu", true);
   conferir(
     "só os registros prontos entram no material",
-    saida.registros === 4,
-    `${saida.registros} de 5`,
+    saida.registros === 5,
+    `${saida.registros} de 6`,
   );
 
   const textosDe = (secao: string) =>
@@ -381,6 +391,30 @@ async function conferirIA(relatorioId: string) {
   conferir(
     "sem travessão, como manda o estilo da casa",
     !tudo.some((i) => i.includes("—")),
+  );
+
+  /**
+   * A IA **não** troca um nome por outro parecido.
+   *
+   * O material diz "Reginaldo" num registro e "Reginato" noutro. A primeira
+   * versão deste teste exigia que a IA corrigisse o primeiro para o segundo,
+   * e ela recusou — com razão. Trocar um nome que ela não pode conferir é
+   * inventar responsável, que é justamente o que a §5 do PRD proíbe: e se
+   * Reginaldo for outra pessoa?
+   *
+   * O elenco no prompt serve para a **grafia** de quem foi citado, não para
+   * adivinhar quem é quem. Quem resolve a confusão é o dedo, no seletor de
+   * responsável — que é para isso que a Entrega 4c existe.
+   */
+  const juntoTudo = tudo.join(" ");
+  conferir(
+    "nome fora do elenco é preservado, não trocado pelo parecido",
+    /reginaldo/i.test(juntoTudo),
+    juntoTudo.match(/regina\w+/gi)?.join(", ") ?? "(nenhum dos dois)",
+  );
+  conferir(
+    "nome do elenco sai na grafia do elenco",
+    /reginato/i.test(juntoTudo),
   );
 
   /**
