@@ -532,7 +532,24 @@ export function TelaDoDiario({
   );
 }
 
-/** Título, quem assina e a senha do link. */
+
+/**
+ * TÃ­tulo, quem assina, o endereÃ§o e a senha.
+ *
+ * **Usa `dialogo-corpo` e `dialogo-rodape`, como todos os outros diÃ¡logos do
+ * painel.** A primeira versÃ£o nÃ£o usava, e o resultado foi o esperado: os
+ * campos encostavam nas bordas do painel, o conteÃºdo passava dos 86dvh do
+ * `.dialogo-painel` â€” que tem `overflow: hidden` â€” e o botÃ£o de salvar ficava
+ * cortado fora da tela. A estrutura existe justamente para isto: cabeÃ§alho e
+ * rodapÃ© fixos, miolo rolando.
+ *
+ * O texto de ajuda tambÃ©m encolheu. Ele tinha trÃªs parÃ¡grafos de duas linhas,
+ * cada um mais pesado que o campo que explicava, e formulÃ¡rio em que a
+ * explicaÃ§Ã£o ocupa metade da altura Ã© formulÃ¡rio que ninguÃ©m lÃª.
+ *
+ * A ordem mudou junto: endereÃ§o e senha primeiro, porque sÃ£o o que a pessoa
+ * vem mexer. TÃ­tulo e nome se acertam uma vez e nÃ£o se toca mais.
+ */
 function Ajustes({
   aberto,
   aoFechar,
@@ -557,7 +574,7 @@ function Ajustes({
       router.refresh();
       aoFechar();
     }
-    // `aoFechar` muda de identidade a cada render de quem chama; incluí-lo
+    // `aoFechar` muda de identidade a cada render de quem chama; incluÃ­-lo
     // reabriria o efeito sem necessidade.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estado, router]);
@@ -567,98 +584,97 @@ function Ajustes({
       aberto={aberto}
       aoFechar={aoFechar}
       titulo="Acesso ao link"
-      descricao="O endereço é fixo e não muda quando você publica. A senha é o que protege o que está atrás dele."
+      descricao="O endereÃ§o Ã© fixo e nÃ£o muda quando vocÃª publica. A senha Ã© o que protege o que estÃ¡ atrÃ¡s dele."
       estreito
     >
-      <form action={salvar} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="titulo" className="rotulo-campo">
-            Título
-          </label>
-          <input
-            id="titulo"
-            name="titulo"
-            defaultValue={diario.titulo ?? ""}
-            placeholder="Diário de atividades"
-            className="campo mt-2"
-          />
-        </div>
+      <form action={salvar} className="dialogo-forma">
+        <div className="dialogo-corpo flex flex-col gap-5">
+          <div>
+            <label htmlFor="apelido" className="rotulo-campo">
+              EndereÃ§o
+            </label>
+            {/* O host colado no campo, como prefixo fixo: sem ele a pessoa
+                digita a URL inteira e a validaÃ§Ã£o recusa por causa da barra. */}
+            <div className="mt-2 flex items-stretch">
+              <span className="flex shrink-0 items-center rounded-l-[var(--radius-controle)] border border-r-0 border-concreto bg-papel px-3 font-mono text-xs text-fumaca">
+                {HOST_DO_DIARIO}/
+              </span>
+              <input
+                id="apelido"
+                name="apelido"
+                defaultValue={diario.apelido ?? ""}
+                placeholder="rodrigo"
+                autoComplete="off"
+                spellCheck={false}
+                className="campo min-w-0 flex-1 rounded-l-none font-mono"
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-cinza">
+              Letras, nÃºmeros e hÃ­fen. O link longo nunca deixa de valer.
+            </p>
+          </div>
 
-        <div>
-          <label htmlFor="autorNome" className="rotulo-campo">
-            Quem assina
-          </label>
-          <input
-            id="autorNome"
-            name="autorNome"
-            defaultValue={diario.autorNome ?? ""}
-            placeholder="Seu nome, como aparece no cabeçalho"
-            className="campo mt-2"
-          />
-          <p className="mt-2 text-xs leading-relaxed text-cinza">
-            Aparece no cabeçalho da página e entra no resumo: é como a IA sabe
-            de quem é o &ldquo;eu&rdquo; dos seus registros.
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="apelido" className="rotulo-campo">
-            Endereço
-          </label>
-          {/* O host fica colado no campo, como prefixo fixo: sem ele a pessoa
-              digita a URL inteira e a validação recusa por causa da barra. */}
-          <div className="mt-2 flex items-stretch">
-            <span className="flex shrink-0 items-center rounded-l-[var(--radius-controle)] border border-r-0 border-concreto bg-papel px-3 font-mono text-xs text-fumaca">
-              {HOST_DO_DIARIO}/
-            </span>
+          <div>
+            <label htmlFor="senha" className="rotulo-campo">
+              Senha de acesso
+            </label>
             <input
-              id="apelido"
-              name="apelido"
-              defaultValue={diario.apelido ?? ""}
-              placeholder="rodrigo"
+              id="senha"
+              name="senha"
+              type="text"
+              defaultValue=""
+              placeholder={
+                diario.temSenha
+                  ? "definida â€” digite para trocar"
+                  : "ao menos 6 caracteres"
+              }
               autoComplete="off"
-              spellCheck={false}
-              className="campo min-w-0 flex-1 rounded-l-none font-mono"
+              className="campo mt-2"
+            />
+            {/* Em claro de propÃ³sito: quem digita aqui vai ditar essa senha
+                por WhatsApp, e esconder o que se estÃ¡ criando sÃ³ gera erro de
+                digitaÃ§Ã£o. NÃ£o Ã© a senha de uma conta. */}
+            <p className="mt-1.5 text-xs text-cinza">
+              Fica visÃ­vel porque vocÃª vai passÃ¡-la adiante. Em branco, remove.
+            </p>
+          </div>
+
+          <div className="border-t border-cinza-100 pt-5">
+            <label htmlFor="titulo" className="rotulo-campo">
+              TÃ­tulo
+            </label>
+            <input
+              id="titulo"
+              name="titulo"
+              defaultValue={diario.titulo ?? ""}
+              placeholder="DiÃ¡rio de atividades"
+              className="campo mt-2"
             />
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-cinza">
-            Letras, números e hífen. Em branco, o link continua sendo o
-            endereço longo — e ele nunca deixa de valer, mesmo depois que você
-            escolher um apelido.
-          </p>
+
+          <div>
+            <label htmlFor="autorNome" className="rotulo-campo">
+              Quem assina
+            </label>
+            <input
+              id="autorNome"
+              name="autorNome"
+              defaultValue={diario.autorNome ?? ""}
+              placeholder="Seu nome"
+              className="campo mt-2"
+            />
+            <p className="mt-1.5 text-xs text-cinza">
+              Vai no cabeÃ§alho da pÃ¡gina, e Ã© como a IA sabe de quem Ã© o
+              &ldquo;eu&rdquo; dos seus registros.
+            </p>
+          </div>
+
+          <Elenco pessoas={pessoas} />
+
+          {estado?.erro && <p className="aviso aviso-erro">{estado.erro}</p>}
         </div>
 
-        <div>
-          <label htmlFor="senha" className="rotulo-campo">
-            Senha de acesso
-          </label>
-          <input
-            id="senha"
-            name="senha"
-            type="text"
-            defaultValue=""
-            placeholder={
-              diario.temSenha ? "definida — digite para trocar" : "ao menos 6 caracteres"
-            }
-            autoComplete="off"
-            className="campo mt-2"
-          />
-          {/* Em claro de propósito: quem digita aqui vai ditar essa senha por
-              WhatsApp, e esconder o que se está criando só gera erro de
-              digitação. Não é a senha de uma conta. */}
-          <p className="mt-2 text-xs leading-relaxed text-cinza">
-            Fica visível porque você vai passá-la adiante. Apagar o campo
-            remove a senha, e sem senha o diário não pode ser publicado.
-          </p>
-        </div>
-
-        <p className="rounded-sm bg-papel px-4 py-3 font-mono text-xs break-all text-fumaca">
-          {link}
-        </p>
-
-        {estado?.erro && <p className="aviso aviso-erro">{estado.erro}</p>}
-
-        <div className="flex justify-end gap-2">
+        <div className="dialogo-rodape">
           <button
             type="button"
             onClick={aoFechar}
@@ -666,15 +682,15 @@ function Ajustes({
           >
             Cancelar
           </button>
-          <button type="submit" disabled={salvando} className="btn btn-primario">
-            {salvando ? "Salvando…" : "Salvar"}
+          <button
+            type="submit"
+            disabled={salvando}
+            className={`btn ${salvando ? "btn-carregando" : "btn-primario"}`}
+          >
+            {salvando ? "Salvandoâ€¦" : "Salvar"}
           </button>
         </div>
       </form>
-
-      {/* Fora do `<form>` de propósito: `<form>` aninhado não existe, e um
-          botão de remover ali dentro submeteria os ajustes junto. */}
-      <Elenco pessoas={pessoas} />
     </Dialogo>
   );
 }
@@ -682,10 +698,13 @@ function Ajustes({
 /**
  * Quem pode responder por um item.
  *
- * A lista nasce do uso — do nome de quem assina e do que já estava escrito nos
- * dias anteriores — e cresce pelo "Outro…" do seletor. Aqui só se tira, que é
- * o que o uso não resolve sozinho: a conversão trouxe "Rodrigo" e "Rodrigo
- * Peixoto" como duas pessoas, e só quem escreve sabe que são a mesma.
+ * A lista nasce do uso â€” do nome de quem assina e do que jÃ¡ estava escrito nos
+ * dias anteriores â€” e cresce pelo &ldquo;Outroâ€¦&rdquo; do seletor. Aqui sÃ³ se
+ * tira, que Ã© o que o uso nÃ£o resolve sozinho: a conversÃ£o trouxe "Rodrigo" e
+ * "Rodrigo Peixoto" como duas pessoas, e sÃ³ quem escreve sabe que sÃ£o a mesma.
+ *
+ * **Os botÃµes sÃ£o `type="button"`.** Dentro de um `<form>`, botÃ£o sem tipo Ã©
+ * `submit`: remover uma pessoa salvaria os ajustes e fecharia o diÃ¡logo.
  */
 function Elenco({ pessoas }: { pessoas: Pessoa[] }) {
   const router = useRouter();
@@ -694,11 +713,11 @@ function Elenco({ pessoas }: { pessoas: Pessoa[] }) {
   if (pessoas.length === 0) return null;
 
   return (
-    <section className="mt-6 border-t border-cinza-100 pt-5">
+    <div className="border-t border-cinza-100 pt-5">
       <p className="rotulo-campo">Quem responde</p>
-      <p className="mt-1 mb-3 text-xs leading-relaxed text-cinza">
-        A lista que o seletor de responsável oferece, e os nomes que a IA usa.
-        Tirar alguém daqui não mexe nos dias já escritos.
+      <p className="mt-1 mb-2.5 text-xs text-cinza">
+        O que o seletor de responsÃ¡vel oferece. Tirar daqui nÃ£o mexe nos dias
+        jÃ¡ escritos.
       </p>
 
       <ul className="flex flex-wrap gap-1.5">
@@ -718,7 +737,13 @@ function Elenco({ pessoas }: { pessoas: Pessoa[] }) {
                 aria-label={`Tirar ${p.nome} da lista`}
                 className="rounded-sm px-1 text-cinza-500 transition hover:text-atraso"
               >
-                <svg viewBox="0 0 24 24" aria-hidden className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth={2} strokeLinecap="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                  className="h-3.5 w-3.5 fill-none stroke-current"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                >
                   <path d="M6 6l12 12M18 6L6 18" />
                 </svg>
               </button>
@@ -726,15 +751,15 @@ function Elenco({ pessoas }: { pessoas: Pessoa[] }) {
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }
 
 /**
- * Revogar é a única ação daqui que não tem volta, e a tela diz isso antes.
+ * Revogar Ã© a Ãºnica aÃ§Ã£o daqui que nÃ£o tem volta, e a tela diz isso antes.
  *
- * Tirar do ar devolve um dia ao rascunho e o endereço continua valendo.
- * Revogar troca o endereço — o link que já foi para o WhatsApp para de
+ * Tirar do ar devolve um dia ao rascunho e o endereÃ§o continua valendo.
+ * Revogar troca o endereÃ§o â€” o link que jÃ¡ foi para o WhatsApp para de
  * funcionar, para sempre.
  */
 function Revogacao({
@@ -767,31 +792,49 @@ function Revogacao({
       aberto={aberto}
       aoFechar={aoFechar}
       titulo="Revogar o acesso"
-      descricao="Use quando o link tiver ido para quem não devia."
+      descricao="Use quando o link tiver ido para quem nÃ£o devia."
       estreito
     >
-      <p className="text-sm leading-relaxed text-grafite">
-        O endereço abaixo para de funcionar na hora, para todo mundo que já o
-        tem. O apelido também é liberado, senão a parte fácil de adivinhar
-        continuaria de pé e não haveria revogação nenhuma. Você escolhe um novo
-        em seguida e envia outra vez. Os relatórios publicados continuam lá.
-      </p>
+      <form action={revogar} className="dialogo-forma">
+        <div className="dialogo-corpo flex flex-col gap-4">
+          <input type="hidden" name="token" value={token} />
 
-      <p className="mt-4 rounded-sm bg-papel px-4 py-3 font-mono text-xs break-all text-fumaca">
-        {link}
-      </p>
+          <p className="text-sm leading-relaxed text-grafite">
+            Este endereÃ§o para de funcionar na hora, para todo mundo que jÃ¡ o
+            tem. O apelido tambÃ©m Ã© liberado â€” senÃ£o a parte fÃ¡cil de adivinhar
+            continuaria de pÃ©, e nÃ£o haveria revogaÃ§Ã£o nenhuma.
+          </p>
 
-      {estado?.erro && <p className="aviso aviso-erro mt-4">{estado.erro}</p>}
+          <p className="rounded-sm bg-papel px-4 py-3 font-mono text-xs break-all text-fumaca">
+            {link}
+          </p>
 
-      <form action={revogar} className="mt-5 flex justify-end gap-2">
-        <input type="hidden" name="token" value={token} />
-        <button type="button" onClick={aoFechar} className="btn btn-secundario">
-          Cancelar
-        </button>
-        <button type="submit" disabled={revogando} className="btn btn-perigo">
-          {revogando ? "Revogando…" : "Revogar e gerar outro"}
-        </button>
+          <p className="text-sm leading-relaxed text-grafite">
+            VocÃª escolhe um novo em seguida e envia outra vez. Os relatÃ³rios
+            publicados continuam lÃ¡.
+          </p>
+
+          {estado?.erro && <p className="aviso aviso-erro">{estado.erro}</p>}
+        </div>
+
+        <div className="dialogo-rodape">
+          <button
+            type="button"
+            onClick={aoFechar}
+            className="btn btn-secundario"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={revogando}
+            className={`btn ${revogando ? "btn-carregando" : "btn-perigo"}`}
+          >
+            {revogando ? "Revogandoâ€¦" : "Revogar e gerar outro"}
+          </button>
+        </div>
       </form>
     </Dialogo>
   );
 }
+
