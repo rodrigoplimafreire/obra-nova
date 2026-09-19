@@ -884,6 +884,23 @@ export function DocumentoDoCliente({
             <h2>Prazos, garantias e normas</h2>
 
             <div className="cond-grid">
+              {/* **A forma de pagamento abre a grade, e vem antes do prazo.**
+                  Existe a seção `#pagamento`, com as parcelas em dinheiro e os
+                  dados bancários — mas ela só aparece quando `entradaPercentual`
+                  está preenchido, e ele só sabe descrever entrada+final ou
+                  parcelas iguais. Obra com parcela desigual (R$ 35.000 de
+                  entrada e três de R$ 21.369, por exemplo) deixa o campo nulo
+                  de propósito, para o documento não imprimir valor que não foi
+                  o combinado — e aí o cliente chegava nas condições comerciais,
+                  o lugar onde se procura como pagar, e não achava nada.
+                  O texto de `pagamento` sempre existe, e é o combinado por
+                  escrito; aqui ele fica onde se procura por ele. */}
+              {documento.pagamento && (
+                <div className="cond">
+                  <div className="cn">Forma de pagamento</div>
+                  <div className="cv">{documento.pagamento}</div>
+                </div>
+              )}
               {documento.prazo && (
                 <div className="cond">
                   <div className="cn">Prazo de execução</div>
