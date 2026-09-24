@@ -104,6 +104,11 @@ export type DocumentoPublicado = {
   cronograma: SemanaPublicada[];
   /** Fotos e vídeo da situação atual. Vazio = a seção não aparece. */
   midias: MidiaPublicada[];
+  /**
+   * Congelado junto com o resto: se a tarja saísse de uma consulta ao vivo, o
+   * documento que o cliente já leu mudaria de aviso sem republicação.
+   */
+  preliminar: boolean;
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
   total: number;
   valorFechado: number | null;
@@ -146,6 +151,7 @@ type OrcamentoDeOrigem = {
   modulos: ModuloPublicado[];
   cronograma: SemanaPublicada[];
   midias: MidiaPublicada[];
+  preliminar: boolean;
 };
 
 /**
@@ -224,6 +230,7 @@ export function montarDocumento(
       url: m.url,
       legenda: m.legenda,
     })),
+    preliminar: orcamento.preliminar,
     total: orcamento.valorFechado ?? soma,
     valorFechado: orcamento.valorFechado,
     publicadoEm: new Date().toISOString(),
@@ -364,6 +371,8 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     modulos,
     cronograma,
     midias,
+    // Publicação antiga não tem o campo, e o que ela era é definitiva.
+    preliminar: d.preliminar === true,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
     publicadoEm: texto(d.publicadoEm) ?? new Date().toISOString(),

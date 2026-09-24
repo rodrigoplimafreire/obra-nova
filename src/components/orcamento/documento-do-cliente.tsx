@@ -306,6 +306,35 @@ export function DocumentoDoCliente({
           `.srole` — só faltava o documento escrever a marcação. Por isso o
           bloco de assinatura reusa exatamente esses nomes: o que se paga aqui
           é só a grade de duas colunas, que é nova. */}
+      {/* A tarja não existe no `brand.css` da RD: as propostas feitas à mão
+          nunca saíam preliminares, iam prontas. Fica aqui, e não na folha da
+          marca, pela mesma razão do bloco de condições — a folha é canônica e
+          não se edita.
+
+          Laranja cheio com texto preto, que é o par de contraste que a marca
+          já usa na `.total-bar` (5,6:1). Âmbar claro com texto escuro seria o
+          idioma de "aviso" de outro sistema, não desta marca. */}
+      <style href="tarja-preliminar" precedence="marca">{`
+        .tarja-preliminar{background:var(--accent);color:#0a0a0a;
+          padding:12px 0;font-size:14.5px;line-height:1.45;
+          border-bottom:1px solid rgba(0,0,0,.18)}
+        .tarja-preliminar b{font-weight:700}
+        @media print{
+          /* Sobrevive à impressão, e força a cor: sem o print-color-adjust o
+             Chrome imprime a faixa em branco e o aviso some. */
+          .tarja-preliminar{background:var(--accent) !important;color:#0a0a0a !important;
+            -webkit-print-color-adjust:exact;print-color-adjust:exact;
+            padding:8px 10px !important;margin-bottom:8mm;break-inside:avoid}
+          .tarja-preliminar .wrap{padding:0 !important}
+          .pc-preliminar{display:block;margin-top:14px;
+            font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+            text-transform:uppercase;color:#E8622C;
+            border:1px solid #E8622C;border-radius:2px;padding:8px 12px;
+            -webkit-print-color-adjust:exact;print-color-adjust:exact}
+        }
+        .pc-preliminar{display:none}
+      `}</style>
+
       <style href="condicoes-e-assinatura" precedence="marca">{`
         .cond-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px}
         @media(min-width:720px){.cond-grid{grid-template-columns:repeat(2,1fr)}}
@@ -424,8 +453,17 @@ export function DocumentoDoCliente({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="pc-logo" src={marca.logo} alt={marca.nome} />
         <div>
-          <div className="pc-eyebrow">Orçamento</div>
+          <div className="pc-eyebrow">
+            {documento.preliminar ? "Orçamento preliminar" : "Orçamento"}
+          </div>
           <div className="pc-title">{documento.objeto ?? "Proposta de serviço"}</div>
+          {/* Na capa impressa também, e não só na tela: uma folha que sai da
+              impressora sem o aviso volta como se fosse definitiva. */}
+          {documento.preliminar && (
+            <div className="pc-preliminar">
+              Versão preliminar · sujeita a revisão
+            </div>
+          )}
         </div>
         <div className="pc-meta">
           <span>{documento.cliente}</span>
@@ -444,6 +482,20 @@ export function DocumentoDoCliente({
           {documento.numero ?? "Orçamento"}
         </div>
       </div>
+
+      {/* ---------- Tarja de versão preliminar ----------
+          Antes do cabeçalho, porque é a primeira coisa que tem que ser lida:
+          quem abre precisa saber que o número ainda vai mudar antes de chegar
+          ao número. Fica na tela e na capa impressa — folha sem o aviso volta
+          como se fosse definitiva. */}
+      {documento.preliminar && (
+        <div className="tarja-preliminar" role="status">
+          <div className="wrap">
+            <b>Versão preliminar.</b> Este documento está em revisão técnica:
+            valores, prazo e condições podem mudar antes do fechamento.
+          </div>
+        </div>
+      )}
 
       <header id="topo">
         <div className="wrap">

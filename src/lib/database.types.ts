@@ -382,6 +382,7 @@ type TabelasDeOrcamento = {
       marca: string;
       /** BDI sugerido em %, ponto de partida do preço de venda por item. */
       bdi_padrao: number;
+      preliminar: boolean;
       valor_fechado: number | null;
       /** Eixo comercial, separado do `status` (preparo do documento). */
       situacao: OrcSituacao;
@@ -421,6 +422,7 @@ type TabelasDeOrcamento = {
       token?: string;
       marca?: string;
       bdi_padrao?: number;
+      preliminar?: boolean;
       valor_fechado?: number | null;
       situacao?: OrcSituacao;
       criado_por?: string | null;
@@ -448,6 +450,7 @@ type TabelasDeOrcamento = {
       senha?: string | null;
       marca?: string;
       bdi_padrao?: number;
+      preliminar?: boolean;
       valor_fechado?: number | null;
       situacao?: OrcSituacao;
       visto_em?: string | null;

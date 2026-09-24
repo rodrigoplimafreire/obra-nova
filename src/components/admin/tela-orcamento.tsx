@@ -222,6 +222,13 @@ function DadosDoOrcamento({
         />
         <Dado rotulo="Objeto" valor={orcamento.objeto} />
         <Dado rotulo="Endereço" valor={orcamento.endereco} />
+        {orcamento.preliminar && (
+          <Dado
+            rotulo="Situação do documento"
+            valor="Versão preliminar"
+            dica="O documento do cliente sai com a tarja de revisão. Desmarque em Editar e republique para tirá-la."
+          />
+        )}
         <Dado rotulo="Prazo de execução" valor={orcamento.prazo} />
         <Dado rotulo="Condições de pagamento" valor={orcamento.pagamento} />
         <Dado
@@ -388,6 +395,24 @@ function FormularioDeDados({
             valor={orcamento.senha ?? ""}
             dica="o cliente digita para abrir"
           />
+          {/* A tarja é uma marca no documento, não um status: o orçamento
+              segue publicado e o link segue o mesmo. Desmarcar e republicar é
+              o que faz o aviso sumir. */}
+          <label className="flex items-start gap-2.5 sm:col-span-2">
+            <input
+              type="checkbox"
+              name="preliminar"
+              defaultChecked={orcamento.preliminar}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-tinta"
+            />
+            <span className="text-sm">
+              Versão preliminar
+              <span className="block text-xs text-cinza">
+                Mostra uma tarja no topo do documento e na capa impressa,
+                avisando que valores e condições ainda podem mudar.
+              </span>
+            </span>
+          </label>
           <label className="flex flex-col gap-1.5">
             <span className="rotulo-campo">Valor fechado</span>
             <CampoDeMoeda

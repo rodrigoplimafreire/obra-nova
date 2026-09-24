@@ -245,6 +245,8 @@ export type OrcamentoCompleto = {
   /** BDI sugerido em %: o ponto de partida do preço de venda de item novo,
    *  não uma trava. Cada item pode se afastar dele. */
   bdiPadrao: number;
+  /** Mostra a tarja de versão preliminar no documento. */
+  preliminar: boolean;
 
   situacao: SituacaoDoOrcamento;
   /** Quando o cliente abriu a página pela primeira vez, e a última. */
@@ -442,6 +444,7 @@ export async function carregarOrcamento(
     marca: o.marca,
     valorFechado: o.valor_fechado,
     bdiPadrao: o.bdi_padrao,
+    preliminar: o.preliminar,
 
     situacao: o.situacao,
     vistoEm: o.visto_em,

@@ -102,6 +102,8 @@ export async function atualizarOrcamento(
       validade_dias: validade ?? 15,
       valor_fechado: valorFechado,
       bdi_padrao: bdi ?? 30,
+      // Checkbox não marcado não chega no FormData; a ausência é o "false".
+      preliminar: form.get("preliminar") === "on",
     })
     .eq("id", id)
     .eq("org_id", orgId);
