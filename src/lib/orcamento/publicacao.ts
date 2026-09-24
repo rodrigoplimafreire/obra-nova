@@ -69,6 +69,21 @@ export type MidiaPublicada = {
   legenda: string | null;
 };
 
+/**
+ * Uma opção de material, com os seus itens e o seu total.
+ *
+ * Dois jeitos de fazer a mesma obra, e o cliente escolhe. Os itens vêm aqui
+ * dentro, e não soltos com um id de opção: o documento publicado é uma cópia
+ * para ler, e um id que aponta para outra lista é uma junção que a folha de
+ * leitura teria de refazer.
+ */
+export type OpcaoPublicada = {
+  nome: string;
+  descricao: string | null;
+  itens: ItemPublicado[];
+  total: number;
+};
+
 /** Uma semana do cronograma executivo físico-financeiro. */
 export type SemanaPublicada = {
   semana: number;
@@ -109,6 +124,8 @@ export type DocumentoPublicado = {
    * documento que o cliente já leu mudaria de aviso sem republicação.
    */
   preliminar: boolean;
+  /** Vazio = tabela única. Com opções, a tabela vira abas e cada uma soma a sua. */
+  opcoes: OpcaoPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
   total: number;
   valorFechado: number | null;
@@ -124,6 +141,8 @@ type ItemDeOrigem = {
   total: number | null;
   observacao: string | null;
   removidoEm: string | null;
+  /** Nulo = item comum, que entra em todas as opções. */
+  opcaoId: string | null;
 };
 
 type OrcamentoDeOrigem = {
@@ -152,6 +171,7 @@ type OrcamentoDeOrigem = {
   cronograma: SemanaPublicada[];
   midias: MidiaPublicada[];
   preliminar: boolean;
+  opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
 };
 
 /**
@@ -231,6 +251,25 @@ export function montarDocumento(
       legenda: m.legenda,
     })),
     preliminar: orcamento.preliminar,
+    // Cada opção leva os seus itens e o seu total. Item sem opção entra em
+    // todas: é serviço que acontece qualquer que seja a escolha.
+    opcoes: orcamento.opcoes.map((o) => {
+      const meus = vivos.filter((i) => i.opcaoId === o.id || i.opcaoId === null);
+      return {
+        nome: o.nome,
+        descricao: o.descricao,
+        itens: meus.map((i) => ({
+          grupo: i.grupo,
+          descricao: i.descricao,
+          quantidade: i.quantidade,
+          unidade: i.unidade,
+          valorUnitario: i.valorUnitario,
+          total: i.total,
+          observacao: i.observacao,
+        })),
+        total: meus.reduce((acc, i) => acc + (i.total ?? 0), 0),
+      };
+    }),
     total: orcamento.valorFechado ?? soma,
     valorFechado: orcamento.valorFechado,
     publicadoEm: new Date().toISOString(),
@@ -345,6 +384,42 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
       })
     : [];
 
+  const opcoes = Array.isArray(d.opcoes)
+    ? d.opcoes.flatMap((linha): OpcaoPublicada[] => {
+        if (!linha || typeof linha !== "object") return [];
+        const o = linha as Record<string, unknown>;
+        const nome = texto(o.nome);
+        if (!nome) return [];
+        const seus = Array.isArray(o.itens)
+          ? o.itens.flatMap((x): ItemPublicado[] => {
+              if (!x || typeof x !== "object") return [];
+              const i = x as Record<string, unknown>;
+              const descricao = texto(i.descricao);
+              if (!descricao) return [];
+              return [
+                {
+                  grupo: texto(i.grupo),
+                  descricao,
+                  quantidade: numero(i.quantidade),
+                  unidade: texto(i.unidade),
+                  valorUnitario: numero(i.valorUnitario),
+                  total: numero(i.total),
+                  observacao: texto(i.observacao),
+                },
+              ];
+            })
+          : [];
+        return [
+          {
+            nome,
+            descricao: texto(o.descricao),
+            itens: seus,
+            total: numero(o.total) ?? seus.reduce((a, i) => a + (i.total ?? 0), 0),
+          },
+        ];
+      })
+    : [];
+
   return {
     versao: numero(d.versao) ?? 1,
     numero: texto(d.numero),
@@ -373,6 +448,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     midias,
     // Publicação antiga não tem o campo, e o que ela era é definitiva.
     preliminar: d.preliminar === true,
+    opcoes,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
     publicadoEm: texto(d.publicadoEm) ?? new Date().toISOString(),

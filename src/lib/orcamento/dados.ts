@@ -120,6 +120,8 @@ export type ItemDoOrcamento = {
   editadoEm: string | null;
   removidoEm: string | null;
   observacao: string | null;
+  /** A opção de material a que o item pertence. Nulo = vale para todas. */
+  opcaoId: string | null;
 };
 
 /** Tipo de bloco de texto do documento. */
@@ -204,6 +206,17 @@ export type MidiaDoOrcamento = {
   position: number;
 };
 
+/**
+ * Uma opção de material: dois jeitos de fazer a mesma obra, com preços
+ * diferentes, e o cliente escolhe.
+ */
+export type OpcaoDoOrcamento = {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  position: number;
+};
+
 export type OrcamentoCompleto = {
   id: string;
   numero: string | null;
@@ -236,6 +249,8 @@ export type OrcamentoCompleto = {
   cronograma: SemanaDoCronograma[];
   /** Fotos e vídeo da situação atual, na ordem em que saem no documento. */
   midias: MidiaDoOrcamento[];
+  /** Vazio = orçamento de tabela única, como sempre foi. */
+  opcoes: OpcaoDoOrcamento[];
 
   senha: string | null;
   token: string;
@@ -299,6 +314,7 @@ function paraItem(linha: {
   editado_em: string | null;
   removido_em: string | null;
   observacao: string | null;
+  opcao_id: string | null;
 }): ItemDoOrcamento {
   return {
     id: linha.id,
@@ -315,6 +331,7 @@ function paraItem(linha: {
     editadoEm: linha.editado_em,
     removidoEm: linha.removido_em,
     observacao: linha.observacao,
+    opcaoId: linha.opcao_id,
   };
 }
 
@@ -354,11 +371,12 @@ export async function carregarOrcamento(
     { data: modulos },
     { data: cronograma },
     { data: midias },
+    { data: opcoes },
   ] = await Promise.all([
       sb
         .from("orc_itens")
         .select(
-          "id, grupo, position, descricao, quantidade, unidade, valor_unitario, custo_unitario, composicao_id, total, origem, editado_em, removido_em, observacao",
+          "id, grupo, position, descricao, quantidade, unidade, valor_unitario, custo_unitario, composicao_id, total, origem, editado_em, removido_em, observacao, opcao_id",
         )
         .eq("orcamento_id", id)
         .order("position"),
@@ -386,6 +404,11 @@ export async function carregarOrcamento(
       sb
         .from("orc_midias")
         .select("id, tipo, storage_path, legenda, position")
+        .eq("orcamento_id", id)
+        .order("position"),
+      sb
+        .from("orc_opcoes")
+        .select("id, nome, descricao, position")
         .eq("orcamento_id", id)
         .order("position"),
     ]);
@@ -438,6 +461,7 @@ export async function carregarOrcamento(
       legenda: m.legenda,
       position: m.position,
     })),
+    opcoes: opcoes ?? [],
 
     senha: o.senha,
     token: o.token,

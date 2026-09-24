@@ -588,6 +588,7 @@ type TabelasDeOrcamento = {
       valor_unitario: number | null;
       /** Custo de tabela ou digitado à mão. NUNCA sai no documento do cliente. */
       custo_unitario: number | null;
+      opcao_id: string | null;
       /** De qual composição da base este item veio, se veio. */
       composicao_id: string | null;
       /** Coluna gerada pelo banco: quantidade × valor_unitario. Só leitura. */
@@ -609,6 +610,7 @@ type TabelasDeOrcamento = {
       unidade?: string | null;
       valor_unitario?: number | null;
       custo_unitario?: number | null;
+      opcao_id?: string | null;
       composicao_id?: string | null;
       origem?: OrcOrigem;
       editado_em?: string | null;
@@ -625,6 +627,7 @@ type TabelasDeOrcamento = {
       unidade?: string | null;
       valor_unitario?: number | null;
       custo_unitario?: number | null;
+      opcao_id?: string | null;
       composicao_id?: string | null;
       origem?: OrcOrigem;
       editado_em?: string | null;
@@ -888,6 +891,28 @@ type TabelasDeOrcamento = {
       tipo?: OrcMidiaTipo;
       storage_path?: string;
       legenda?: string | null;
+      position?: number;
+    };
+  };
+  orc_opcoes: {
+    Row: {
+      id: string;
+      orcamento_id: string;
+      nome: string;
+      descricao: string | null;
+      position: number;
+      created_at: string;
+    };
+    Insert: {
+      id?: string;
+      orcamento_id: string;
+      nome: string;
+      descricao?: string | null;
+      position?: number;
+    };
+    Update: {
+      nome?: string;
+      descricao?: string | null;
       position?: number;
     };
   };

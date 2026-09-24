@@ -7,7 +7,10 @@ import {
   contratoPreenchido,
   type Empreiteira,
 } from "@/lib/admin/empreiteira";
-import type { DocumentoPublicado } from "@/lib/orcamento/publicacao";
+import type {
+  DocumentoPublicado,
+  ItemPublicado,
+} from "@/lib/orcamento/publicacao";
 
 /**
  * O orçamento como o cliente vê, na marca de quem executa a obra.
@@ -100,6 +103,85 @@ function montarParcelas(
   });
 }
 
+/**
+ * A tabela de custos de um conjunto de itens.
+ *
+ * Existe como componente porque agora é desenhada duas vezes: uma na seção de
+ * detalhamento, e outra dentro de cada opção de material — e as duas têm que
+ * ser a mesma tabela, com o mesmo cabeçalho de grupo e as mesmas colunas.
+ */
+function TabelaDeCustos({
+  itens,
+  mostraValores,
+}: {
+  itens: ItemPublicado[];
+  mostraValores: boolean;
+}) {
+  const linhas: Array<
+    { tipo: "grupo"; nome: string } | { tipo: "item"; item: ItemPublicado }
+  > = [];
+  let grupoAtual: string | null = null;
+  for (const item of itens) {
+    if (item.grupo && item.grupo !== grupoAtual) {
+      grupoAtual = item.grupo;
+      linhas.push({ tipo: "grupo", nome: item.grupo });
+    }
+    linhas.push({ tipo: "item", item });
+  }
+
+  return (
+    <div className="cost-wrap">
+      <table className="cost-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th className="ct-num">Qtd.</th>
+            <th>Unid.</th>
+            {mostraValores && <th className="ct-num">Vlr. unitário</th>}
+            {mostraValores && <th className="ct-num">Total</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((linha, i) =>
+            linha.tipo === "grupo" ? (
+              <tr className="ct-group" key={`g${i}`}>
+                <td colSpan={mostraValores ? 5 : 3}>{linha.nome}</td>
+              </tr>
+            ) : (
+              <tr key={`i${i}`}>
+                <td>
+                  {linha.item.descricao}
+                  {linha.item.observacao && (
+                    <span className="ct-obs">{linha.item.observacao}</span>
+                  )}
+                </td>
+                <td className="num">
+                  {linha.item.quantidade === null
+                    ? "—"
+                    : numero(linha.item.quantidade)}
+                </td>
+                <td className="unit">{linha.item.unidade ?? "—"}</td>
+                {mostraValores && (
+                  <td className="num">
+                    {linha.item.valorUnitario === null
+                      ? "—"
+                      : moeda(linha.item.valorUnitario)}
+                  </td>
+                )}
+                {mostraValores && (
+                  <td className="num total">
+                    {linha.item.total === null ? "—" : moeda(linha.item.total)}
+                  </td>
+                )}
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function DocumentoDoCliente({
   documento,
   token,
@@ -127,6 +209,19 @@ export function DocumentoDoCliente({
     logo: empreiteira?.logo ?? tema.logo,
   };
   const itemizado = documento.valorFechado === null;
+
+  /**
+   * Com opções de material não existe **um** total.
+   *
+   * A soma das duas seria um número que ninguém vai pagar: o cliente escolhe
+   * uma. Onde o documento precisa de um número só — o cartão do topo, as
+   * parcelas, o aceite — vale a opção mais barata, e o cartão mostra a faixa.
+   */
+  const opcoes = documento.opcoes;
+  const totais = opcoes.map((o) => o.total);
+  const menorOpcao = totais.length > 0 ? Math.min(...totais) : null;
+  const maiorOpcao = totais.length > 0 ? Math.max(...totais) : null;
+  const totalDeReferencia = menorOpcao ?? documento.total;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
   // Seções 2 e 4. As duas somem inteiras quando ninguém preencheu — regra do
@@ -146,7 +241,7 @@ export function DocumentoDoCliente({
   // quatro, as contas separadas somariam um centavo a mais ou a menos que o
   // total, e o cliente conferiria na calculadora.
   const parcelas = montarParcelas(
-    documento.total,
+    totalDeReferencia,
     documento.entradaPercentual,
     documento.parcelas,
   );
@@ -333,6 +428,37 @@ export function DocumentoDoCliente({
             -webkit-print-color-adjust:exact;print-color-adjust:exact}
         }
         .pc-preliminar{display:none}
+      `}</style>
+
+      {/* As abas de opção: a folha da marca já tem `.opt-tabs`, `.opt-tab` e
+          `.opt-title` prontos, e a de impressão já empilha as duas e revela o
+          título. O que faltava era a troca — e ela é feita com radio escondido
+          e `:has()`, sem uma linha de JavaScript. */}
+      <style href="opcoes-de-material" precedence="marca">{`
+        .opt-radio{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+        .opt-tab{cursor:pointer}
+        .opt-tab .ot-desc{font-size:12.5px;color:var(--fog-2);line-height:1.4;margin-top:2px}
+        /* Sem :has() as duas aparecem, que é degradação certa: melhor ver as
+           duas opções do que ver nenhuma. */
+        ${documento.opcoes
+          .map(
+            (_, i) => `
+        .opt-escolha:has(#opcao-${i}:checked) .opt-painel:not([data-opt="${i}"]){display:none}
+        .opt-escolha:has(#opcao-${i}:checked) .opt-tab[for="opcao-${i}"]{border-color:var(--accent);background:rgba(232,98,44,.08)}
+        .opt-escolha:has(#opcao-${i}:checked) .opt-tab[for="opcao-${i}"] .ot-name,
+        .opt-escolha:has(#opcao-${i}:checked) .opt-tab[for="opcao-${i}"] .ot-price{color:var(--accent)}`,
+          )
+          .join("")}
+        /* O foco precisa aparecer na aba, não no radio invisível. */
+        .opt-radio:focus-visible + .opt-tabs .opt-tab,
+        .opt-escolha:has(.opt-radio:focus-visible) .opt-tabs{outline:2px solid var(--accent);outline-offset:3px}
+        @media print{
+          .opt-tabs{display:none !important}
+          .opt-painel{display:block !important;break-inside:avoid}
+          .opt-painel + .opt-painel{margin-top:32px;padding-top:24px;border-top:1px dashed #bbb}
+          .opt-title{display:block !important;font-family:var(--archivo);font-weight:700;
+            font-size:15px;color:#0a0a0a !important;margin-bottom:12px}
+        }
       `}</style>
 
       <style href="condicoes-e-assinatura" precedence="marca">{`
@@ -553,13 +679,27 @@ export function DocumentoDoCliente({
                     <span className="v">{documento.endereco}</span>
                   </div>
                 )}
+                {opcoes.length === 0 && (
+                  <div className="sc-row">
+                    <span className="k">Itens</span>
+                    <span className="v">{documento.itens.length}</span>
+                  </div>
+                )}
+                {opcoes.length > 0 && (
+                  <div className="sc-row">
+                    <span className="k">Opções</span>
+                    <span className="v">
+                      {opcoes.length === 2 ? "duas" : opcoes.length} de material
+                    </span>
+                  </div>
+                )}
                 <div className="sc-row">
-                  <span className="k">Itens</span>
-                  <span className="v">{documento.itens.length}</span>
-                </div>
-                <div className="sc-row">
-                  <span className="k">Total</span>
-                  <span className="v">{moeda(documento.total)}</span>
+                  <span className="k">{opcoes.length > 0 ? "Valores" : "Total"}</span>
+                  <span className="v">
+                    {opcoes.length > 0 && menorOpcao !== maiorOpcao
+                      ? `${moeda(menorOpcao!)} a ${moeda(maiorOpcao!)}`
+                      : moeda(totalDeReferencia)}
+                  </span>
                 </div>
               </div>
               <div className="sc-print">
@@ -736,61 +876,63 @@ export function DocumentoDoCliente({
               "Cada linha é um serviço com sua medida. O valor de cada item já inclui material e mão de obra, salvo observação em contrário."}
           </p>
 
-          <div className="cost-wrap">
-            <table className="cost-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th className="ct-num">Qtd.</th>
-                  <th>Unid.</th>
-                  {mostraValores && <th className="ct-num">Vlr. unitário</th>}
-                  {mostraValores && <th className="ct-num">Total</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {linhas.map((linha, i) =>
-                  linha.tipo === "grupo" ? (
-                    <tr className="ct-group" key={`g${i}`}>
-                      <td colSpan={mostraValores ? 5 : 3}>{linha.nome}</td>
-                    </tr>
-                  ) : (
-                    <tr key={`i${i}`}>
-                      <td>
-                        {linha.item.descricao}
-                        {linha.item.observacao && (
-                          <>
-                            <br />
-                            <small>{linha.item.observacao}</small>
-                          </>
-                        )}
-                      </td>
-                      <td className="num">{numero(linha.item.quantidade)}</td>
-                      <td className="unit">{linha.item.unidade ?? "—"}</td>
-                      {mostraValores && (
-                        <td className="num">
-                          {linha.item.valorUnitario === null
-                            ? "—"
-                            : moeda(linha.item.valorUnitario)}
-                        </td>
-                      )}
-                      {mostraValores && (
-                        <td className="num total">
-                          {linha.item.total === null ? "—" : moeda(linha.item.total)}
-                        </td>
-                      )}
-                    </tr>
-                  ),
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* Com opções de material, a tabela vira abas: o cliente escolhe
+              entre dois jeitos de fazer a mesma obra e vê o preço de cada um.
 
-          <div className="total-bar">
-            <span className="tb-label">
-              {itemizado ? "Total geral" : "Valor fechado"}
-            </span>
-            <span className="tb-value">{moeda(documento.total)}</span>
-          </div>
+              **A troca é CSS puro, com radio escondido e `:has()`** — nada de
+              JavaScript. O documento é um contrato e tem que aparecer inteiro
+              sem script, que é a mesma razão de esta rota não ter `loading.tsx`
+              (ver o comentário em `src/app/p/[token]/page.tsx`). Onde o
+              `:has()` não pegar, as duas opções aparecem empilhadas, que é
+              exatamente o que a folha de impressão já faz no papel. */}
+          {documento.opcoes.length > 0 ? (
+            <div className="opt-escolha">
+              {documento.opcoes.map((_, i) => (
+                <input
+                  key={`r${i}`}
+                  type="radio"
+                  name="opcao-de-material"
+                  id={`opcao-${i}`}
+                  defaultChecked={i === 0}
+                  className="opt-radio"
+                />
+              ))}
+
+              <div className="opt-tabs" role="tablist">
+                {documento.opcoes.map((o, i) => (
+                  <label className="opt-tab" htmlFor={`opcao-${i}`} key={`t${i}`}>
+                    <span className="ot-name">{o.nome}</span>
+                    <span className="ot-price">{moeda(o.total)}</span>
+                    {o.descricao && <span className="ot-desc">{o.descricao}</span>}
+                  </label>
+                ))}
+              </div>
+
+              {documento.opcoes.map((o, i) => (
+                <div className="opt-painel" data-opt={i} key={`p${i}`}>
+                  {/* Só na impressão: no papel as duas saem uma sob a outra e
+                      sem título ninguém sabe qual é qual. */}
+                  <div className="opt-title">{o.nome}</div>
+                  <TabelaDeCustos itens={o.itens} mostraValores={mostraValores} />
+                  <div className="total-bar">
+                    <span className="tb-label">{o.nome}</span>
+                    <span className="tb-value">{moeda(o.total)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <TabelaDeCustos itens={documento.itens} mostraValores={mostraValores} />
+          )}
+
+          {documento.opcoes.length === 0 && (
+            <div className="total-bar">
+              <span className="tb-label">
+                {itemizado ? "Total geral" : "Valor fechado"}
+              </span>
+              <span className="tb-value">{moeda(documento.total)}</span>
+            </div>
+          )}
 
           {/* A nota escrita fica logo abaixo do total, que é onde a dúvida
               nasce: o que este número inclui, até quando vale, como se paga. */}
@@ -1109,7 +1251,7 @@ export function DocumentoDoCliente({
           <AceiteDoCliente
             token={token}
             jaAprovado={jaAprovado}
-            total={documento.total}
+            total={totalDeReferencia}
             versao={documento.versao}
             cliente={documento.cliente}
             aceite={aceite ?? null}
