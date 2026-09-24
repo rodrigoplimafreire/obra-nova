@@ -1,5 +1,5 @@
 import "server-only";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseAdmin, urlDaProposta } from "@/lib/supabase/admin";
 import { orgAtual } from "@/lib/admin/sessao";
 import type { Enums } from "@/lib/database.types";
 
@@ -190,6 +190,20 @@ export type SemanaDoCronograma = {
   critico: boolean;
 };
 
+/**
+ * Uma foto ou vídeo da situação atual da obra.
+ *
+ * A URL é montada na leitura a partir do caminho no bucket — guardar a URL na
+ * linha seria guardar o domínio do storage dentro do dado.
+ */
+export type MidiaDoOrcamento = {
+  id: string;
+  tipo: "foto" | "video";
+  url: string;
+  legenda: string | null;
+  position: number;
+};
+
 export type OrcamentoCompleto = {
   id: string;
   numero: string | null;
@@ -220,6 +234,8 @@ export type OrcamentoCompleto = {
   modulos: ModuloDoOrcamento[];
   /** Seção 4: o cronograma semana a semana. Vazio = seção não aparece. */
   cronograma: SemanaDoCronograma[];
+  /** Fotos e vídeo da situação atual, na ordem em que saem no documento. */
+  midias: MidiaDoOrcamento[];
 
   senha: string | null;
   token: string;
@@ -335,6 +351,7 @@ export async function carregarOrcamento(
     { data: secoes },
     { data: modulos },
     { data: cronograma },
+    { data: midias },
   ] = await Promise.all([
       sb
         .from("orc_itens")
@@ -364,6 +381,11 @@ export async function carregarOrcamento(
         .select("id, semana, titulo, fisico, financeiro, marco, critico")
         .eq("orcamento_id", id)
         .order("semana"),
+      sb
+        .from("orc_midias")
+        .select("id, tipo, storage_path, legenda, position")
+        .eq("orcamento_id", id)
+        .order("position"),
     ]);
 
   const todos = (linhas ?? []).map(paraItem);
@@ -407,6 +429,13 @@ export async function carregarOrcamento(
     })),
     modulos: modulos ?? [],
     cronograma: cronograma ?? [],
+    midias: (midias ?? []).map((m) => ({
+      id: m.id,
+      tipo: m.tipo,
+      url: urlDaProposta(m.storage_path),
+      legenda: m.legenda,
+      position: m.position,
+    })),
 
     senha: o.senha,
     token: o.token,

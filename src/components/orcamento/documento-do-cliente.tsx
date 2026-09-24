@@ -176,6 +176,8 @@ export function DocumentoDoCliente({
       ].filter((g): g is string => g !== null)
     : [];
 
+  const fotos = documento.midias.filter((m) => m.tipo === "foto");
+  const videos = documento.midias.filter((m) => m.tipo === "video");
   const projeto = documento.secoes.filter((s) => s.tipo === "projeto");
   const observacoes = documento.secoes.filter((s) => s.tipo === "observacao");
   const etapas = documento.secoes.filter((s) => s.tipo === "etapa");
@@ -515,6 +517,79 @@ export function DocumentoDoCliente({
           </div>
         </div>
       </header>
+
+      {/* ---------- Situação atual: as fotos e o vídeo ----------
+          Vem antes de tudo, e é de propósito: é o "antes" que explica por que a
+          obra é necessária, e é o que o cliente reconhece — ele mora ali. As
+          propostas escritas à mão da RD sempre abriram assim.
+
+          As classes são do `brand.css` da marca (`.media-grid`, `.media-item`,
+          `.media-cap`, `.media-video-wrap`), que já existiam e já estavam
+          afinadas para o A4: na impressão a grade vira duas colunas e o vídeo
+          some, porque papel não toca vídeo.
+
+          A foto é `<img>` puro, sem `next/image`: a URL é do bucket público do
+          Supabase e o documento tem que continuar aparecendo quando o
+          otimizador da Vercel estiver indisponível ou a cota estourar. Um
+          contrato não pode depender disso. */}
+      {documento.midias.length > 0 && (
+        <section id="fotos">
+          <div className="wrap">
+            <p className="kicker">
+              <span className="s-num">{proximoNumero()}</span> Situação atual
+            </p>
+            <h2>O que existe hoje</h2>
+            <p className="intro">
+              Registro do estado atual — a base técnica usada para fechar este
+              orçamento.
+            </p>
+
+            {fotos.length > 0 && (
+              <div className="media-grid">
+                {fotos.map((m, i) => (
+                  <figure className="media-item" key={i}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={m.url}
+                      alt={m.legenda ?? "Foto da situação atual da obra"}
+                      loading="lazy"
+                    />
+                    {m.legenda && (
+                      <figcaption className="media-cap">{m.legenda}</figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            )}
+
+            {videos.map((m, i) => (
+              <div className="media-video-wrap" key={i}>
+                <video
+                  controls
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-label={m.legenda ?? "Vídeo da situação atual da obra"}
+                >
+                  <source src={m.url} type="video/mp4" />
+                </video>
+              </div>
+            ))}
+            {videos.map(
+              (m, i) =>
+                m.legenda && (
+                  <p
+                    className="media-cap"
+                    style={{ border: "none", padding: "10px 2px 0" }}
+                    key={i}
+                  >
+                    {m.legenda}
+                  </p>
+                ),
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ---------- O projeto, antes dos números ---------- */}
       {projeto.length > 0 && (

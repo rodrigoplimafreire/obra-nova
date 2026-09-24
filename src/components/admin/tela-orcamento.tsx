@@ -12,6 +12,7 @@ import {
 import { Dialogo } from "@/components/comum/dialogo";
 import { PublicacaoDoOrcamento } from "./publicacao-do-orcamento";
 import { TabelaDeCustos } from "./tabela-de-custos";
+import { MidiasDoDocumento } from "./midias-do-documento";
 import { PlanejamentoDoDocumento } from "./planejamento-do-documento";
 // `horas` vem daqui porque é o mesmo formato do pipeline: "3h20", "45 min".
 // Duas grafias para a mesma duração em telas vizinhas é ruído.
@@ -162,6 +163,11 @@ export function TelaDoOrcamento({
             sentido quando já existe o que planejar. As duas seções que ele
             alimenta são opcionais no documento. */}
         <PlanejamentoDoDocumento orcamento={orcamento} />
+
+        {/* Por último no painel, primeiro no documento: as fotos abrem a
+            proposta, mas quem monta o orçamento só vai atrás delas depois de
+            ter escopo, preço e texto. */}
+        <MidiasDoDocumento orcamento={orcamento} />
 
         <ZonaDeRisco orcamento={orcamento} />
       </Conteudo>

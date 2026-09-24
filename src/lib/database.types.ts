@@ -863,6 +863,31 @@ type TabelasDeOrcamento = {
       updated_at?: string;
     };
   };
+  orc_midias: {
+    Row: {
+      id: string;
+      orcamento_id: string;
+      tipo: OrcMidiaTipo;
+      storage_path: string;
+      legenda: string | null;
+      position: number;
+      created_at: string;
+    };
+    Insert: {
+      id?: string;
+      orcamento_id: string;
+      tipo?: OrcMidiaTipo;
+      storage_path: string;
+      legenda?: string | null;
+      position?: number;
+    };
+    Update: {
+      tipo?: OrcMidiaTipo;
+      storage_path?: string;
+      legenda?: string | null;
+      position?: number;
+    };
+  };
   orc_secoes: {
     Row: {
       id: string;
@@ -1013,6 +1038,7 @@ type OrcStatus =
 type OrcOrigem = "ia" | "humano";
 /** `projeto` abre o documento, `observacao` fecha, `etapa` é a linha do tempo. */
 type OrcSecaoTipo = "projeto" | "observacao" | "etapa";
+type OrcMidiaTipo = "foto" | "video";
 type OrcBlocoTipo = "text" | "audio" | "image";
 type OrcTranscricaoStatus = "pending" | "done" | "failed";
 type OrcGeracaoEtapa = "perguntas" | "orcamento";

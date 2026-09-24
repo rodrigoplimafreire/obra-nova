@@ -56,6 +56,19 @@ export type ModuloPublicado = {
   percentual: number | null;
 };
 
+/**
+ * Uma foto ou o vídeo da situação atual, congelados junto com o resto.
+ *
+ * A URL é gravada aqui, e não montada na leitura: o documento publicado é uma
+ * cópia, e tem que continuar mostrando a mesma foto mesmo que alguém troque a
+ * mídia do orçamento depois. É a mesma razão de o preço ser copiado.
+ */
+export type MidiaPublicada = {
+  tipo: "foto" | "video";
+  url: string;
+  legenda: string | null;
+};
+
 /** Uma semana do cronograma executivo físico-financeiro. */
 export type SemanaPublicada = {
   semana: number;
@@ -89,6 +102,8 @@ export type DocumentoPublicado = {
   modulos: ModuloPublicado[];
   /** Seção 4. Vazio = a seção não aparece no documento. */
   cronograma: SemanaPublicada[];
+  /** Fotos e vídeo da situação atual. Vazio = a seção não aparece. */
+  midias: MidiaPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
   total: number;
   valorFechado: number | null;
@@ -130,6 +145,7 @@ type OrcamentoDeOrigem = {
   secoes: SecaoPublicada[];
   modulos: ModuloPublicado[];
   cronograma: SemanaPublicada[];
+  midias: MidiaPublicada[];
 };
 
 /**
@@ -202,6 +218,11 @@ export function montarDocumento(
       financeiro: c.financeiro,
       marco: c.marco,
       critico: c.critico,
+    })),
+    midias: orcamento.midias.map((m) => ({
+      tipo: m.tipo,
+      url: m.url,
+      legenda: m.legenda,
     })),
     total: orcamento.valorFechado ?? soma,
     valorFechado: orcamento.valorFechado,
@@ -301,6 +322,22 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
       })
     : [];
 
+  const midias = Array.isArray(d.midias)
+    ? d.midias.flatMap((linha): MidiaPublicada[] => {
+        if (!linha || typeof linha !== "object") return [];
+        const m = linha as Record<string, unknown>;
+        const url = texto(m.url);
+        if (!url) return [];
+        return [
+          {
+            tipo: m.tipo === "video" ? "video" : "foto",
+            url,
+            legenda: texto(m.legenda),
+          },
+        ];
+      })
+    : [];
+
   return {
     versao: numero(d.versao) ?? 1,
     numero: texto(d.numero),
@@ -326,6 +363,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     secoes,
     modulos,
     cronograma,
+    midias,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
     publicadoEm: texto(d.publicadoEm) ?? new Date().toISOString(),
