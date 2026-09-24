@@ -1,6 +1,6 @@
 # Biblioteca de orçamentos · RD Engenharia
 
-Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela RD, nas duas fontes: o banco do Obra Nova e as propostas em HTML do `rd-propostas`. Gerado em 24/09/2026 por `scripts/biblioteca-de-orcamentos.ts`.
+Extração de **535 linhas de serviço** de todos os orçamentos já feitos pela RD, nas duas fontes: o banco do Obra Nova e as propostas em HTML do `rd-propostas`. Gerado em 24/09/2026 por `scripts/biblioteca-de-orcamentos.ts`.
 
 **Sobre os preços:** a maioria das obras da RD é orçada por **valor fechado** — um preço único para o escopo inteiro, sem preço por item. Por isso boa parte das linhas aqui tem quantidade e unidade, mas não tem valor. Nada foi estimado para preencher lacuna.
 
@@ -8,9 +8,9 @@ Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela
 
 | Cliente | Objeto | Valor fechado | Situação | Fonte |
 |---|---|---:|---|---|
-| Jeová Filho | Parede de Gesso (4 itens) | — | enviado | Obra Nova `OYUeY6gMahpulzCq5R66CTt4jOrAuMBP` |
+| Jeová Filho | Parede de Gesso (4 itens) | R$ 3.249,60 | enviado | Obra Nova `OYUeY6gMahpulzCq5R66CTt4jOrAuMBP` |
 | Jeová | — (2 itens) | — | visto | Obra Nova `2dk-0IpT_A7WbiyDauKCXxbS8PW7w2bg` |
-| Amanda e Diego | Proposta técnica (3 itens) | — | aprovado | Obra Nova `-tTbKxtdJGW5G58ofnUxks15YzSkC9tm` |
+| Amanda e Diego | Proposta técnica (3 itens) | R$ 1.200,00 | aprovado | Obra Nova `-tTbKxtdJGW5G58ofnUxks15YzSkC9tm` |
 | Sr. Erivando | Proposta técnica (9 itens) | R$ 10.000,00 | aprovado | Obra Nova `zWRUVk3rN6mCdLp81vrusL3miao_4o4m` |
 | Gabriel Fernandes | Orçamento e cronograma (45 itens) | — | enviado | Obra Nova `IZzvtACtYTf7rjAlygSIKpRDCqTQzRBh` |
 | Sr. Helano | Orçamento técnico (30 itens) | R$ 87.748,00 | enviado | Obra Nova `RRoHHFiVRf-lOaLQ5e3DiYphrvdZ-aKT` |
@@ -26,9 +26,11 @@ Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela
 | Sra. Heloneida | Substituição de portas, pintura, luminárias e torneiras (18 itens) | R$ 3.950,00 | visto | Obra Nova `heloneida` |
 | Dona Fátima Marasini | Recuperação e manutenção das áreas externas (19 itens) | R$ 69.860,00 | visto | Obra Nova `fatima` |
 | Sr. Thomas | Ampliação de área gourmet (38 itens) | R$ 99.107,00 | visto | Obra Nova `thomas` |
+| Dona Izonete | Reforma de apartamento (12 itens) | R$ 7.157,00 | rascunho | Obra Nova `izonete` |
+| Condomínio Botânico Terras Brasilis | Reforma de cobertura, forro PVC e pintura da estrutura (21 itens) | R$ 80.797,50 | rascunho | Obra Nova `terrabrasilis` |
 | Amanda e Diego | — (3 itens) | — | — | HTML `amanda-diego` |
 | Sr. Erivando | — (9 itens) | — | — | HTML `erivando` |
-| Gabriel Fernandes | — (67 itens) | — | — | HTML `gabriel-fernandes` |
+| Gabriel Fernandes | — (50 itens) | — | — | HTML `gabriel-fernandes` |
 | Sr. Helano | — (30 itens) | — | — | HTML `helano` |
 | Dona Izonete | — (12 itens) | — | — | HTML `izonete` |
 | Jeová Filho | — (10 itens) | — | — | HTML `jeova-filho` |
@@ -39,7 +41,7 @@ Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela
 
 ## Preços unitários observados
 
-86 linhas têm preço unitário lançado. São as únicas referências de preço por serviço que existem hoje.
+98 linhas têm preço unitário lançado. São as únicas referências de preço por serviço que existem hoje.
 
 | Serviço | Un. | Vlr. unitário | Cliente |
 |---|---|---:|---|
@@ -77,6 +79,7 @@ Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela
 | Esquadrias: troca, instalação e pintura de portas de madeira completas | un | R$ 270,00 | Gabriel Fernandes |
 | Fechamento de vão antigo de janela em alvenaria com reboco duplo (1,5 × 1,20 m) | — | R$ 550,00 | Gabriel Fernandes |
 | Fita de LED + fonte de alimentação (para o nicho decorativo sobre a cabeceira) | Kit | R$ 180,00 | Dona Izonete |
+| Fita de LED + fonte de alimentação (para o nicho decorativo sobre a cabeceira) | Kit | R$ 180,00 | Dona Izonete |
 | Gesso em pó | kg | R$ 10,00 | Jeová |
 | Impermeabilização de paredes na área do box até 1,80 m | Serviço | R$ 350,00 | Gabriel Fernandes |
 | Instalação de novo telhado colonial com colunas e calhas (61,28 m²) | — | R$ 4.902,00 | Gabriel Fernandes |
@@ -84,29 +87,40 @@ Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela
 | Instalação de revestimento cerâmico nas paredes (21,28 m²) | — | R$ 2.200,00 | Gabriel Fernandes |
 | Instalação elétrica completa (infraestrutura, fiação e quadro — 7 compartimentos) | Global | R$ 8.500,00 | Gabriel Fernandes |
 | Kit de ferragens especiais (dobradiças com amortecedor soft-close e puxadores) | Conj | R$ 850,00 | Dona Izonete |
+| Kit de ferragens especiais (dobradiças com amortecedor soft-close e puxadores) | Conj | R$ 850,00 | Dona Izonete |
 | Limpeza de caixa d'água de alvenaria, ~2.000 L (Se a caixa for de plástico, o valor cai para R$ 450,00) | Serv | R$ 650,00 | Amanda e Diego |
 | Limpeza de entulho na laje de cobertura, com descarte | Serv | R$ 400,00 | Amanda e Diego |
 | Limpeza pós-obra | Serv | R$ 150,00 | Jeová Filho |
 | Limpeza pós-obra e descarte de entulho | Serv | R$ 450,00 | Sr. Rafael |
 | Locação de caçambas estacionárias para descarte de entulho (6 caçambas) | — | R$ 3.500,00 | Gabriel Fernandes |
 | Mão de obra de gesseiro (montagem, nichos, tratamento de junta e pintura) | Serv | R$ 1.900,00 | Dona Izonete |
+| Mão de obra de gesseiro (montagem, nichos, tratamento de junta e pintura) | Serv | R$ 1.900,00 | Dona Izonete |
+| Mão de obra de vidraçaria (medição fina, furação e instalação fina dos vidros) | Serv | R$ 750,00 | Dona Izonete |
 | Mão de obra de vidraçaria (medição fina, furação e instalação fina dos vidros) | Serv | R$ 750,00 | Dona Izonete |
 | Mão de obra dos serviços acima | vb | R$ 2.560,00 | Sra. Heloneida |
 | Materiais de acabamento (fundo preparador e pintura látex/acrílica) | Unid | R$ 220,00 | Dona Izonete |
+| Materiais de acabamento (fundo preparador e pintura látex/acrílica) | Unid | R$ 220,00 | Dona Izonete |
 | Materiais listados acima | vb | R$ 1.390,00 | Sra. Heloneida |
 | Módulos de tomada, interruptores e caixas de embutir especiais para drywall | Unid | R$ 50,00 | Dona Izonete |
+| Módulos de tomada, interruptores e caixas de embutir especiais para drywall | Unid | R$ 50,00 | Dona Izonete |
 | Muros laterais e fundos: aplicação de reboco completo (170 m²) | — | R$ 5.400,00 | Gabriel Fernandes |
+| Parafusos, fita de junta, massa para drywall e acessórios | Conj | R$ 180,00 | Dona Izonete |
 | Parafusos, fita de junta, massa para drywall e acessórios | Conj | R$ 180,00 | Dona Izonete |
 | Parede de gesso drywall | m² | R$ 180,00 | Jeová |
 | Paredes da garagem: remoção de chapisco antigo, novo chapisco e reboco (51,92 m²) | — | R$ 4.420,00 | Gabriel Fernandes |
 | Paredes da sala: emassamento sobre textura existente, correção e pintura completa (72,82 m²) | — | R$ 5.097,00 | Gabriel Fernandes |
 | Perfis de alumínio e contrabatentes de fixação estrutural (ancoragem no gesso) | Conj | R$ 450,00 | Dona Izonete |
+| Perfis de alumínio e contrabatentes de fixação estrutural (ancoragem no gesso) | Conj | R$ 450,00 | Dona Izonete |
+| Perfis estruturais (guias, montantes e cantoneiras de aço) | Unid | R$ 28,00 | Dona Izonete |
 | Perfis estruturais (guias, montantes e cantoneiras de aço) | Unid | R$ 28,00 | Dona Izonete |
 | Pintura das paredes com tinta látex na cor existente | m² | R$ 25,00 | Sr. Rafael |
 | Pintura de parede de gesso drywall (22,04 m²) | — | R$ 662,40 | Jeová Filho |
 | Piso das laterais: regularização de terreno e confecção de piso cimentado | m² | R$ 32,50 | Gabriel Fernandes |
 | Placas de gesso acartonado ST (Standard 12,5 mm) | Chapa | R$ 45,00 | Dona Izonete |
+| Placas de gesso acartonado ST (Standard 12,5 mm) | Chapa | R$ 45,00 | Dona Izonete |
 | Portas laterais e superiores em vidro temperado 10 mm sob medida | m² | R$ 350,00 | Dona Izonete |
+| Portas laterais e superiores em vidro temperado 10 mm sob medida | m² | R$ 350,00 | Dona Izonete |
+| Prateleiras e divisórias internas (MDF branco 15 mm para os vãos de roupas) | Chapa | R$ 250,00 | Dona Izonete |
 | Prateleiras e divisórias internas (MDF branco 15 mm para os vãos de roupas) | Chapa | R$ 250,00 | Dona Izonete |
 | Quarto 2: emassamento e pintura completa de paredes e teto (49,01 m²) | — | R$ 3.430,00 | Gabriel Fernandes |
 | Quarto 3: emassamento e pintura completa (48,65 m²) | — | R$ 3.405,00 | Gabriel Fernandes |
@@ -134,7 +148,7 @@ Extração de **519 linhas de serviço** de todos os orçamentos já feitos pela
 
 ### Jeová Filho
 
-Parede de Gesso · Av. Ademar Arruda, 285 · Eusébio/CE
+Parede de Gesso · Av. Ademar Arruda, 285 · Eusébio/CE · **R$ 3.249,60**
 
 
 **1. Serviços iniciais**
@@ -170,7 +184,7 @@ Parede de Gesso · Av. Ademar Arruda, 285 · Eusébio/CE
 
 ### Amanda e Diego
 
-Proposta técnica
+Proposta técnica · **R$ 1.200,00**
 
 
 **Sem grupo**
@@ -870,6 +884,84 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 |---|---:|---|---:|---:|
 | Limpeza final, retirada e descarte de entulho | 1 | Serv | — | — |
 
+### Dona Izonete
+
+Reforma de apartamento · **R$ 7.157,00**
+
+
+**01 Estrutura em gesso acartonado (drywall) e internos**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Placas de gesso acartonado ST (Standard 12,5 mm) | 8 | Chapa | R$ 45,00 | R$ 360,00 |
+| Perfis estruturais (guias, montantes e cantoneiras de aço) | 14 | Unid | R$ 28,00 | R$ 392,00 |
+| Parafusos, fita de junta, massa para drywall e acessórios | 1 | Conj | R$ 180,00 | R$ 180,00 |
+| Materiais de acabamento (fundo preparador e pintura látex/acrílica) | 1 | Unid | R$ 220,00 | R$ 220,00 |
+| Prateleiras e divisórias internas (MDF branco 15 mm para os vãos de roupas) | 3 | Chapa | R$ 250,00 | R$ 750,00 |
+
+**02 Vidraçaria — portas em vidro temperado 10 mm**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Portas laterais e superiores em vidro temperado 10 mm sob medida | 3.5 | m² | R$ 350,00 | R$ 1.225,00 |
+| Perfis de alumínio e contrabatentes de fixação estrutural (ancoragem no gesso) | 1 | Conj | R$ 450,00 | R$ 450,00 |
+| Kit de ferragens especiais (dobradiças com amortecedor soft-close e puxadores) | 1 | Conj | R$ 850,00 | R$ 850,00 |
+
+**03 Iluminação & instalações elétricas**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Fita de LED + fonte de alimentação (para o nicho decorativo sobre a cabeceira) | 1 | Kit | R$ 180,00 | R$ 180,00 |
+| Módulos de tomada, interruptores e caixas de embutir especiais para drywall | 2 | Unid | R$ 50,00 | R$ 100,00 |
+
+**04 Mão de obra especializada**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Mão de obra de gesseiro (montagem, nichos, tratamento de junta e pintura) | 1 | Serv | R$ 1.900,00 | R$ 1.900,00 |
+| Mão de obra de vidraçaria (medição fina, furação e instalação fina dos vidros) | 1 | Serv | R$ 750,00 | R$ 750,00 |
+
+### Condomínio Botânico Terras Brasilis
+
+Reforma de cobertura, forro PVC e pintura da estrutura · **R$ 80.797,50**
+
+
+**01 Cobertura / telhado**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Retirada de telhado em aço galvalume existente (saída) | 81.34 | m² | — | — |
+| Retirada de rufo em zinco | 15 | m linear | — | — |
+| Retirada de telhas em ACM das duas coberturas menores | 2 | coberturas | — | — |
+| Instalação de telha Isoroof TP40 50 mm (saída) | 81.34 | m² | — | — |
+| Instalação de telha Isoroof TP40 50 mm + estrutura metálica nova (entrada) | 28.4 | m² | — | — |
+| Limpeza e correção de calha | 15 | m linear | — | — |
+| Instalação de rufo | 15 | m linear | — | — |
+| Instalação de calha nas duas coberturas menores da entrada | 9 | m linear | — | — |
+| Instalação de tubulação PVC para saída de água pluvial | 15 | m linear | — | — |
+
+**02 Forro PVC**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Retirada de forro PVC das duas coberturas da entrada | 28.4 | m² | — | — |
+| Nova estrutura de fixação do forro PVC | 1 | Conj | — | — |
+| Instalação de forro PVC na cor amadeirado | 28.4 | m² | — | — |
+
+**03 Pintura da estrutura**
+
+| Serviço | Qtd | Un. | Vlr. unit. | Total |
+|---|---:|---|---:|---:|
+| Lixamento do pergolado para correção de pintura, com tratamento das emendas em PU40/selante híbrido | 56 | m² | — | — |
+| Lixamento e regularização das emendas das colunas (6,00 m de altura) | 4 | colunas | — | — |
+| Lixamento dos topos das emendas da face das coberturas | 68 | m linear | — | — |
+| Tratamento das juntas com PU40 (pergolado, colunas e face das coberturas) | 1 | Conj | — | — |
+| Aplicação de primer (colunas, pergolado e face das coberturas) | 1 | Conj | — | — |
+| Pintura do pergolado com esmalte poliuretano alifático | 56 | m² | — | — |
+| Pintura das colunas com esmalte poliuretano alifático | 4 | colunas | — | — |
+| Pintura da face das coberturas com esmalte poliuretano alifático | 68 | m linear | — | — |
+| Limpeza pós-obra | 1 | Serv | — | — |
+
 ### Amanda e Diego (HTML)
 
 `rd-propostas/amanda-diego`
@@ -896,13 +988,13 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 | Construção de colunas de 4,00 m × 25 cm × 15 cm | 3 | un | — | — |
 | Construção de vigas de reforço estrutural para a construção existente 1 viga de 3,80 m × 30 cm × 15 cm e 1 viga de 5,00 m × 35 cm × 15 cm | 2 | un | — | — |
 | Construção de laje de cobertura A estrutura já existe — o serviço executa apenas a laje | 3,59 × 3,94 m | — | — | — |
-| Construção de platibanda de 60 cm de altura, com reboco apenas na parte interna | 11,12 | m | — | — |
+| Construção de platibanda de 60 cm de altura, com reboco apenas na parte interna | 11.12 | m | — | — |
 
 **02 Revestimento e acabamentos**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Chapisco e reboco do forro de laje | 40,60 | m² | — | — |
+| Chapisco e reboco do forro de laje | 40.6 | m² | — | — |
 | Acabamento de reboco das esquadrias de janela e instalação de peitoril em granito verde Ubatuba Janelas de 1,60 × 1,20 m | 4 esquadrias | — | — | — |
 | Acabamento de reboco das esquadrias de janela de banheiro e instalação de peitoril em granito verde Ubatuba Janelas de 1,60 m × 60 cm | 2 esquadrias | — | — | — |
 | Instalação de grades de ferro nas esquadrias | 6 grades | — | — | — |
@@ -917,19 +1009,17 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
 | Escavação, armação e concretagem de colunas de sustentação | 6 un / ~12 m | — | — | — |
-| Confecção de cinta de amarração superior/inferior em concreto armado | 26,00 | m | — | — |
-| Elevação de alvenaria para subir muro até 3,00 m de altura | 14,40 | m² | — | — |
-| Demolição de reboco do muro da frente e coluna de alvenaria | — | — | — | — |
-| Chapisco e reboco completo em ambas as faces (interna e externa) | 77,82 | m² | — | — |
+| Confecção de cinta de amarração superior/inferior em concreto armado | 26 | m | — | — |
+| Elevação de alvenaria para subir muro até 3,00 m de altura | 14.4 | m² | — | — |
+| Demolição de reboco do muro da frente e coluna de alvenaria | Serviço | — | — | — |
+| Chapisco e reboco completo em ambas as faces (interna e externa) | 77.82 | m² | — | — |
 | Demolição de marquise antiga e execução de nova marquise em concreto armado | 4,20 × 0,60 m | — | — | — |
-| Subtotal · Etapa 1 | — | — | — | — |
 
 **02 Tratamento especial de infiltração (quincheamento)**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
 | Corte intercalado a cada 2 m (H=10 cm), armação e concretagem com Rebotec no rodapé | 100,00 m lin. | — | — | — |
-| Subtotal · Etapa 2 | — | — | — | — |
 
 **03 Fechamento e abertura de vãos (janelas)**
 
@@ -937,7 +1027,6 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 |---|---:|---|---:|---:|
 | Fechamento de vão antigo de janela em alvenaria com reboco duplo | 1,50 × 1,20 m | — | — | — |
 | Abertura de novo vão em alvenaria na lateral com verga e contraverga | 1,50 × 1,20 m | — | — | — |
-| Subtotal · Etapa 3 | — | — | — | — |
 
 **04 Reservatório, varanda, garagem, despensa e elétrica**
 
@@ -945,84 +1034,65 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 |---|---:|---|---:|---:|
 | Demolição manual de caixa d'água elevada em alvenaria/colunas (H=5 m, 2×2 m) | 1 | un | — | — |
 | Confecção de base para nova caixa d'água e instalação de caixa plástica com conexões | 1 | un | — | — |
-| Demolição e confecção de novo reboco nas paredes externas até a altura de 1,60 m | 35,00 | m² | — | — |
-| Demolição de parede da garagem | 10,70 | m² | — | — |
-| Despensa: instalação de revestimento cerâmico nas paredes | 10,36 | m² | — | — |
-| Instalação elétrica completa (infraestrutura, fiação e quadro — 7 compartimentos) | — | — | — | — |
-| Subtotal · Etapa 4 | — | — | — | — |
+| Demolição e confecção de novo reboco nas paredes externas até a altura de 1,60 m | 35 | m² | — | — |
+| Demolição de parede da garagem | 10.7 | m² | — | — |
+| Despensa: instalação de revestimento cerâmico nas paredes | 10.36 | m² | — | — |
+| Instalação elétrica completa (infraestrutura, fiação e quadro — 7 compartimentos) | Global | — | — | — |
 
 **05 Cozinha**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Aplicação de massa corrida e pintura das paredes | 15,45 | m² | — | — |
-| Demolição de meia parede e remoção de entulho | 2,97 | m² | — | — |
-| Subtotal · Etapa 5 | — | — | — | — |
+| Aplicação de massa corrida e pintura das paredes | 15.45 | m² | — | — |
+| Demolição de meia parede e remoção de entulho | 2.97 | m² | — | — |
 
 **06 Ambientes internos (salas, quartos e banheiros)**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Teto geral (sala/circulação): emassamento, correção e pintura | 48,88 | m² | — | — |
-| Paredes da sala: emassamento sobre textura existente, correção e pintura completa | 72,82 | m² | — | — |
+| Teto geral (sala/circulação): emassamento, correção e pintura | 48.88 | m² | — | — |
+| Paredes da sala: emassamento sobre textura existente, correção e pintura completa | 72.82 | m² | — | — |
 | 6.3 Quarto 1 | — | — | — | — |
-| Correção de reboco em faixa de rodapé (H=1 m) | — | — | — | — |
-| Emassamento e pintura completa | 43,46 | m² | — | — |
+| Correção de reboco em faixa de rodapé (H=1 m) | Serviço | — | — | — |
+| Emassamento e pintura completa | 43.46 | m² | — | — |
 | 6.4 Banheiro suíte | — | — | — | — |
-| Remoção de revestimento cerâmico existente na área do box | 4,54 | m² | — | — |
-| Assentamento de novo revestimento cerâmico no box | 8,58 | m² | — | — |
+| Remoção de revestimento cerâmico existente na área do box | 4.54 | m² | — | — |
+| Assentamento de novo revestimento cerâmico no box | 8.58 | m² | — | — |
 | Troca e substituição de registro geral e registro do chuveiro | 2 | un | — | — |
-| Emassamento e pintura de paredes com tinta epóxi sobre cerâmica | — | — | — | — |
+| Emassamento e pintura de paredes com tinta epóxi sobre cerâmica | Global | — | — | — |
 | Aparelhos sanitários gerais: troca e instalação de 2 vasos sanitários e 2 pias/lavatórios | 4 | un | — | — |
-| Quarto 2: emassamento e pintura completa de paredes e teto | 49,01 | m² | — | — |
+| Quarto 2: emassamento e pintura completa de paredes e teto | 49.01 | m² | — | — |
 | 6.7 Banheiro social — reforma completa | — | — | — | — |
-| Demolição de revestimento cerâmico das paredes | 9,43 | m² | — | — |
-| Demolição de piso cerâmico e contrapiso | 3,18 | m² | — | — |
-| Confecção de piso em concreto | 3,18 | m² | — | — |
-| Impermeabilização de paredes na área do box até 1,80 m | — | — | — | — |
-| Instalação de revestimento cerâmico nas paredes | 21,28 | m² | — | — |
-| Assentamento de piso cerâmico | 3,18 | m² | — | — |
-| Quarto 3: emassamento e pintura completa | 48,65 | m² | — | — |
-| Subtotal · Etapa 6 | — | — | — | — |
+| Demolição de revestimento cerâmico das paredes | 9.43 | m² | — | — |
+| Demolição de piso cerâmico e contrapiso | 3.18 | m² | — | — |
+| Confecção de piso em concreto | 3.18 | m² | — | — |
+| Impermeabilização de paredes na área do box até 1,80 m | Serviço | — | — | — |
+| Instalação de revestimento cerâmico nas paredes | 21.28 | m² | — | — |
+| Assentamento de piso cerâmico | 3.18 | m² | — | — |
+| Quarto 3: emassamento e pintura completa | 48.65 | m² | — | — |
 
 **07 Área externa, cobertura, muros e esquadrias**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Varanda: pintura e acabamentos em paredes e teto | 17,55 | m² | — | — |
-| Paredes da garagem: remoção de chapisco antigo, novo chapisco e reboco | 51,92 | m² | — | — |
+| Varanda: pintura e acabamentos em paredes e teto | 17.55 | m² | — | — |
+| Paredes da garagem: remoção de chapisco antigo, novo chapisco e reboco | 51.92 | m² | — | — |
 | 7.3 Piso da garagem | — | — | — | — |
-| Demolição de piso existente | 44,23 | m² | — | — |
-| Confecção de piso em concreto com malha pop 15×15 | 44,23 | m² | — | — |
+| Demolição de piso existente | 44.23 | m² | — | — |
+| Confecção de piso em concreto com malha pop 15×15 | 44.23 | m² | — | — |
 | 7.4 Cobertura da garagem | — | — | — | — |
-| Demolição de telhado colonial antigo | 44,23 | m² | — | — |
-| Instalação de novo telhado colonial com colunas e calhas | 61,28 | m² | — | — |
-| Esgoto e drenagem: reconstrução de caixas de visita e revisão de tubulações | — | — | — | — |
-| Piso das laterais: regularização de terreno e confecção de piso cimentado | 60,00 | m² | — | — |
-| Muros laterais e fundos: aplicação de reboco completo | 170,00 | m² | — | — |
+| Demolição de telhado colonial antigo | 44.23 | m² | — | — |
+| Instalação de novo telhado colonial com colunas e calhas | 61.28 | m² | — | — |
+| Esgoto e drenagem: reconstrução de caixas de visita e revisão de tubulações | Serviço geral | — | — | — |
+| Piso das laterais: regularização de terreno e confecção de piso cimentado | 60 | m² | — | — |
+| Muros laterais e fundos: aplicação de reboco completo | 170 | m² | — | — |
 | Esquadrias: troca, instalação e pintura de portas de madeira completas | 5 | un | — | — |
-| Subtotal · Etapa 7 | — | — | — | — |
 
 **08 Descarte de entulho e resíduos**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
 | Locação de caçambas estacionárias para descarte de entulho | 6 caçambas | — | — | — |
-| Subtotal · Etapa 8 | — | — | — | — |
-
-**Sem grupo**
-
-| Serviço | Qtd | Un. | Vlr. unit. | Total |
-|---|---:|---|---:|---:|
-| Etapa 1 · Muro da frente, marquise e estrutura | — | — | — | — |
-| Etapa 2 · Tratamento de infiltração (quincheamento) | — | — | — | — |
-| Etapa 3 · Fechamento e abertura de vãos | — | — | — | — |
-| Etapa 4 · Reservatório, varanda, garagem, despensa e elétrica | — | — | — | — |
-| Etapa 5 · Cozinha | — | — | — | — |
-| Etapa 6 · Ambientes internos (salas, quartos e banheiros) | — | — | — | — |
-| Etapa 7 · Área externa, cobertura, muros e esquadrias | — | — | — | — |
-| Etapa 8 · Descarte de entulho e resíduos | — | — | — | — |
-| Valor total do orçamento | — | — | — | — |
 
 ### Sr. Helano (HTML)
 
@@ -1033,23 +1103,23 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Escavação de baldrame | 27,56 | m | — | — |
-| Construção de baldrame de tijolo e cinta de amarração | 27,56 | m | — | — |
+| Escavação de baldrame | 27.56 | m | — | — |
+| Construção de baldrame de tijolo e cinta de amarração | 27.56 | m | — | — |
 | Execução de fossa (1,50 × 1,50 × 2,00 m) e/ou caixas de inspeção/visita 50×50 cm até o Sanear Caso necessário — Sanear a 25 m de distância | 1 | Un | — | — |
-| Terraplenagem e nivelamento, com aterro de 20 cm de altura, no nível do piso existente | 27,32 | m² | — | — |
+| Terraplenagem e nivelamento, com aterro de 20 cm de altura, no nível do piso existente | 27.32 | m² | — | — |
 | Escavação, fôrmas, armação e concretagem de sapatas isoladas (70×70 cm) | 6 | Un | — | — |
 | Escavação, fôrmas, armação e concretagem de sapatas (60×60 cm) — WC social | 4 | Un | — | — |
 | Construção de pilares (25 × 15 × 300 cm) — fôrmas, armação e concretagem | 6 | Un | — | — |
 | Construção de vigas (4,00 m × 40 × 15 cm) — fôrmas, armação e concretagem 3 vigas cruzando a casa e 1 no comprimento | 4 | Un | — | — |
-| Lastro de concreto 5 cm com tela pop 15×15 cm em área externa | 27,32 | m² | — | — |
+| Lastro de concreto 5 cm com tela pop 15×15 cm em área externa | 27.32 | m² | — | — |
 
 **02 Construção externa / pavimento térreo**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Construção de banheiro social (1,84 × 1,84 × 4,80 m) Pé-direito de 2,80 m com laje para caixa d'água de 500 L e telhado de cobertura | 3,39 | m² | — | — |
-| Construção de parede lateral em alvenaria | 27,48 | m² | — | — |
-| Construção de deck / caramanchão Coluna e cobertura de madeira com telha sanduíche termoacústica | 15,00 | m² | — | — |
+| Construção de banheiro social (1,84 × 1,84 × 4,80 m) Pé-direito de 2,80 m com laje para caixa d'água de 500 L e telhado de cobertura | 3.39 | m² | — | — |
+| Construção de parede lateral em alvenaria | 27.48 | m² | — | — |
+| Construção de deck / caramanchão Coluna e cobertura de madeira com telha sanduíche termoacústica | 15 | m² | — | — |
 
 **03 Reforma do pavimento térreo (24,64 m²)**
 
@@ -1057,28 +1127,28 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 |---|---:|---|---:|---:|
 | Demolição de paredes internas existentes | 1 | Vb | — | — |
 | Demolição do banheiro existente (local da futura escada em L) | 1 | Vb | — | — |
-| Retirada do telhado existente | 24,64 | m² | — | — |
-| Construção de laje pré-moldada/maciça | 24,64 | m² | — | — |
+| Retirada do telhado existente | 24.64 | m² | — | — |
+| Construção de laje pré-moldada/maciça | 24.64 | m² | — | — |
 | Execução de escada em L em concreto armado | 1 | Un | — | — |
-| Adequação de quarto/escritório | 8,00 | m² | — | — |
-| Adequação de cozinha integrada ao deck | 15,00 | m² | — | — |
+| Adequação de quarto/escritório | 8 | m² | — | — |
+| Adequação de cozinha integrada ao deck | 15 | m² | — | — |
 
 **04 Construção do pavimento superior (área: 24,64 m²)**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Construção de hall de acesso (2,24 × 2,12 × 2,80 m) | 4,75 | m² | — | — |
-| Construção de quarto superior (3,80 × 2,84 × 2,80 m) | 10,79 | m² | — | — |
-| Construção de banheiro superior (1,40 × 2,12 × 2,80 m) | 2,97 | m² | — | — |
-| Instalação de cobertura em telha sanduíche termoacústica | 24,64 | m² | — | — |
-| Instalação de forro de PVC | 24,64 | m² | — | — |
+| Construção de hall de acesso (2,24 × 2,12 × 2,80 m) | 4.75 | m² | — | — |
+| Construção de quarto superior (3,80 × 2,84 × 2,80 m) | 10.79 | m² | — | — |
+| Construção de banheiro superior (1,40 × 2,12 × 2,80 m) | 2.97 | m² | — | — |
+| Instalação de cobertura em telha sanduíche termoacústica | 24.64 | m² | — | — |
+| Instalação de forro de PVC | 24.64 | m² | — | — |
 
 **05 Pisos, revestimentos e pintura**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Execução de contrapiso regularizado | 76,60 | m² | — | — |
-| Assentamento de piso porcelanato e revestimentos | 76,60 | m² | — | — |
+| Execução de contrapiso regularizado | 76.6 | m² | — | — |
+| Assentamento de piso porcelanato e revestimentos | 76.6 | m² | — | — |
 | Pintura completa (massa corrida, selador e tinta) — térreo e superior | 1 | Vb | — | — |
 
 **06 Instalações elétricas**
@@ -1118,7 +1188,7 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Portas laterais e superiores em vidro temperado 10 mm sob medida | 3,5 | m² | R$ 350,00 | R$ 1.225,00 |
+| Portas laterais e superiores em vidro temperado 10 mm sob medida | 3.5 | m² | R$ 350,00 | R$ 1.225,00 |
 | Perfis de alumínio e contrabatentes de fixação estrutural (ancoragem no gesso) | 1 | Conj | R$ 450,00 | R$ 450,00 |
 | Kit de ferragens especiais (dobradiças com amortecedor soft-close e puxadores) | 1 | Conj | R$ 850,00 | R$ 850,00 |
 
@@ -1145,14 +1215,14 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Construção de parede de gesso drywall | 11,04 | m² | — | R$ 1.987,20 |
+| Construção de parede de gesso drywall | 11.04 | m² | — | R$ 1.987,20 |
 | Instalação de porta (porta já existente — inclui só o forramento) | 1 | Unid | — | R$ 450,00 |
-| Pintura de parede de gesso drywall | 22,04 | m² | — | R$ 662,40 |
+| Pintura de parede de gesso drywall | 22.04 | m² | — | R$ 662,40 |
 | Limpeza pós-obra | 1 | Serv | — | R$ 150,00 |
-| Construção de parede de gesso bloco | 11,04 | m² | — | R$ 1.435,20 |
-| Aplicação de massa corrida na parede construída | 22,08 | m² | — | R$ 850,00 |
-| Aplicação de selador | 22,08 | m² | — | R$ 250,00 |
-| Pintura da parede construída | 22,08 | m² | — | R$ 662,40 |
+| Construção de parede de gesso bloco | 11.04 | m² | — | R$ 1.435,20 |
+| Aplicação de massa corrida na parede construída | 22.08 | m² | — | R$ 850,00 |
+| Aplicação de selador | 22.08 | m² | — | R$ 250,00 |
+| Pintura da parede construída | 22.08 | m² | — | R$ 662,40 |
 | Instalação de porta (porta já existente — inclui só o forramento) | 1 | Unid | — | R$ 450,00 |
 | Limpeza pós-obra | 1 | Serv | — | R$ 250,00 |
 
@@ -1165,8 +1235,8 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Remoção cuidadosa de forro PVC com armazenamento | 31,00 | m² | — | — |
-| Desmontagem de telhado (telhas, ripamento e caibros) | 31,00 | m² | — | — |
+| Remoção cuidadosa de forro PVC com armazenamento | 31 | m² | — | — |
+| Desmontagem de telhado (telhas, ripamento e caibros) | 31 | m² | — | — |
 
 **02 Infraestrutura (fundação)**
 
@@ -1180,22 +1250,22 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
 | Montagem de armação, fôrmas e concretagem de 8 pilares de 300×30×15 cm | 8 | un | — | — |
-| Montagem de armação, fôrmas e concretagem de vigas de 50×15 cm | 33,42 | m | — | — |
-| Montagem de laje pré-moldada/treliçada, escoramento e capeamento, com abertura de 2,00×0,86 m para futura escada | 31,00 | m² | — | — |
+| Montagem de armação, fôrmas e concretagem de vigas de 50×15 cm | 33.42 | m | — | — |
+| Montagem de laje pré-moldada/treliçada, escoramento e capeamento, com abertura de 2,00×0,86 m para futura escada | 31 | m² | — | — |
 
 **04 Reinstalações e cobertura**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Remontagem da estrutura de madeira/metal do telhado | — | — | — | — |
-| Reinstalação das telhas e acabamentos de cumeeira | — | — | — | — |
-| Reinstalação do forro PVC existente | — | — | — | — |
+| Remontagem da estrutura de madeira/metal do telhado | Etapa | — | — | — |
+| Reinstalação das telhas e acabamentos de cumeeira | Etapa | — | — | — |
+| Reinstalação do forro PVC existente | Etapa | — | — | — |
 
 **05 Limpeza e organização**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Remoção contínua de entulho e limpeza final da obra | — | — | — | — |
+| Remoção contínua de entulho e limpeza final da obra | Vb | — | — | — |
 
 ### Sr. Rafael (HTML)
 
@@ -1206,11 +1276,11 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Retirada de rodapé em porcelanato existente Com reaproveitamento para reinstalação após o tratamento | 125,00 | m linear | — | R$ 2.500,00 |
-| Tratamento de infiltração das paredes na altura do rodapé Corte de 10 cm de altura × 15 cm de espessura, atravessando de um lado ao outro da parede, a cada 2,00 m — areia grossa, rebotech e cimento, técnica tipo viga baldrame sem armadura | 66,80 | m linear | — | R$ 5.678,00 |
-| Aplicação de massa corrida nas paredes tratadas | 44,64 | m² | — | R$ 1.696,32 |
+| Retirada de rodapé em porcelanato existente Com reaproveitamento para reinstalação após o tratamento | 125 | m linear | — | R$ 2.500,00 |
+| Tratamento de infiltração das paredes na altura do rodapé Corte de 10 cm de altura × 15 cm de espessura, atravessando de um lado ao outro da parede, a cada 2,00 m — areia grossa, rebotech e cimento, técnica tipo viga baldrame sem armadura | 66.8 | m linear | — | R$ 5.678,00 |
+| Aplicação de massa corrida nas paredes tratadas | 44.64 | m² | — | R$ 1.696,32 |
 | Correção de rufo do telhado, lado direito da varanda | 1 | Serv | — | R$ 750,00 |
-| Pintura das paredes com tinta látex na cor existente | 249,97 | m² | — | R$ 6.249,25 |
+| Pintura das paredes com tinta látex na cor existente | 249.97 | m² | — | R$ 6.249,25 |
 | Limpeza pós-obra e descarte de entulho | 1 | Serv | — | R$ 450,00 |
 
 ### Shopping Meirelles (HTML)
@@ -1222,18 +1292,18 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Demolição controlada de piso com martelete elétrico (2 mobilizações para meia-pista) | 17,94 | m² | — | — |
+| Demolição controlada de piso com martelete elétrico (2 mobilizações para meia-pista) | 17.94 | m² | — | — |
 | Caçambas estacionárias para entulho com taxa de permanência estendida (3 caçambas de 5 m³) | 3 | Unid | — | — |
-| Limpeza, aspiração e lavagem das superfícies fracionadas | 17,94 | m² | — | — |
+| Limpeza, aspiração e lavagem das superfícies fracionadas | 17.94 | m² | — | — |
 
 **02 Materiais e insumos**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Tela soldada nervurada Q-92 (aço CA-60, 4,2 mm, malha 15×15 cm) com transpasse adequado | 22,00 | m² | — | — |
-| Pontes de aderência epóxi (prensa/fixação entre concreto velho e concreto novo na junta longitudinal) | 5,00 | kg | — | — |
+| Tela soldada nervurada Q-92 (aço CA-60, 4,2 mm, malha 15×15 cm) com transpasse adequado | 22 | m² | — | — |
+| Pontes de aderência epóxi (prensa/fixação entre concreto velho e concreto novo na junta longitudinal) | 5 | kg | — | — |
 | Cimento CP II-Z-32 (sacos de 50 kg) — concreto e regularização em 2 etapas | 14 | Saco | — | — |
-| Areia média e brita nº 1 | 2,80 | m³ | — | — |
+| Areia média e brita nº 1 | 2.8 | m³ | — | — |
 | Argamassa colante ACIII-E, 20 kg (especial para tráfego intenso e secagem rápida) | 8 | Saco | — | — |
 | Rejunte industrializado de alta performance + selante PU para junta longitudinal central | 1 | Gl | — | — |
 | Aditivo acelerador de pega / cura rápida para liberação antecipada do concreto | 2 | Unid | — | — |
@@ -1242,8 +1312,8 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Equipe de concretagem e nivelamento da rampa (1 pedreiro líder + 2 serventes × 2 etapas) | 17,94 | m² | — | — |
-| Assentamento especializado e rejuntamento de ladrilhos (1 ladrilhista + 1 auxiliar × 2 etapas) | 17,94 | m² | — | — |
+| Equipe de concretagem e nivelamento da rampa (1 pedreiro líder + 2 serventes × 2 etapas) | 17.94 | m² | — | — |
+| Assentamento especializado e rejuntamento de ladrilhos (1 ladrilhista + 1 auxiliar × 2 etapas) | 17.94 | m² | — | — |
 
 ### Terras Brasilis (HTML)
 
@@ -1254,35 +1324,35 @@ Ampliação de área gourmet · Alphaville G1-04 · Eusébio/CE · **R$ 99.107,
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Retirada de telhado em aço galvalume existente (saída) | 81,34 | m² | — | — |
-| Retirada de rufo em zinco | 15,00 | m linear | — | — |
+| Retirada de telhado em aço galvalume existente (saída) | 81.34 | m² | — | — |
+| Retirada de rufo em zinco | 15 | m linear | — | — |
 | Retirada de telhas em ACM das duas coberturas menores | 2 | coberturas | — | — |
-| Instalação de telha Isoroof TP40 50 mm (saída) | 81,34 | m² | — | — |
-| Instalação de telha Isoroof TP40 50 mm + estrutura metálica nova (entrada) | 28,40 | m² | — | — |
-| Limpeza e correção de calha | 15,00 | m linear | — | — |
-| Instalação de rufo | 15,00 | m linear | — | — |
-| Instalação de calha nas duas coberturas menores da entrada | 9,00 | m linear | — | — |
-| Instalação de tubulação PVC para saída de água pluvial | 15,00 | m linear | — | — |
+| Instalação de telha Isoroof TP40 50 mm (saída) | 81.34 | m² | — | — |
+| Instalação de telha Isoroof TP40 50 mm + estrutura metálica nova (entrada) | 28.4 | m² | — | — |
+| Limpeza e correção de calha | 15 | m linear | — | — |
+| Instalação de rufo | 15 | m linear | — | — |
+| Instalação de calha nas duas coberturas menores da entrada | 9 | m linear | — | — |
+| Instalação de tubulação PVC para saída de água pluvial | 15 | m linear | — | — |
 
 **02 Forro PVC**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Retirada de forro PVC das duas coberturas da entrada | 28,40 | m² | — | — |
+| Retirada de forro PVC das duas coberturas da entrada | 28.4 | m² | — | — |
 | Nova estrutura de fixação do forro PVC | 1 | Conj | — | — |
-| Instalação de forro PVC na cor amadeirado | 28,40 | m² | — | — |
+| Instalação de forro PVC na cor amadeirado | 28.4 | m² | — | — |
 
 **03 Pintura da estrutura**
 
 | Serviço | Qtd | Un. | Vlr. unit. | Total |
 |---|---:|---|---:|---:|
-| Lixamento do pergolado para correção de pintura, com tratamento das emendas em PU40/selante híbrido | 56,00 | m² | — | — |
+| Lixamento do pergolado para correção de pintura, com tratamento das emendas em PU40/selante híbrido | 56 | m² | — | — |
 | Lixamento e regularização das emendas das colunas (6,00 m de altura) | 4 | colunas | — | — |
-| Lixamento dos topos das emendas da face das coberturas | 68,00 | m linear | — | — |
+| Lixamento dos topos das emendas da face das coberturas | 68 | m linear | — | — |
 | Tratamento das juntas com PU40 (pergolado, colunas e face das coberturas) | 1 | Conj | — | — |
 | Aplicação de primer (colunas, pergolado e face das coberturas) | 1 | Conj | — | — |
-| Pintura do pergolado com esmalte poliuretano alifático | 56,00 | m² | — | — |
+| Pintura do pergolado com esmalte poliuretano alifático | 56 | m² | — | — |
 | Pintura das colunas com esmalte poliuretano alifático | 4 | colunas | — | — |
-| Pintura da face das coberturas com esmalte poliuretano alifático | 68,00 | m linear | — | — |
+| Pintura da face das coberturas com esmalte poliuretano alifático | 68 | m linear | — | — |
 | Limpeza pós-obra | 1 | Serv | — | — |
 

@@ -19,10 +19,11 @@
  * Escreve em BIBLIOTECA-DE-ORCAMENTOS.md, na raiz.
  */
 
-import { readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { readdirSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { lerProposta } from "./ler-propostas-html";
 
 config({ path: ".env.local" });
 
@@ -48,91 +49,24 @@ type Linha = {
 
 // ------------------------------------------------------------------ HTML
 
-const texto = (html: string) =>
-  html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;| /g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&rsquo;|&#39;/g, "’")
-    .replace(/&times;/g, "×")
-    .replace(/&mdash;/g, "—")
-    .replace(/\s+/g, " ")
-    .trim();
-
-/** "R$ 1.234,56" → 1234.56. Travessão e vazio viram nulo. */
-function dinheiro(s: string | null): number | null {
-  if (!s) return null;
-  const limpo = s.replace(/[R$\s]/g, "");
-  if (!/\d/.test(limpo)) return null;
-  const n = Number(limpo.replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
-
+/**
+ * O leitor mora em `ler-propostas-html.ts` porque o importador precisa do
+ * mesmo. Ler o mesmo HTML de dois jeitos é como os dois números discordam.
+ */
 function lerHtml(pasta: string): Linha[] {
-  const arquivo = join(PROPOSTAS, pasta, "index.html");
-  if (!existsSync(arquivo)) return [];
-  const html = readFileSync(arquivo, "utf8");
-
-  const cliente =
-    texto(html.match(/<h1 class="gate-title">([\s\S]*?)<\/h1>/)?.[1] ?? "")
-      .replace(/^Orçamento para (o |a )?/i, "") || pasta;
-
-  const linhas: Linha[] = [];
-
-  for (const tabela of html.match(/<table class="cost-table">[\s\S]*?<\/table>/g) ?? []) {
-    const cabecalhos = (tabela.match(/<th[^>]*>[\s\S]*?<\/th>/g) ?? []).map((t) =>
-      texto(t).toLowerCase(),
-    );
-    const acha = (...termos: string[]) =>
-      cabecalhos.findIndex((c) => termos.some((t) => c.includes(t)));
-
-    const iDesc = acha("descrição", "serviço", "item");
-    const iQtd = acha("qtd");
-    const iUnid = cabecalhos.findIndex((c) => /^unid/.test(c));
-    const iUnit = acha("unitário");
-    const iTotal = cabecalhos.findIndex((c) => /^(total|valor total|valor)$/.test(c));
-
-    let grupo: string | null = null;
-
-    for (const tr of tabela.match(/<tr[\s\S]*?<\/tr>/g) ?? []) {
-      if (/<th/.test(tr)) continue;
-      const celulas = (tr.match(/<td[\s\S]*?<\/td>/g) ?? []).map(texto);
-      if (celulas.length === 0) continue;
-
-      if (/class="[^"]*ct-group/.test(tr)) {
-        grupo = celulas.join(" ").trim() || grupo;
-        continue;
-      }
-
-      const descricao = celulas[iDesc >= 0 ? iDesc : 0] ?? "";
-      if (!descricao) continue;
-
-      // "Qtd. / Unid." numa coluna só: separa o número do resto — mas só
-      // quando o resto é mesmo uma unidade. "0,80 × 1,20 m" é uma dimensão, e
-      // partir ali produzia o item com unidade "× 1,20 m".
-      let quantidade = iQtd >= 0 ? (celulas[iQtd] ?? null) : null;
-      let unidade = iUnid >= 0 ? (celulas[iUnid] ?? null) : null;
-      if (quantidade && unidade === null) {
-        const m = quantidade.match(/^([\d.,]+)\s+(m²|m³|m linear|m|un\.?|unid\.?|vb|pç|conj|serv|peças?|colunas?|placas?|sapatas?|pilares?|vigas?|valas?|coberturas?)$/i);
-        if (m) {
-          quantidade = m[1];
-          unidade = m[2];
-        }
-      }
-
-      linhas.push({
-        origem: `rd-propostas/${pasta}`,
-        cliente,
-        grupo,
-        descricao,
-        quantidade: quantidade && /\d/.test(quantidade) ? quantidade : null,
-        unidade: unidade && unidade !== "—" ? unidade : null,
-        valorUnitario: iUnit >= 0 ? dinheiro(celulas[iUnit] ?? null) : null,
-        total: iTotal >= 0 ? dinheiro(celulas[iTotal] ?? null) : null,
-      });
-    }
-  }
-  return linhas;
+  const proposta = lerProposta(PROPOSTAS, pasta);
+  if (!proposta) return [];
+  return proposta.itens.map((i) => ({
+    origem: `rd-propostas/${pasta}`,
+    cliente: proposta.cliente,
+    grupo: i.grupo,
+    descricao: i.descricao,
+    quantidade:
+      i.quantidade != null ? String(i.quantidade) : i.quantidadeTexto,
+    unidade: i.unidade,
+    valorUnitario: i.valorUnitario,
+    total: i.total,
+  }));
 }
 
 // ------------------------------------------------------------------ saída
