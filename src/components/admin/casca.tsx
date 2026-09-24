@@ -115,6 +115,15 @@ const EXTRAS: Destino[] = [
     icone: Etiqueta,
     prefixos: ["/admin/precos"],
   },
+  // Depois de Preços porque é vizinha dele na cabeça de quem usa: uma é a
+  // tabela de referência que se importa de fora, a outra é o que a própria
+  // empreiteira já cobrou. Quem vai orçar abre as duas.
+  {
+    href: "/admin/biblioteca",
+    rotulo: "Biblioteca",
+    icone: Estante,
+    prefixos: ["/admin/biblioteca"],
+  },
   {
     href: "/admin/diario",
     rotulo: "Diário",
@@ -143,6 +152,7 @@ const ITENS: Destino[] = [
   EXTRAS[2],
   EXTRAS[3],
   EXTRAS[4],
+  EXTRAS[5],
 ];
 
 /** As iniciais do e-mail, para o avatar do documento (36px, arroio). */
@@ -520,6 +530,23 @@ function Etiqueta() {
     <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3h6a1 1 0 0 1 1 1v6l-9.3 9.3a1 1 0 0 1-1.4 0L3.7 14.7a1 1 0 0 1 0-1.4L12 3Z" />
       <circle cx="15.5" cy="7.5" r="1.3" />
+    </svg>
+  );
+}
+
+/**
+ * Estante: três lombadas na prateleira.
+ *
+ * Não um livro aberto — livro aberto é "ler agora", e a Biblioteca é o
+ * contrário: é o acervo a que se volta. A lombada inclinada da direita é o
+ * volume que alguém tirou e devolveu torto, que é como estante de verdade
+ * fica.
+ */
+function Estante() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h3v16H4zM9.5 4h3v16h-3z" />
+      <path d="m16 4.8 2.9.8-4 14.6-2.9-.8z" />
     </svg>
   );
 }
