@@ -430,6 +430,19 @@ export function DocumentoDoCliente({
         .pc-preliminar{display:none}
       `}</style>
 
+      {/* **A observação do item nunca teve estilo.** A `.ct-obs` é escrita por
+          este componente desde sempre e não existe no `brand.css` de nenhuma
+          marca — o resultado era `display:inline`, herdando o tamanho da
+          descrição e colando nela: "…regularização da superfícieMaterial
+          incluso: a RD fornece o gesso."
+
+          Vira uma linha própria, menor e em cinza, no tom que a folha da marca
+          já usa na coluna de unidade da planilha de papel. */}
+      <style href="observacao-do-item" precedence="marca">{`
+        .ct-obs{display:block;margin-top:4px;font-size:12px;line-height:1.4;color:#6b6b6b}
+        @media print{.ct-obs{color:#555 !important}}
+      `}</style>
+
       {/* As abas de opção: a folha da marca já tem `.opt-tabs`, `.opt-tab` e
           `.opt-title` prontos, e a de impressão já empilha as duas e revela o
           título. O que faltava era a troca — e ela é feita com radio escondido
