@@ -169,3 +169,87 @@ export function normalizar(descricao: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+// ------------------------------------------------- textos que envolvem a tabela
+
+export type SecaoHtml = { tipo: "projeto" | "observacao" | "etapa"; titulo: string; texto: string };
+
+export type TextosHtml = {
+  secoes: SecaoHtml[];
+  /** O `.paper-note`: a RD usa para prazo, validade ou forma de pagamento. */
+  notaTitulo: string | null;
+  notaTexto: string | null;
+  /** O `<p class="lede">` do hero, que é a apresentação da proposta. */
+  apresentacao: string | null;
+  /** O `.intro` da seção de custos. */
+  introCustos: string | null;
+};
+
+/**
+ * Lê os blocos de texto que ficam em volta da tabela.
+ *
+ * `.pcard` vira seção de projeto, `.obs-list li` vira observação e
+ * `.timeline li` vira etapa — que são exatamente os três tipos de
+ * `orc_secoes`. O HTML e o app dizem a mesma coisa com marcação diferente.
+ */
+export function lerTextos(raiz: string, slug: string): TextosHtml | null {
+  const arquivo = join(raiz, slug, "index.html");
+  if (!existsSync(arquivo)) return null;
+  const html = readFileSync(arquivo, "utf8");
+
+  const secoes: SecaoHtml[] = [];
+
+  const colher = (
+    blocos: string[],
+    tipo: SecaoHtml["tipo"],
+    /** O `.pcard` tem um rótulo curto em `.pn` antes do `<h3>`. */
+    comRotulo = false,
+  ) => {
+    for (const bloco of blocos) {
+      const h3 = bloco.match(/<h3[^>]*>([\s\S]*?)<\/h3>/)?.[1];
+      const p = bloco.match(/<p[^>]*>([\s\S]*?)<\/p>/)?.[1];
+      if (!h3 || !p) continue;
+      const rotulo = comRotulo
+        ? texto(bloco.match(/<div class="pn">([\s\S]*?)<\/div>/)?.[1] ?? "")
+        : "";
+      const titulo = texto(h3);
+      secoes.push({
+        tipo,
+        // O rótulo entra no título porque o documento do app não tem onde
+        // mostrá-lo à parte, e "Fundação · Sapatas e baldrame" diz mais que
+        // "Sapatas e baldrame" sozinho.
+        titulo: rotulo && rotulo !== titulo ? `${rotulo} · ${titulo}` : titulo,
+        texto: texto(p),
+      });
+    }
+  };
+
+  // Fatiar em vez de casar o bloco inteiro: o `.pcard` fecha com um `</div>`
+  // só, e o `<div class="pn">` lá dentro faz qualquer regex preguiçoso parar
+  // no fechamento errado — o resultado era um cartão em vez de três.
+  const grade = html.match(/<div class="proj-grid">[\s\S]*?<\/section>/)?.[0] ?? "";
+  colher(
+    grade.split('<div class="pcard"').slice(1),
+    "projeto",
+    true,
+  );
+  const obs = html.match(/<ul class="obs-list">[\s\S]*?<\/ul>/)?.[0] ?? "";
+  colher(obs.match(/<li[\s\S]*?<\/li>/g) ?? [], "observacao");
+  const linha = html.match(/<ol class="timeline">[\s\S]*?<\/ol>/)?.[0] ?? "";
+  colher(linha.match(/<li[\s\S]*?<\/li>/g) ?? [], "etapa");
+
+  const nota = html.match(/<aside class="paper-note"[\s\S]*?<\/aside>/)?.[0] ?? "";
+
+  return {
+    secoes,
+    notaTitulo: texto(nota.match(/<h3[^>]*>([\s\S]*?)<\/h3>/)?.[1] ?? "") || null,
+    notaTexto: texto(nota.match(/<p[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? "") || null,
+    apresentacao:
+      texto(html.match(/<p class="lede"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? "") || null,
+    introCustos:
+      texto(
+        html.match(/<section id="custos">[\s\S]*?<p class="intro"[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
+          "",
+      ) || null,
+  };
+}
