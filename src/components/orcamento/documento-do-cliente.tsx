@@ -438,6 +438,27 @@ export function DocumentoDoCliente({
 
           Vira uma linha própria, menor e em cinza, no tom que a folha da marca
           já usa na coluna de unidade da planilha de papel. */}
+      {/* **Prancha de projeto não é foto de obra.** A `.media-item img` da
+          folha da marca é `aspect-ratio:3/4` com `object-fit:cover`, que é o
+          certo para foto de vistoria tirada no celular em pé: preenche o
+          cartão e recorta o que sobra.
+
+          Uma prancha é documento — tem cota, legenda e tabela de elementos nas
+          bordas. Com `cover` num contêiner 3/4, uma imagem de 1284 × 1356
+          perde cerca de um quinto da largura, e o que se perde é justamente a
+          medida escrita na margem. Aqui ela aparece inteira, sobre branco,
+          porque a folha da prancha é branca e o cartão é escuro. */}
+      <style href="prancha-de-projeto" precedence="marca">{`
+        .media-prancha .media-item img{aspect-ratio:auto;height:auto;
+          object-fit:contain;background:#fff}
+        @media(min-width:720px){.media-prancha{grid-template-columns:repeat(2,1fr)}}
+        @media print{
+          .media-prancha{grid-template-columns:repeat(2,1fr) !important}
+          .media-prancha .media-item{break-inside:avoid}
+          .media-prancha .media-item img{background:#fff !important}
+        }
+      `}</style>
+
       <style href="observacao-do-item" precedence="marca">{`
         .ct-obs{display:block;margin-top:4px;font-size:12px;line-height:1.4;color:#6b6b6b}
         @media print{.ct-obs{color:#555 !important}}
@@ -741,16 +762,19 @@ export function DocumentoDoCliente({
         <section id="fotos">
           <div className="wrap">
             <p className="kicker">
-              <span className="s-num">{proximoNumero()}</span> Situação atual
+              <span className="s-num">{proximoNumero()}</span>{" "}
+              {documento.midiasTitulo ? "Projeto" : "Situação atual"}
             </p>
-            <h2>O que existe hoje</h2>
+            <h2>{documento.midiasTitulo ?? "O que existe hoje"}</h2>
             <p className="intro">
-              Registro do estado atual — a base técnica usada para fechar este
-              orçamento.
+              {documento.midiasTexto ??
+                "Registro do estado atual — a base técnica usada para fechar este orçamento."}
             </p>
 
             {fotos.length > 0 && (
-              <div className="media-grid">
+              <div
+                className={`media-grid${documento.midiasTitulo ? " media-prancha" : ""}`}
+              >
                 {fotos.map((m, i) => (
                   <figure className="media-item" key={i}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}

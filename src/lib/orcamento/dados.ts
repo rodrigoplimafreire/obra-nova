@@ -262,6 +262,9 @@ export type OrcamentoCompleto = {
   bdiPadrao: number;
   /** Mostra a tarja de versão preliminar no documento. */
   preliminar: boolean;
+  /** Título e chamada da seção de mídia. Nulos = a redação de situação atual. */
+  midiasTitulo: string | null;
+  midiasTexto: string | null;
 
   situacao: SituacaoDoOrcamento;
   /** Quando o cliente abriu a página pela primeira vez, e a última. */
@@ -469,6 +472,8 @@ export async function carregarOrcamento(
     valorFechado: o.valor_fechado,
     bdiPadrao: o.bdi_padrao,
     preliminar: o.preliminar,
+    midiasTitulo: o.midias_titulo,
+    midiasTexto: o.midias_texto,
 
     situacao: o.situacao,
     vistoEm: o.visto_em,

@@ -124,6 +124,9 @@ export type DocumentoPublicado = {
    * documento que o cliente já leu mudaria de aviso sem republicação.
    */
   preliminar: boolean;
+  /** Título e chamada da seção de mídia. Nulos = a redação de situação atual. */
+  midiasTitulo: string | null;
+  midiasTexto: string | null;
   /** Vazio = tabela única. Com opções, a tabela vira abas e cada uma soma a sua. */
   opcoes: OpcaoPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
@@ -171,6 +174,8 @@ type OrcamentoDeOrigem = {
   cronograma: SemanaPublicada[];
   midias: MidiaPublicada[];
   preliminar: boolean;
+  midiasTitulo: string | null;
+  midiasTexto: string | null;
   opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
 };
 
@@ -251,6 +256,8 @@ export function montarDocumento(
       legenda: m.legenda,
     })),
     preliminar: orcamento.preliminar,
+    midiasTitulo: orcamento.midiasTitulo,
+    midiasTexto: orcamento.midiasTexto,
     // Cada opção leva os seus itens e o seu total. Item sem opção entra em
     // todas: é serviço que acontece qualquer que seja a escolha.
     opcoes: orcamento.opcoes.map((o) => {
@@ -448,6 +455,8 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     midias,
     // Publicação antiga não tem o campo, e o que ela era é definitiva.
     preliminar: d.preliminar === true,
+    midiasTitulo: texto(d.midiasTitulo),
+    midiasTexto: texto(d.midiasTexto),
     opcoes,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
