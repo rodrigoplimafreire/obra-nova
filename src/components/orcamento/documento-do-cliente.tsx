@@ -277,11 +277,40 @@ export function DocumentoDoCliente({
   // rodapé discordarem em centavos.
   const valorMaterial =
     materiais.length > 0
-      ? materiais.reduce((acc, m) => acc + (m.valor ?? 0), 0)
+      ? materiais.reduce(
+          (acc, m) => acc + (m.valor ?? 0) * (m.quantidade ?? 1),
+          0,
+        )
       : pctMaterial !== null && pctMaterial > 0
         ? Math.round(documento.total * pctMaterial) / 100
         : 0;
   const separaMaterial = valorMaterial > 0;
+
+  /** As linhas da tabela de material, agrupadas pela etapa e com subtotal. */
+  const linhasDeMaterial: Array<
+    | { tipo: "grupo"; nome: string }
+    | { tipo: "material"; material: (typeof materiais)[number] }
+    | { tipo: "subtotal"; nome: string; valor: number }
+  > = [];
+  {
+    let grupo: string | null = null;
+    let soma = 0;
+    const fechar = () => {
+      if (grupo !== null) linhasDeMaterial.push({ tipo: "subtotal", nome: grupo, valor: soma });
+      soma = 0;
+    };
+    for (const m of materiais) {
+      const g = m.grupo ?? "Materiais";
+      if (g !== grupo) {
+        fechar();
+        grupo = g;
+        linhasDeMaterial.push({ tipo: "grupo", nome: g });
+      }
+      linhasDeMaterial.push({ tipo: "material", material: m });
+      soma += (m.valor ?? 0) * (m.quantidade ?? 1);
+    }
+    fechar();
+  }
   const totalComMaterial = documento.total + valorMaterial;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
@@ -1076,38 +1105,66 @@ export function DocumentoDoCliente({
                 <table className="cost-table">
                   <thead>
                     <tr>
-                      <th>Etapa / materiais previstos</th>
-                      <th className="ct-num">Valor estimado</th>
+                      <th>Material</th>
+                      <th className="ct-num">Qtd.</th>
+                      <th>Unid.</th>
+                      <th className="ct-num">Vlr. unitário</th>
+                      <th className="ct-num">Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {materiais.length > 0 ? (
-                      materiais.map((m, i) => (
-                        <tr key={`m${i}`}>
-                          <td>
-                            {m.grupo ?? "Materiais"}
-                            <span className="ct-obs">{m.descricao}</span>
-                          </td>
-                          <td className="num total">
-                            {m.valor === null ? "a definir" : moeda(m.valor)}
-                          </td>
-                        </tr>
-                      ))
+                      linhasDeMaterial.map((l, i) =>
+                        l.tipo === "grupo" ? (
+                          <tr className="ct-group" key={`mg${i}`}>
+                            <td colSpan={5}>{l.nome}</td>
+                          </tr>
+                        ) : l.tipo === "subtotal" ? (
+                          <tr className="ct-subtotal" key={`ms${i}`}>
+                            <td colSpan={4}>Subtotal · {l.nome}</td>
+                            <td className="num total">{moeda(l.valor)}</td>
+                          </tr>
+                        ) : (
+                          <tr key={`m${i}`}>
+                            <td>{l.material.descricao}</td>
+                            <td className="num">
+                              {l.material.quantidade === null
+                                ? "—"
+                                : numero(l.material.quantidade)}
+                            </td>
+                            <td className="unit">{l.material.unidade ?? "—"}</td>
+                            <td className="num">
+                              {l.material.valor === null
+                                ? "a definir"
+                                : moeda(l.material.valor)}
+                            </td>
+                            <td className="num total">
+                              {l.material.valor === null
+                                ? "—"
+                                : moeda(
+                                    l.material.valor *
+                                      (l.material.quantidade ?? 1),
+                                  )}
+                            </td>
+                          </tr>
+                        ),
+                      )
                     ) : (
                       <tr>
-                        <td>Materiais — estimativa</td>
+                        <td colSpan={4}>Materiais — estimativa</td>
                         <td className="num total">{moeda(valorMaterial)}</td>
                       </tr>
                     )}
-                    <tr className="ct-subtotal">
-                      <td>Subtotal · materiais</td>
-                      <td className="num total">{moeda(valorMaterial)}</td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
 
               <div className="total-bar">
+                <span className="tb-label">Total dos materiais</span>
+                <span className="tb-value">{moeda(valorMaterial)}</span>
+              </div>
+
+              <div className="total-bar" style={{ marginTop: 12 }}>
                 <span className="tb-label">
                   Total geral · mão de obra + material
                 </span>
