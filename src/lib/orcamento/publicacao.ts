@@ -127,6 +127,11 @@ export type DocumentoPublicado = {
   /** Título e chamada da seção de mídia. Nulos = a redação de situação atual. */
   midiasTitulo: string | null;
   midiasTexto: string | null;
+  /**
+   * Estimativa de material, em % sobre a mão de obra. Nulo = o documento não
+   * separa material, e o total é o que sempre foi.
+   */
+  materialPercentual: number | null;
   /** Vazio = tabela única. Com opções, a tabela vira abas e cada uma soma a sua. */
   opcoes: OpcaoPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
@@ -176,6 +181,7 @@ type OrcamentoDeOrigem = {
   preliminar: boolean;
   midiasTitulo: string | null;
   midiasTexto: string | null;
+  materialPercentual: number | null;
   opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
 };
 
@@ -258,6 +264,7 @@ export function montarDocumento(
     preliminar: orcamento.preliminar,
     midiasTitulo: orcamento.midiasTitulo,
     midiasTexto: orcamento.midiasTexto,
+    materialPercentual: orcamento.materialPercentual,
     // Cada opção leva os seus itens e o seu total. Item sem opção entra em
     // todas: é serviço que acontece qualquer que seja a escolha.
     opcoes: orcamento.opcoes.map((o) => {
@@ -457,6 +464,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     preliminar: d.preliminar === true,
     midiasTitulo: texto(d.midiasTitulo),
     midiasTexto: texto(d.midiasTexto),
+    materialPercentual: numero(d.materialPercentual),
     opcoes,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),

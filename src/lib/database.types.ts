@@ -385,6 +385,7 @@ type TabelasDeOrcamento = {
       preliminar: boolean;
       midias_titulo: string | null;
       midias_texto: string | null;
+      material_percentual: number | null;
       valor_fechado: number | null;
       /** Eixo comercial, separado do `status` (preparo do documento). */
       situacao: OrcSituacao;
@@ -427,6 +428,7 @@ type TabelasDeOrcamento = {
       preliminar?: boolean;
       midias_titulo?: string | null;
       midias_texto?: string | null;
+      material_percentual?: number | null;
       valor_fechado?: number | null;
       situacao?: OrcSituacao;
       criado_por?: string | null;
@@ -457,6 +459,7 @@ type TabelasDeOrcamento = {
       preliminar?: boolean;
       midias_titulo?: string | null;
       midias_texto?: string | null;
+      material_percentual?: number | null;
       valor_fechado?: number | null;
       situacao?: OrcSituacao;
       visto_em?: string | null;

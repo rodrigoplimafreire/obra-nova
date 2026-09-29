@@ -257,6 +257,25 @@ export function DocumentoDoCliente({
   const menorOpcao = totais.length > 0 ? Math.min(...totais) : null;
   const maiorOpcao = totais.length > 0 ? Math.max(...totais) : null;
   const totalDeReferencia = menorOpcao ?? documento.total;
+
+  /**
+   * A estimativa de material, quando o orçamento separa mão de obra de
+   * material.
+   *
+   * O valor **não** é guardado: sai do percentual sobre a soma da planilha. Se
+   * fosse gravado, um item alterado deixaria os dois números discordando, e o
+   * cliente confere na calculadora.
+   *
+   * Com material, o "Total geral" da planilha passa a ser o total da mão de
+   * obra, e o total geral de verdade fica na segunda tabela — senão o mesmo
+   * rótulo apareceria duas vezes com números diferentes.
+   */
+  const pctMaterial = documento.materialPercentual;
+  const separaMaterial = pctMaterial !== null && pctMaterial > 0;
+  const valorMaterial = separaMaterial
+    ? Math.round(documento.total * pctMaterial) / 100
+    : 0;
+  const totalComMaterial = documento.total + valorMaterial;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
   // Seções 2 e 4. As duas somem inteiras quando ninguém preencheu — regra do
@@ -1017,7 +1036,11 @@ export function DocumentoDoCliente({
           {documento.opcoes.length === 0 && (
             <div className="total-bar">
               <span className="tb-label">
-                {itemizado ? "Total geral" : "Valor fechado"}
+                {separaMaterial
+                  ? "Total da mão de obra"
+                  : itemizado
+                    ? "Total geral"
+                    : "Valor fechado"}
               </span>
               <span className="tb-value">{moeda(documento.total)}</span>
             </div>
@@ -1025,6 +1048,58 @@ export function DocumentoDoCliente({
 
           {/* A nota escrita fica logo abaixo do total, que é onde a dúvida
               nasce: o que este número inclui, até quando vale, como se paga. */}
+          {/* ---------- Material e mão de obra, separados ----------
+              O cliente quer saber quanto é serviço e quanto é material, e no
+              orçamento fechado por escopo os dois vinham num número só.
+
+              A estimativa é percentual sobre a mão de obra — é como a RD
+              estima antes de cotar —, e o documento diz isso na própria linha.
+              Chamar de "material" sem dizer "estimativa" seria deixar o
+              cliente ler como preço cotado. */}
+          {separaMaterial && (
+            <>
+              <div className="cost-wrap" style={{ marginTop: 28 }}>
+                <table className="cost-table">
+                  <thead>
+                    <tr>
+                      <th>Composição do investimento</th>
+                      <th className="ct-num">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        Serviços — mão de obra
+                        <span className="ct-obs">
+                          A soma das etapas da planilha acima.
+                        </span>
+                      </td>
+                      <td className="num total">{moeda(documento.total)}</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Materiais — estimativa
+                        <span className="ct-obs">
+                          Previsão de {numero(pctMaterial)}% sobre a mão de
+                          obra, sem cotação por insumo. O valor será revisto
+                          quando os materiais forem especificados e cotados.
+                        </span>
+                      </td>
+                      <td className="num total">{moeda(valorMaterial)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="total-bar">
+                <span className="tb-label">
+                  Total geral · mão de obra + material
+                </span>
+                <span className="tb-value">{moeda(totalComMaterial)}</span>
+              </div>
+            </>
+          )}
+
           {documento.textos.notaCustos ? (
             <p className="total-note">{documento.textos.notaCustos}</p>
           ) : (

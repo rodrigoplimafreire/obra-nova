@@ -265,6 +265,8 @@ export type OrcamentoCompleto = {
   /** Título e chamada da seção de mídia. Nulos = a redação de situação atual. */
   midiasTitulo: string | null;
   midiasTexto: string | null;
+  /** Estimativa de material, em % sobre a mão de obra. Nulo = não separa. */
+  materialPercentual: number | null;
 
   situacao: SituacaoDoOrcamento;
   /** Quando o cliente abriu a página pela primeira vez, e a última. */
@@ -474,6 +476,7 @@ export async function carregarOrcamento(
     preliminar: o.preliminar,
     midiasTitulo: o.midias_titulo,
     midiasTexto: o.midias_texto,
+    materialPercentual: o.material_percentual,
 
     situacao: o.situacao,
     vistoEm: o.visto_em,
