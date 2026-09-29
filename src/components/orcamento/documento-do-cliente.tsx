@@ -117,17 +117,47 @@ function TabelaDeCustos({
   itens: ItemPublicado[];
   mostraValores: boolean;
 }) {
+  /**
+   * **Subtotal ao fim de cada grupo**, que a estrutura canônica pede desde
+   * sempre — "subtotal por disciplina ao fim de cada grupo" — e que a tabela
+   * nunca desenhou. Sem ele, o cliente que quer saber quanto custa a pintura
+   * precisa somar sete linhas na calculadora.
+   *
+   * Só sai quando o grupo tem preço: grupo inteiro sem valor fecharia com um
+   * "Subtotal R$ 0,00" que não é verdade — é ausência de preço, não preço
+   * zero.
+   */
   const linhas: Array<
-    { tipo: "grupo"; nome: string } | { tipo: "item"; item: ItemPublicado }
+    | { tipo: "grupo"; nome: string }
+    | { tipo: "item"; item: ItemPublicado }
+    | { tipo: "subtotal"; nome: string; valor: number }
   > = [];
+
   let grupoAtual: string | null = null;
+  let somaDoGrupo = 0;
+  let precificados = 0;
+
+  const fecharGrupo = () => {
+    if (grupoAtual !== null && precificados > 0) {
+      linhas.push({ tipo: "subtotal", nome: grupoAtual, valor: somaDoGrupo });
+    }
+    somaDoGrupo = 0;
+    precificados = 0;
+  };
+
   for (const item of itens) {
     if (item.grupo && item.grupo !== grupoAtual) {
+      fecharGrupo();
       grupoAtual = item.grupo;
       linhas.push({ tipo: "grupo", nome: item.grupo });
     }
     linhas.push({ tipo: "item", item });
+    if (item.total !== null) {
+      somaDoGrupo += item.total;
+      precificados += 1;
+    }
   }
+  fecharGrupo();
 
   return (
     <div className="cost-wrap">
@@ -146,6 +176,11 @@ function TabelaDeCustos({
             linha.tipo === "grupo" ? (
               <tr className="ct-group" key={`g${i}`}>
                 <td colSpan={mostraValores ? 5 : 3}>{linha.nome}</td>
+              </tr>
+            ) : linha.tipo === "subtotal" ? (
+              <tr className="ct-subtotal" key={`s${i}`}>
+                <td colSpan={mostraValores ? 4 : 2}>Subtotal · {linha.nome}</td>
+                <td className="num total">{moeda(linha.valor)}</td>
               </tr>
             ) : (
               <tr key={`i${i}`}>
@@ -448,6 +483,23 @@ export function DocumentoDoCliente({
           perde cerca de um quinto da largura, e o que se perde é justamente a
           medida escrita na margem. Aqui ela aparece inteira, sobre branco,
           porque a folha da prancha é branca e o cartão é escuro. */}
+      {/* A linha de subtotal não existe na folha da marca: as propostas
+          escritas à mão fechavam o grupo à mão, com uma `<tr>` própria. Aqui
+          ela é calculada, e precisa se distinguir do item sem virar outro
+          cabeçalho de grupo — daí o creme mais claro e o filete acima. */}
+      <style href="subtotal-do-grupo" precedence="marca">{`
+        .cost-table .ct-subtotal td{background:#f1ede2;font-weight:700;
+          border-top:1px solid #d9d4c5;color:var(--paper-ink)}
+        .cost-table .ct-subtotal td:first-child{text-align:right;
+          font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+          text-transform:uppercase;font-weight:400;color:#4a4a4a}
+        @media print{
+          .cost-table .ct-subtotal td{background:#f1ede2 !important;
+            -webkit-print-color-adjust:exact;print-color-adjust:exact}
+          .cost-table .ct-subtotal{break-inside:avoid}
+        }
+      `}</style>
+
       <style href="prancha-de-projeto" precedence="marca">{`
         .media-prancha .media-item img{aspect-ratio:auto;height:auto;
           object-fit:contain;background:#fff}
