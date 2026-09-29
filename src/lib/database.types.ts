@@ -878,6 +878,39 @@ type TabelasDeOrcamento = {
       updated_at?: string;
     };
   };
+  orc_materiais: {
+    Row: {
+      id: string;
+      orcamento_id: string;
+      grupo: string | null;
+      descricao: string;
+      quantidade: number | null;
+      unidade: string | null;
+      valor: number | null;
+      position: number;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      orcamento_id: string;
+      grupo?: string | null;
+      descricao: string;
+      quantidade?: number | null;
+      unidade?: string | null;
+      valor?: number | null;
+      position?: number;
+    };
+    Update: {
+      grupo?: string | null;
+      descricao?: string;
+      quantidade?: number | null;
+      unidade?: string | null;
+      valor?: number | null;
+      position?: number;
+      updated_at?: string;
+    };
+  };
   orc_midias: {
     Row: {
       id: string;

@@ -210,6 +210,17 @@ export type MidiaDoOrcamento = {
  * Uma opção de material: dois jeitos de fazer a mesma obra, com preços
  * diferentes, e o cliente escolhe.
  */
+/** Um insumo da obra, amarrado à etapa de serviço que o consome. */
+export type MaterialDoOrcamento = {
+  id: string;
+  grupo: string | null;
+  descricao: string;
+  quantidade: number | null;
+  unidade: string | null;
+  valor: number | null;
+  position: number;
+};
+
 export type OpcaoDoOrcamento = {
   id: string;
   nome: string;
@@ -251,6 +262,8 @@ export type OrcamentoCompleto = {
   midias: MidiaDoOrcamento[];
   /** Vazio = orçamento de tabela única, como sempre foi. */
   opcoes: OpcaoDoOrcamento[];
+  /** Vazio = o documento não discrimina material. */
+  materiais: MaterialDoOrcamento[];
 
   senha: string | null;
   token: string;
@@ -377,6 +390,7 @@ export async function carregarOrcamento(
     { data: cronograma },
     { data: midias },
     { data: opcoes },
+    { data: materiais },
   ] = await Promise.all([
       sb
         .from("orc_itens")
@@ -414,6 +428,11 @@ export async function carregarOrcamento(
       sb
         .from("orc_opcoes")
         .select("id, nome, descricao, position")
+        .eq("orcamento_id", id)
+        .order("position"),
+      sb
+        .from("orc_materiais")
+        .select("id, grupo, descricao, quantidade, unidade, valor, position")
         .eq("orcamento_id", id)
         .order("position"),
     ]);
@@ -467,6 +486,7 @@ export async function carregarOrcamento(
       position: m.position,
     })),
     opcoes: opcoes ?? [],
+    materiais: materiais ?? [],
 
     senha: o.senha,
     token: o.token,

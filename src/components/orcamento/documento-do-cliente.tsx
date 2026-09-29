@@ -271,10 +271,17 @@ export function DocumentoDoCliente({
    * rótulo apareceria duas vezes com números diferentes.
    */
   const pctMaterial = documento.materialPercentual;
-  const separaMaterial = pctMaterial !== null && pctMaterial > 0;
-  const valorMaterial = separaMaterial
-    ? Math.round(documento.total * pctMaterial) / 100
-    : 0;
+  const materiais = documento.materiais;
+  // Com a lista discriminada, o valor é a soma dela — não o percentual
+  // aplicado de novo sobre o total. Recalcular aqui faria a tabela e o
+  // rodapé discordarem em centavos.
+  const valorMaterial =
+    materiais.length > 0
+      ? materiais.reduce((acc, m) => acc + (m.valor ?? 0), 0)
+      : pctMaterial !== null && pctMaterial > 0
+        ? Math.round(documento.total * pctMaterial) / 100
+        : 0;
+  const separaMaterial = valorMaterial > 0;
   const totalComMaterial = documento.total + valorMaterial;
   const mostraValores = documento.itens.some((i) => i.valorUnitario !== null);
 
@@ -1058,33 +1065,42 @@ export function DocumentoDoCliente({
               cliente ler como preço cotado. */}
           {separaMaterial && (
             <>
-              <div className="cost-wrap" style={{ marginTop: 28 }}>
+              <h3 className="cond-sub">Materiais</h3>
+              <p className="intro">
+                {materiais.length > 0
+                  ? `Os materiais previstos para cada etapa da obra, com o valor estimado de cada uma. A previsão é de ${numero(pctMaterial ?? 0)}% sobre a mão de obra da própria etapa, e será revista quando as marcas e os modelos forem definidos e cotados.`
+                  : `Previsão de ${numero(pctMaterial ?? 0)}% sobre a mão de obra, sem cotação por insumo. O valor será revisto quando os materiais forem especificados e cotados.`}
+              </p>
+
+              <div className="cost-wrap">
                 <table className="cost-table">
                   <thead>
                     <tr>
-                      <th>Composição do investimento</th>
-                      <th className="ct-num">Valor</th>
+                      <th>Etapa / materiais previstos</th>
+                      <th className="ct-num">Valor estimado</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>
-                        Serviços — mão de obra
-                        <span className="ct-obs">
-                          A soma das etapas da planilha acima.
-                        </span>
-                      </td>
-                      <td className="num total">{moeda(documento.total)}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Materiais — estimativa
-                        <span className="ct-obs">
-                          Previsão de {numero(pctMaterial)}% sobre a mão de
-                          obra, sem cotação por insumo. O valor será revisto
-                          quando os materiais forem especificados e cotados.
-                        </span>
-                      </td>
+                    {materiais.length > 0 ? (
+                      materiais.map((m, i) => (
+                        <tr key={`m${i}`}>
+                          <td>
+                            {m.grupo ?? "Materiais"}
+                            <span className="ct-obs">{m.descricao}</span>
+                          </td>
+                          <td className="num total">
+                            {m.valor === null ? "a definir" : moeda(m.valor)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td>Materiais — estimativa</td>
+                        <td className="num total">{moeda(valorMaterial)}</td>
+                      </tr>
+                    )}
+                    <tr className="ct-subtotal">
+                      <td>Subtotal · materiais</td>
                       <td className="num total">{moeda(valorMaterial)}</td>
                     </tr>
                   </tbody>

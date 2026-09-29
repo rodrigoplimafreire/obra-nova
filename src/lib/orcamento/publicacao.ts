@@ -77,6 +77,15 @@ export type MidiaPublicada = {
  * para ler, e um id que aponta para outra lista é uma junção que a folha de
  * leitura teria de refazer.
  */
+/** Um insumo, congelado junto com o resto. */
+export type MaterialPublicado = {
+  grupo: string | null;
+  descricao: string;
+  quantidade: number | null;
+  unidade: string | null;
+  valor: number | null;
+};
+
 export type OpcaoPublicada = {
   nome: string;
   descricao: string | null;
@@ -132,6 +141,8 @@ export type DocumentoPublicado = {
    * separa material, e o total é o que sempre foi.
    */
   materialPercentual: number | null;
+  /** Vazio = o documento não discrimina material. */
+  materiais: MaterialPublicado[];
   /** Vazio = tabela única. Com opções, a tabela vira abas e cada uma soma a sua. */
   opcoes: OpcaoPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
@@ -182,6 +193,7 @@ type OrcamentoDeOrigem = {
   midiasTitulo: string | null;
   midiasTexto: string | null;
   materialPercentual: number | null;
+  materiais: MaterialPublicado[];
   opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
 };
 
@@ -265,6 +277,13 @@ export function montarDocumento(
     midiasTitulo: orcamento.midiasTitulo,
     midiasTexto: orcamento.midiasTexto,
     materialPercentual: orcamento.materialPercentual,
+    materiais: orcamento.materiais.map((m) => ({
+      grupo: m.grupo,
+      descricao: m.descricao,
+      quantidade: m.quantidade,
+      unidade: m.unidade,
+      valor: m.valor,
+    })),
     // Cada opção leva os seus itens e o seu total. Item sem opção entra em
     // todas: é serviço que acontece qualquer que seja a escolha.
     opcoes: orcamento.opcoes.map((o) => {
@@ -434,6 +453,24 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
       })
     : [];
 
+  const materiais = Array.isArray(d.materiais)
+    ? d.materiais.flatMap((linha): MaterialPublicado[] => {
+        if (!linha || typeof linha !== "object") return [];
+        const m = linha as Record<string, unknown>;
+        const descricao = texto(m.descricao);
+        if (!descricao) return [];
+        return [
+          {
+            grupo: texto(m.grupo),
+            descricao,
+            quantidade: numero(m.quantidade),
+            unidade: texto(m.unidade),
+            valor: numero(m.valor),
+          },
+        ];
+      })
+    : [];
+
   return {
     versao: numero(d.versao) ?? 1,
     numero: texto(d.numero),
@@ -465,6 +502,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     midiasTitulo: texto(d.midiasTitulo),
     midiasTexto: texto(d.midiasTexto),
     materialPercentual: numero(d.materialPercentual),
+    materiais,
     opcoes,
     total: numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
