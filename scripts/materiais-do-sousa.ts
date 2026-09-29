@@ -59,6 +59,7 @@ const G8 = "8 · Impermeabilização";
 const G9 = "9 · Pisos, revestimentos e escada";
 const G10 = "10 · Preparação e pintura das paredes do térreo";
 const G11 = "11 · Louças, metais, testes e conclusão";
+const G12 = "12 · Fachada e muro da frente";
 
 const MATERIAIS: Material[] = [
   // ---- 2 · Estrutura: 2 sapatas 1,20×1,20×0,40, 2 pilares 7,00 m (30×15),
@@ -115,16 +116,24 @@ const MATERIAIS: Material[] = [
   { grupo: G9, descricao: "Rejunte acrílico, espaçadores e perfis de acabamento", quantidade: 1, unidade: "conj", valor: 1200 },
 
   // ---- 10 · Pintura: 146,92 m²
-  { grupo: G10, descricao: "Fundo preparador acrílico, lata de 18 litros", quantidade: 1, unidade: "lata", valor: 220 },
-  { grupo: G10, descricao: "Massa corrida PVA, balde de 25 kg", quantidade: 3, unidade: "balde", valor: 120 },
+  { grupo: G10, descricao: "Selador acrílico, lata de 18 litros", quantidade: 3, unidade: "lata", valor: 220 },
+  { grupo: G10, descricao: "Massa corrida PVA, balde de 25 kg", quantidade: 20, unidade: "balde", valor: 120 },
   { grupo: G10, descricao: "Tinta acrílica fosca, lata de 18 litros, duas demãos", quantidade: 2, unidade: "lata", valor: 350 },
   { grupo: G10, descricao: "Lixas, fita crepe, lona de proteção, rolos e pincéis", quantidade: 1, unidade: "conj", valor: 250 },
 
   // ---- 11 · Louças e metais do banheiro da suíte
-  { grupo: G11, descricao: "Vaso sanitário com caixa acoplada e assento", quantidade: 1, unidade: "un", valor: 700 },
-  { grupo: G11, descricao: "Lavatório com coluna", quantidade: 1, unidade: "un", valor: 400 },
-  { grupo: G11, descricao: "Chuveiro e registro de acabamento", quantidade: 1, unidade: "conj", valor: 350 },
-  { grupo: G11, descricao: "Torneiras, sifões, engates flexíveis e acessórios", quantidade: 1, unidade: "conj", valor: 550 },
+  // Dois banheiros: o social e o da suíte. A lista anterior contemplava um só.
+  // A pia comum sai — já foi encomendada —, e no lugar dela entra a bancada.
+  { grupo: G11, descricao: "Vaso sanitário com caixa acoplada e assento", quantidade: 2, unidade: "un", valor: 700 },
+  { grupo: G11, descricao: "Bancada em granito Verde Ubatuba, com cuba e frontão", quantidade: 2, unidade: "un", valor: 950 },
+  { grupo: G11, descricao: "Chuveiro e registro de acabamento", quantidade: 2, unidade: "conj", valor: 350 },
+  { grupo: G11, descricao: "Torneiras, sifões, engates flexíveis e acessórios", quantidade: 2, unidade: "conj", valor: 550 },
+
+  // ---- 12 · Fachada: vão de 6,00 × 3,00 m = 18,00 m², em peça grande
+  //      (aprox. 1,50 × 1,00 m), com 10% de perda de corte
+  { grupo: G12, descricao: "Porcelanato de grande formato, aproximadamente 1,50 × 1,00 m, para o revestimento da fachada, com 10% de perda de corte", quantidade: 20, unidade: "m²", valor: 180 },
+  { grupo: G12, descricao: "Argamassa colante AC-III para grandes formatos, saco de 20 kg", quantidade: 14, unidade: "sc", valor: 42 },
+  { grupo: G12, descricao: "Rejunte para fachada, perfis de arremate e cantoneiras", quantidade: 1, unidade: "conj", valor: 900 },
 ];
 
 const moeda = (n: number) =>
@@ -149,7 +158,40 @@ async function main() {
 
   const maoDeObra = (itens ?? []).reduce((a, i) => a + Number(i.total ?? 0), 0);
 
-  const grupos = [...new Set(MATERIAIS.map((m) => m.grupo))];
+  /**
+   * Os 20% de imprevistos, **destrinchados por etapa** e não numa linha só no
+   * fim.
+   *
+   * Cobrem o que a lista não enxerga: material estrutural que não fica
+   * aparente, complemento da fachada e a sobra que toda obra consome. Cada
+   * etapa carrega a sua parte, proporcional ao que ela custa — a etapa de
+   * revestimento gera mais imprevisto que a de impermeabilização.
+   *
+   * Entra como linha visível, e não embutido no preço unitário: somar 20% ao
+   * saco de cimento faria o documento anunciar R$ 48,00 num insumo que o
+   * mercado vende a R$ 40,00, e o cliente que confere numa loja pegaria a RD
+   * em contradição.
+   */
+  const IMPREVISTOS = 20;
+
+  const base = [...MATERIAIS];
+  const grupos = [...new Set(base.map((m) => m.grupo))];
+  const comImprevistos: Material[] = [];
+  for (const g of grupos) {
+    const doGrupo = base.filter((m) => m.grupo === g);
+    comImprevistos.push(...doGrupo);
+    const sub = doGrupo.reduce((s, m) => s + totalDaLinha(m), 0);
+    comImprevistos.push({
+      grupo: g,
+      descricao: `Imprevistos, materiais estruturais não aparentes e complementos — ${IMPREVISTOS}% sobre os materiais desta etapa`,
+      quantidade: 1,
+      unidade: "vb",
+      valor: Math.round(sub * IMPREVISTOS) / 100,
+    });
+  }
+  MATERIAIS.length = 0;
+  MATERIAIS.push(...comImprevistos);
+
   let soma = 0;
 
   console.log(`\n${o.cliente_nome}`);
