@@ -823,7 +823,11 @@ export function DocumentoDoCliente({
                 {opcoes.length === 0 && (
                   <div className="sc-row">
                     <span className="k">Itens</span>
-                    <span className="v">{documento.itens.length}</span>
+                    <span className="v">
+                      {documento.itens.length}
+                      {materiais.length > 0 &&
+                        ` serviços · ${materiais.length} insumos`}
+                    </span>
                   </div>
                 )}
                 {opcoes.length > 0 && (
@@ -834,14 +838,37 @@ export function DocumentoDoCliente({
                     </span>
                   </div>
                 )}
-                <div className="sc-row">
-                  <span className="k">{opcoes.length > 0 ? "Valores" : "Total"}</span>
-                  <span className="v">
-                    {opcoes.length > 0 && menorOpcao !== maiorOpcao
-                      ? `${moeda(menorOpcao!)} a ${moeda(maiorOpcao!)}`
-                      : moeda(totalDeReferencia)}
-                  </span>
-                </div>
+                {/* Com material separado, o resumo do topo abre as três
+                    linhas. Mostrar só "Total R$ 88.832,10" ao lado de uma
+                    proposta de R$ 181.654,38 é a primeira coisa que o cliente
+                    lê, e estaria errada. */}
+                {separaMaterial ? (
+                  <>
+                    <div className="sc-row">
+                      <span className="k">Mão de obra</span>
+                      <span className="v">{moeda(documento.total)}</span>
+                    </div>
+                    <div className="sc-row">
+                      <span className="k">Materiais</span>
+                      <span className="v">{moeda(valorMaterial)}</span>
+                    </div>
+                    <div className="sc-row">
+                      <span className="k">Total geral</span>
+                      <span className="v">{moeda(totalComMaterial)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="sc-row">
+                    <span className="k">
+                      {opcoes.length > 0 ? "Valores" : "Total"}
+                    </span>
+                    <span className="v">
+                      {opcoes.length > 0 && menorOpcao !== maiorOpcao
+                        ? `${moeda(menorOpcao!)} a ${moeda(maiorOpcao!)}`
+                        : moeda(totalDeReferencia)}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="sc-print">
                 <BotaoImprimir />
@@ -1096,8 +1123,11 @@ export function DocumentoDoCliente({
             <>
               <h3 className="cond-sub">Materiais</h3>
               <p className="intro">
+                {/* O percentual só é citado quando é ele que produz o
+                    número. Com a lista discriminada o campo fica nulo, e a
+                    frase dizia "previsão de 0% sobre a mão de obra". */}
                 {materiais.length > 0
-                  ? `Os materiais previstos para cada etapa da obra, com o valor estimado de cada uma. A previsão é de ${numero(pctMaterial ?? 0)}% sobre a mão de obra da própria etapa, e será revista quando as marcas e os modelos forem definidos e cotados.`
+                  ? "Os materiais previstos em cada etapa da obra, com quantidade levantada do escopo e preço unitário de referência de mercado. Não é cotação de fornecedor: os valores serão revistos quando as marcas e os modelos forem definidos e cotados."
                   : `Previsão de ${numero(pctMaterial ?? 0)}% sobre a mão de obra, sem cotação por insumo. O valor será revisto quando os materiais forem especificados e cotados.`}
               </p>
 
@@ -1488,7 +1518,8 @@ export function DocumentoDoCliente({
           <AceiteDoCliente
             token={token}
             jaAprovado={jaAprovado}
-            total={totalDeReferencia}
+            /* Mão de obra mais material: é o que ele está contratando. */
+            total={separaMaterial ? totalComMaterial : totalDeReferencia}
             versao={documento.versao}
             cliente={documento.cliente}
             aceite={aceite ?? null}

@@ -223,7 +223,7 @@ export async function marcarSituacao(
     ...(alvo === "aprovado"
       ? {
           aprovado_em: agora,
-          valor_aprovado: orcamento.total,
+          valor_aprovado: orcamento.totalGeral,
           recusado_em: null,
           motivo_recusa: null,
         }

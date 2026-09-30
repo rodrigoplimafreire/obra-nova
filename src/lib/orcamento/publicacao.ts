@@ -147,6 +147,15 @@ export type DocumentoPublicado = {
   opcoes: OpcaoPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
   total: number;
+  /**
+   * Mão de obra **mais** material — o que o cliente contrata.
+   *
+   * Congelado junto com o resto, e não recalculado na leitura: é este o número
+   * que o aceite registra. Sem ele, `total` (que é só a mão de obra) ia para
+   * `valor_aprovado`, e o sistema guardaria R$ 88.832,10 como valor aprovado
+   * de uma obra de R$ 181.654,38.
+   */
+  totalGeral: number;
   valorFechado: number | null;
   publicadoEm: string;
 };
@@ -304,6 +313,12 @@ export function montarDocumento(
       };
     }),
     total: orcamento.valorFechado ?? soma,
+    totalGeral:
+      (orcamento.valorFechado ?? soma) +
+      orcamento.materiais.reduce(
+        (acc, m) => acc + (m.valor ?? 0) * (m.quantidade ?? 1),
+        0,
+      ),
     valorFechado: orcamento.valorFechado,
     publicadoEm: new Date().toISOString(),
   };
@@ -505,6 +520,8 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     materiais,
     opcoes,
     total: numero(d.total) ?? 0,
+    // Publicação antiga não tem o campo, e nela o total já era tudo.
+    totalGeral: numero(d.totalGeral) ?? numero(d.total) ?? 0,
     valorFechado: numero(d.valorFechado),
     publicadoEm: texto(d.publicadoEm) ?? new Date().toISOString(),
   };

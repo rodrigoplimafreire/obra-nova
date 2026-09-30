@@ -86,8 +86,19 @@ export async function aceitarOrcamento(
     .maybeSingle();
   if (!publicacao) return { erro: "Este orçamento não está mais disponível." };
 
-  const dados = publicacao.dados as { total?: number } | null;
-  const total = typeof dados?.total === "number" ? dados.total : null;
+  // `totalGeral` é mão de obra mais material — o que o cliente está de fato
+  // contratando. `total` sozinho é só a mão de obra, e registrá-lo guardaria
+  // no banco um valor aprovado menor que o da proposta assinada. Publicação
+  // antiga não tem o campo, e nela o total já era tudo.
+  const dados = publicacao.dados as
+    | { total?: number; totalGeral?: number }
+    | null;
+  const total =
+    typeof dados?.totalGeral === "number"
+      ? dados.totalGeral
+      : typeof dados?.total === "number"
+        ? dados.total
+        : null;
   const agora = new Date().toISOString();
 
   await sb

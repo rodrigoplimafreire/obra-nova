@@ -300,6 +300,14 @@ export type OrcamentoCompleto = {
   removidos: ItemDoOrcamento[];
 
   total: number;
+  /**
+   * Mão de obra **mais** material.
+   *
+   * `total` é só a planilha de serviços. Quem grava valor aprovado precisa
+   * deste — senão o painel registra como aprovado um número menor que o da
+   * proposta que o cliente assinou.
+   */
+  totalGeral: number;
   semPreco: number;
   /** Quantos itens vivos não têm custo lançado. Informativo — diferente de
    *  `semPreco`, não bloqueia o envio: falta de custo é problema de margem,
@@ -514,6 +522,13 @@ export async function carregarOrcamento(
     removidos: todos.filter((i) => i.removidoEm),
 
     total: o.valor_fechado ?? vivos.reduce((acc, i) => acc + (i.total ?? 0), 0),
+    /** Mão de obra mais material: o que o cliente contrata. */
+    totalGeral:
+      (o.valor_fechado ?? vivos.reduce((acc, i) => acc + (i.total ?? 0), 0)) +
+      (materiais ?? []).reduce(
+        (acc, m) => acc + Number(m.valor ?? 0) * Number(m.quantidade ?? 1),
+        0,
+      ),
     semPreco: vivos.filter((i) => i.valorUnitario === null).length,
     semCusto: vivos.filter((i) => i.custoUnitario === null).length,
     custoTotal: vivos.reduce((acc, i) => acc + custoDoItem(i), 0),
