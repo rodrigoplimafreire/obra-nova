@@ -18,6 +18,7 @@
     "verificar:custo-comercial": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-custo-comercial.ts",
     "verificar:vistoria": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-vistoria.ts",
     "verificar:diario": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-diario.ts",
+    "verificar:material-pendente": "tsx --tsconfig scripts/tsconfig.json scripts/verificar-material-pendente.ts",
     "minerar:servicos": "tsx --tsconfig scripts/tsconfig.json scripts/minerar-servicos.ts"
   },
   "dependencies": {

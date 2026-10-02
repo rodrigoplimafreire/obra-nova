@@ -64,6 +64,19 @@ export async function publicarOrcamento(
       erro: `${orcamento.semPreco} ${orcamento.semPreco === 1 ? "item está" : "itens estão"} sem preço de venda. Preencha antes de enviar ao cliente.`,
     };
   }
+  // A tabela de materiais é visível mesmo sem preço, e isso é certo no painel
+  // e no rascunho — mas publicar com insumo "a definir" deixa o cliente aceitar
+  // um documento cujo total geral não existe, e `valor_aprovado` congelaria só
+  // o que estava precificado.
+  const materiaisSemPreco = orcamento.materiais.filter(
+    (m) => m.valor === null,
+  ).length;
+  if (materiaisSemPreco > 0) {
+    return {
+      ok: false,
+      erro: `${materiaisSemPreco} ${materiaisSemPreco === 1 ? "material está" : "materiais estão"} sem preço. Cote ou remova antes de enviar ao cliente.`,
+    };
+  }
   if (!orcamento.senha) {
     return {
       ok: false,

@@ -196,16 +196,23 @@ function TabelaDeCustos({
                     : numero(linha.item.quantidade)}
                 </td>
                 <td className="unit">{linha.item.unidade ?? "—"}</td>
+                {/* Medida que falta é travessão; preço que falta é "a
+                    definir". A distinção não é estilo: travessão na coluna de
+                    valor deixa o cliente ler "não se cobra por isto", e a
+                    tabela de materiais já escreve "a definir" desde que
+                    nasceu. */}
                 {mostraValores && (
                   <td className="num">
                     {linha.item.valorUnitario === null
-                      ? "—"
+                      ? "a definir"
                       : moeda(linha.item.valorUnitario)}
                   </td>
                 )}
                 {mostraValores && (
                   <td className="num total">
-                    {linha.item.total === null ? "—" : moeda(linha.item.total)}
+                    {linha.item.total === null
+                      ? "a definir"
+                      : moeda(linha.item.total)}
                   </td>
                 )}
               </tr>
@@ -284,7 +291,27 @@ export function DocumentoDoCliente({
       : pctMaterial !== null && pctMaterial > 0
         ? Math.round(documento.total * pctMaterial) / 100
         : 0;
-  const separaMaterial = valorMaterial > 0;
+  /**
+   * A lista de materiais aparece **pela existência da lista**, não pelo
+   * total dela.
+   *
+   * Era `valorMaterial > 0`, e com isso uma obra cujos materiais ainda não
+   * foram cotados perdia a segunda tabela inteira: o cliente lia a proposta
+   * sem saber que havia material previsto, e o Reginato não tinha onde
+   * precificar. Lista com preço pendente é informação; lista escondida é
+   * ausência.
+   */
+  const separaMaterial = materiais.length > 0 || valorMaterial > 0;
+  const materialPrecificado = materiais.some((m) => m.valor !== null);
+  const materialPendente =
+    materiais.length > 0 && materiais.some((m) => m.valor === null);
+  const maoDeObraPendente = documento.itens.some(
+    (i) => i.valorUnitario === null,
+  );
+  /** Só existe total geral quando nenhuma das duas tabelas tem pendência. */
+  const totalGeralFechado = !maoDeObraPendente && !materialPendente;
+  /** O que não tem número não ganha número: nunca R$ 0,00 no lugar. */
+  const aDefinir = "a definir";
 
   /** As linhas da tabela de material, agrupadas pela etapa e com subtotal. */
   const linhasDeMaterial: Array<
@@ -295,9 +322,15 @@ export function DocumentoDoCliente({
   {
     let grupo: string | null = null;
     let soma = 0;
+    let precificados = 0;
+    // Mesma regra da tabela de mão de obra: etapa sem nenhum preço fecharia
+    // com "Subtotal R$ 0,00", que não é preço zero — é preço ausente.
     const fechar = () => {
-      if (grupo !== null) linhasDeMaterial.push({ tipo: "subtotal", nome: grupo, valor: soma });
+      if (grupo !== null && precificados > 0) {
+        linhasDeMaterial.push({ tipo: "subtotal", nome: grupo, valor: soma });
+      }
       soma = 0;
+      precificados = 0;
     };
     for (const m of materiais) {
       const g = m.grupo ?? "Materiais";
@@ -307,7 +340,10 @@ export function DocumentoDoCliente({
         linhasDeMaterial.push({ tipo: "grupo", nome: g });
       }
       linhasDeMaterial.push({ tipo: "material", material: m });
-      soma += (m.valor ?? 0) * (m.quantidade ?? 1);
+      if (m.valor !== null) {
+        soma += m.valor * (m.quantidade ?? 1);
+        precificados += 1;
+      }
     }
     fechar();
   }
@@ -846,15 +882,31 @@ export function DocumentoDoCliente({
                   <>
                     <div className="sc-row">
                       <span className="k">Mão de obra</span>
-                      <span className="v">{moeda(documento.total)}</span>
+                      <span className="v">
+                        {maoDeObraPendente
+                          ? `${moeda(documento.total)} + ${aDefinir}`
+                          : moeda(documento.total)}
+                      </span>
                     </div>
                     <div className="sc-row">
                       <span className="k">Materiais</span>
-                      <span className="v">{moeda(valorMaterial)}</span>
+                      <span className="v">
+                        {!materialPrecificado
+                          ? aDefinir
+                          : materialPendente
+                            ? `${moeda(valorMaterial)} + ${aDefinir}`
+                            : moeda(valorMaterial)}
+                      </span>
                     </div>
+                    {/* Com pendência nas duas tabelas, o total geral não
+                        existe: somar o que está precificado e chamar de total
+                        seria anunciar como preço da obra um subtotal de
+                        etapa. */}
                     <div className="sc-row">
                       <span className="k">Total geral</span>
-                      <span className="v">{moeda(totalComMaterial)}</span>
+                      <span className="v">
+                        {totalGeralFechado ? moeda(totalComMaterial) : aDefinir}
+                      </span>
                     </div>
                   </>
                 ) : (
@@ -1099,10 +1151,17 @@ export function DocumentoDoCliente({
           {documento.opcoes.length === 0 && (
             <div className="total-bar">
               <span className="tb-label">
+                {/* "Total" com linha sem preço na mesma tabela é promessa
+                    falsa: o número é o que já está precificado, e o rótulo
+                    diz isso. */}
                 {separaMaterial
-                  ? "Total da mão de obra"
+                  ? maoDeObraPendente
+                    ? "Mão de obra · subtotal precificado"
+                    : "Total da mão de obra"
                   : itemizado
-                    ? "Total geral"
+                    ? maoDeObraPendente
+                      ? "Subtotal precificado"
+                      : "Total geral"
                     : "Valor fechado"}
               </span>
               <span className="tb-value">{moeda(documento.total)}</span>
@@ -1126,9 +1185,11 @@ export function DocumentoDoCliente({
                 {/* O percentual só é citado quando é ele que produz o
                     número. Com a lista discriminada o campo fica nulo, e a
                     frase dizia "previsão de 0% sobre a mão de obra". */}
-                {materiais.length > 0
+                {materiais.length > 0 && materialPrecificado
                   ? "Os materiais previstos em cada etapa da obra, com quantidade levantada do escopo e preço unitário de referência de mercado. Não é cotação de fornecedor: os valores serão revistos quando as marcas e os modelos forem definidos e cotados."
-                  : `Previsão de ${numero(pctMaterial ?? 0)}% sobre a mão de obra, sem cotação por insumo. O valor será revisto quando os materiais forem especificados e cotados.`}
+                  : materiais.length > 0
+                    ? "Os materiais previstos em cada etapa da obra. Os preços ainda não foram cotados e aparecem como a definir: entram no documento quando a cotação for fechada, e nenhum deles foi estimado."
+                    : `Previsão de ${numero(pctMaterial ?? 0)}% sobre a mão de obra, sem cotação por insumo. O valor será revisto quando os materiais forem especificados e cotados.`}
               </p>
 
               <div className="cost-wrap">
@@ -1165,12 +1226,12 @@ export function DocumentoDoCliente({
                             <td className="unit">{l.material.unidade ?? "—"}</td>
                             <td className="num">
                               {l.material.valor === null
-                                ? "a definir"
+                                ? aDefinir
                                 : moeda(l.material.valor)}
                             </td>
                             <td className="num total">
                               {l.material.valor === null
-                                ? "—"
+                                ? aDefinir
                                 : moeda(
                                     l.material.valor *
                                       (l.material.quantidade ?? 1),
@@ -1190,15 +1251,25 @@ export function DocumentoDoCliente({
               </div>
 
               <div className="total-bar">
-                <span className="tb-label">Total dos materiais</span>
-                <span className="tb-value">{moeda(valorMaterial)}</span>
+                <span className="tb-label">
+                  {!materialPrecificado
+                    ? "Materiais"
+                    : materialPendente
+                      ? "Materiais · subtotal precificado"
+                      : "Total dos materiais"}
+                </span>
+                <span className="tb-value">
+                  {materialPrecificado ? moeda(valorMaterial) : aDefinir}
+                </span>
               </div>
 
               <div className="total-bar" style={{ marginTop: 12 }}>
                 <span className="tb-label">
                   Total geral · mão de obra + material
                 </span>
-                <span className="tb-value">{moeda(totalComMaterial)}</span>
+                <span className="tb-value">
+                  {totalGeralFechado ? moeda(totalComMaterial) : aDefinir}
+                </span>
               </div>
             </>
           )}

@@ -91,7 +91,8 @@ automatizado. A coluna "coberto" diz qual script prova cada bloco.
 | `removerItem` | Soft delete (`removido_em`); reaparece em "removidos" e dá para voltar |
 | `moverItem` com direção diferente de cima/baixo | `"Direção inválida."` |
 | `moverItem` no primeiro item para cima | Sem efeito, sem erro ⚠️ **não verificado** |
-| Item sem `valor_unitario` | `total` fica `null`; a linha sai no documento com travessão |
+| Item sem `valor_unitario` | `total` fica `null`; a linha sai no documento como **"a definir"**, nas duas colunas de valor |
+| Item sem quantidade ou sem unidade | Travessão. Medida que falta é travessão; preço que falta é "a definir" |
 
 **Bordas**
 
@@ -213,6 +214,7 @@ automatizado. A coluna "coberto" diz qual script prova cada bloco.
 | --- | --- |
 | `publicarOrcamento` com zero itens | `"Inclua ao menos um item antes de publicar."` |
 | `publicar` com 7 itens sem preço e sem valor fechado | `"7 itens estão sem preço de venda. Preencha antes de enviar ao cliente."` |
+| `publicar` com material sem preço na lista | `"N materiais estão sem preço. Cote ou remova antes de enviar ao cliente."` — senão o aceite congelaria um total geral que não existe |
 | Mesmo caso, com **1** item sem preço | `"1 item está sem preço de venda…"` — concorda em número |
 | `publicar` com itens sem preço **mas** com `valor_fechado` | Publica; o total é o valor fechado |
 | `publicar` sem senha definida | `"Defina uma senha em Dados do orçamento: o link circula por WhatsApp…"` |
@@ -256,6 +258,11 @@ automatizado. A coluna "coberto" diz qual script prova cada bloco.
 | `aceitarOrcamento` num já aprovado | `{ ok: true }` — idempotente, não duplica evento |
 | Orçamento aprovado | Formulário some; aparece o comprovante com quem aceitou, quando, versão e valor |
 | Aprovado pelo painel (sem aceite do cliente) | Comprovante **sem** a linha "Aceito por" — não mostra campo vazio |
+| Orçamento com lista de materiais, nenhum cotado | A segunda tabela **aparece** (a lista é a informação); valor e total de cada linha saem como "a definir" |
+| Etapa de material sem nenhum preço | **Sem** linha de subtotal — "Subtotal R$ 0,00" não é preço zero, é preço ausente |
+| Item sem preço na planilha de mão de obra | Barra de total vira "Mão de obra · subtotal precificado" (ou "Subtotal precificado", sem material) — nunca "Total geral" |
+| Pendência em qualquer das duas tabelas | "Total geral" sai como "a definir", no cartão do topo e na barra |
+| Mão de obra precificada em parte | Cartão do topo mostra `R$ x + a definir` |
 
 **Bordas**
 
