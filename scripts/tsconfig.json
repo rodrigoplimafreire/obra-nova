@@ -2,6 +2,9 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "baseUrl": "..",
+    // O Next compila o JSX com o runtime automático; o `tsx` lê daqui, e sem
+    // isto um script que renderiza componente cai em "React is not defined".
+    "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"],
       "server-only": ["./scripts/stubs/server-only.ts"]
