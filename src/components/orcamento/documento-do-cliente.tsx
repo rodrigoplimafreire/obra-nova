@@ -912,12 +912,18 @@ export function DocumentoDoCliente({
                 ) : (
                   <div className="sc-row">
                     <span className="k">
-                      {opcoes.length > 0 ? "Valores" : "Total"}
+                      {documento.totalADefinir
+                        ? "Valor da obra"
+                        : opcoes.length > 0
+                          ? "Valores"
+                          : "Total"}
                     </span>
                     <span className="v">
-                      {opcoes.length > 0 && menorOpcao !== maiorOpcao
-                        ? `${moeda(menorOpcao!)} a ${moeda(maiorOpcao!)}`
-                        : moeda(totalDeReferencia)}
+                      {documento.totalADefinir
+                        ? "A definir"
+                        : opcoes.length > 0 && menorOpcao !== maiorOpcao
+                          ? `${moeda(menorOpcao!)} a ${moeda(maiorOpcao!)}`
+                          : moeda(totalDeReferencia)}
                     </span>
                   </div>
                 )}
@@ -1151,20 +1157,30 @@ export function DocumentoDoCliente({
           {documento.opcoes.length === 0 && (
             <div className="total-bar">
               <span className="tb-label">
-                {/* "Total" com linha sem preço na mesma tabela é promessa
-                    falsa: o número é o que já está precificado, e o rótulo
-                    diz isso. */}
-                {separaMaterial
-                  ? maoDeObraPendente
-                    ? "Mão de obra · subtotal precificado"
-                    : "Total da mão de obra"
-                  : itemizado
+                {/* Dois jeitos de o total não ser um total, e os dois
+                    precisam aparecer no rótulo.
+
+                    `totalADefinir` é a declaração explícita de que o valor da
+                    obra ainda não existe. `maoDeObraPendente` é derivado: há
+                    linha sem preço na mesma tabela, e chamar a soma de "Total"
+                    seria promessa falsa. O derivado se ajusta sozinho conforme
+                    o Reginato preenche; a coluna é para quando nem isso dá a
+                    resposta certa. */}
+                {documento.totalADefinir
+                  ? "Subtotal preliminar · mão de obra precificada"
+                  : separaMaterial
                     ? maoDeObraPendente
-                      ? "Subtotal precificado"
-                      : "Total geral"
-                    : "Valor fechado"}
+                      ? "Mão de obra · subtotal precificado"
+                      : "Total da mão de obra"
+                    : itemizado
+                      ? maoDeObraPendente
+                        ? "Subtotal precificado"
+                        : "Total geral"
+                      : "Valor fechado"}
               </span>
-              <span className="tb-value">{moeda(documento.total)}</span>
+              <span className="tb-value">
+                {documento.totalADefinir ? "A definir" : moeda(documento.total)}
+              </span>
             </div>
           )}
 
@@ -1586,6 +1602,14 @@ export function DocumentoDoCliente({
               "Ao aceitar, você registra a concordância com o escopo e o valor acima. A data e o valor ficam guardados como estão hoje."}
           </p>
 
+          {/* Sem valor fechado não há o que aprovar: um aceite registraria
+              concordância com um número que o documento não traz. O botão some
+              e o de imprimir fica, que é o que esta versão pede. */}
+          {documento.totalADefinir ? (
+            <div className="accept-row">
+              <BotaoImprimir />
+            </div>
+          ) : (
           <AceiteDoCliente
             token={token}
             jaAprovado={jaAprovado}
@@ -1595,6 +1619,7 @@ export function DocumentoDoCliente({
             cliente={documento.cliente}
             aceite={aceite ?? null}
           />
+          )}
 
           <p className="validade">
             Este orçamento é válido até{" "}

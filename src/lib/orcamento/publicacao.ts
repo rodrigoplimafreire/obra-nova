@@ -141,6 +141,11 @@ export type DocumentoPublicado = {
    * separa material, e o total é o que sempre foi.
    */
   materialPercentual: number | null;
+  /**
+   * O valor da obra ainda não existe. O documento mostra "a definir" no lugar
+   * do total, mantém os subtotais do que já tem preço e não oferece aceite.
+   */
+  totalADefinir: boolean;
   /** Vazio = o documento não discrimina material. */
   materiais: MaterialPublicado[];
   /** Vazio = tabela única. Com opções, a tabela vira abas e cada uma soma a sua. */
@@ -202,6 +207,7 @@ type OrcamentoDeOrigem = {
   midiasTitulo: string | null;
   midiasTexto: string | null;
   materialPercentual: number | null;
+  totalADefinir: boolean;
   materiais: MaterialPublicado[];
   opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
 };
@@ -286,6 +292,7 @@ export function montarDocumento(
     midiasTitulo: orcamento.midiasTitulo,
     midiasTexto: orcamento.midiasTexto,
     materialPercentual: orcamento.materialPercentual,
+    totalADefinir: orcamento.totalADefinir,
     materiais: orcamento.materiais.map((m) => ({
       grupo: m.grupo,
       descricao: m.descricao,
@@ -517,6 +524,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     midiasTitulo: texto(d.midiasTitulo),
     midiasTexto: texto(d.midiasTexto),
     materialPercentual: numero(d.materialPercentual),
+    totalADefinir: d.totalADefinir === true,
     materiais,
     opcoes,
     total: numero(d.total) ?? 0,

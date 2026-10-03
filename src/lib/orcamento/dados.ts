@@ -280,6 +280,8 @@ export type OrcamentoCompleto = {
   midiasTexto: string | null;
   /** Estimativa de material, em % sobre a mão de obra. Nulo = não separa. */
   materialPercentual: number | null;
+  /** O valor da obra ainda não existe: o documento mostra "a definir". */
+  totalADefinir: boolean;
 
   situacao: SituacaoDoOrcamento;
   /** Quando o cliente abriu a página pela primeira vez, e a última. */
@@ -505,6 +507,7 @@ export async function carregarOrcamento(
     midiasTitulo: o.midias_titulo,
     midiasTexto: o.midias_texto,
     materialPercentual: o.material_percentual,
+    totalADefinir: o.total_a_definir,
 
     situacao: o.situacao,
     vistoEm: o.visto_em,

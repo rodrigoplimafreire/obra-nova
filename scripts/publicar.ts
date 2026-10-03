@@ -73,7 +73,14 @@ async function main() {
       console.error(`${orcamento.cliente}: nenhum item lançado.`);
       process.exit(1);
     }
-    if (orcamento.valorFechado === null && orcamento.semPreco > 0) {
+    // A trava existe para não publicar um total somado de linhas incompletas.
+    // Quando o orçamento declara que o valor ainda não existe, o documento
+    // mostra "a definir" em vez de somar, e aí não há número falso a proteger.
+    if (
+      orcamento.valorFechado === null &&
+      orcamento.semPreco > 0 &&
+      !orcamento.totalADefinir
+    ) {
       console.error(
         `${orcamento.cliente}: ${orcamento.semPreco} item(ns) sem preço de venda.`,
       );
