@@ -8,15 +8,14 @@
  * o m² de massa e R$ 25,00 o m² de pintura. Reduzir escopo não é remarcar
  * preço, e remarcar junto esconderia qual das duas coisas mudou.
  *
- * **A leitura das medidas, que vale conferir.** O levantamento traz a garagem
- * com 10,46 m e o quarto com 20,76 m — somados, 31,22 m. O rodapé, a massa e a
- * pintura vêm com 62,44 m, que é **exatamente o dobro**. A leitura que fecha é
- * a de que 31,22 m é o corrido de parede, e 62,44 m são as duas faces dela:
- * o corte atravessa a parede de um lado ao outro, mas o rodapé, a massa e a
- * tinta existem nos dois lados.
+ * **A medição do tratamento.** O levantamento traz a garagem com 10,46 m e o
+ * quarto com 20,76 m — somados, 31,22 m —, e o rodapé, a massa e a pintura com
+ * 62,44 m, o dobro exato: 31,22 m é o corrido de parede, e 62,44 m são as duas
+ * faces dela.
  *
- * Por isso o tratamento entra com 31,22 m e o resto com 62,44 m. Se a intenção
- * era tratar os 62,44 m corridos, a linha dobra e o total sobe R$ 2.653,70.
+ * O tratamento entra pelo **corrido**, 31,22 m: o corte atravessa a parede de
+ * um lado ao outro, e é um serviço só. Chegou a ser publicado pelas duas faces,
+ * a R$ 5.307,40, e o Rodrigo mandou voltar.
  *
  * O `valor_fechado` passa a ser nulo: com todas as linhas precificadas, o
  * total vira a soma da tabela e não pode divergir dela.
@@ -73,7 +72,7 @@ const ITENS: Item[] = [
     unidade: "m linear",
     valor: 85,
     observacao:
-      "Corrido de parede: garagem 10,46 m e quarto 20,76 m. O corte atravessa a parede, e por isso a medida é do corrido e não das duas faces.",
+      "Corrido de parede: garagem 10,46 m e quarto 20,76 m. O corte atravessa a parede de um lado ao outro, e por isso a medida é do corrido e não das duas faces.",
   },
   {
     descricao:
