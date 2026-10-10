@@ -14,6 +14,7 @@ import { PublicacaoDoOrcamento } from "./publicacao-do-orcamento";
 import { TabelaDeCustos } from "./tabela-de-custos";
 import { MidiasDoDocumento } from "./midias-do-documento";
 import { PlanejamentoDoDocumento } from "./planejamento-do-documento";
+import { NormasDoDocumento } from "./normas-do-documento";
 // `horas` vem daqui porque é o mesmo formato do pipeline: "3h20", "45 min".
 // Duas grafias para a mesma duração em telas vizinhas é ruído.
 import { horas } from "./painel-pipeline";
@@ -46,10 +47,13 @@ export function TelaDoOrcamento({
   obras,
   urlBase,
   custoComercial,
+  normasDoPerfil,
 }: {
   orcamento: OrcamentoCompleto;
   obras: ObraParaVincular[];
   urlBase: string;
+  /** As normas do Perfil, usadas por quem não escolheu as suas. */
+  normasDoPerfil: string[];
   /** O medido deste pedido e a carga a embutir, quando este orçamento veio de
    *  um pedido do pipeline. Ver `custoComercialDoOrcamento`. */
   custoComercial: CustoComercialDoOrcamento | null;
@@ -163,6 +167,14 @@ export function TelaDoOrcamento({
             sentido quando já existe o que planejar. As duas seções que ele
             alimenta são opcionais no documento. */}
         <PlanejamentoDoDocumento orcamento={orcamento} />
+
+        {/* Junto do planejamento porque é da mesma natureza: o que o
+            documento declara além do preço. Quase sempre fica como está —
+            só a obra com disciplina diferente das outras mexe aqui. */}
+        <NormasDoDocumento
+          orcamento={orcamento}
+          normasDoPerfil={normasDoPerfil}
+        />
 
         {/* Por último no painel, primeiro no documento: as fotos abrem a
             proposta, mas quem monta o orçamento só vai atrás delas depois de

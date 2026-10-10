@@ -70,7 +70,7 @@ async function main() {
       );
     }
 
-    const linhas = o.observacoes!.split("\n").filter((l) => l.trim());
+    const linhas = o.observacoes!.split("\n").filter((l: string) => l.trim());
     console.log(`  ${o.cliente_nome} · ${o.token} · ${o.status} · ${linhas.length} parágrafo(s)`);
   }
 

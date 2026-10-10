@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
+import { empreiteiraDaOrg } from "@/lib/admin/empreiteira";
 import { carregarOrcamento } from "./dados";
 import { montarDocumento } from "./publicacao";
 import type { Enums } from "@/lib/database.types";
@@ -98,7 +99,12 @@ export async function republicar(id: string): Promise<Saida> {
   if (!orcamento.senha) return { ok: false, erro: "Sem senha definida." };
 
   const versao = orcamento.versaoPublicada + 1;
-  const dados = montarDocumento(orcamento, versao);
+  const empreiteira = await empreiteiraDaOrg(orgId);
+  const dados = montarDocumento(
+    orcamento,
+    versao,
+    empreiteira.contrato.normasTecnicas,
+  );
   const sb = supabaseAdmin();
 
   const { error } = await sb

@@ -848,6 +848,33 @@ type TabelasDeOrcamento = {
       updated_at?: string;
     };
   };
+  /**
+   * As normas técnicas que este orçamento cita, uma por linha.
+   *
+   * Vazio significa "use a lista da empreiteira", que é como sempre foi: a
+   * tabela só existe para o orçamento que precisa citar menos — ou outras.
+   */
+  orc_normas: {
+    Row: {
+      id: string;
+      orcamento_id: string;
+      position: number;
+      texto: string;
+      created_at: string;
+      updated_at: string;
+    };
+    Insert: {
+      id?: string;
+      orcamento_id: string;
+      position: number;
+      texto: string;
+    };
+    Update: {
+      position?: number;
+      texto?: string;
+      updated_at?: string;
+    };
+  };
   orc_cronograma: {
     Row: {
       id: string;

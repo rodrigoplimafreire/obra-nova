@@ -148,6 +148,15 @@ export type DocumentoPublicado = {
   totalADefinir: boolean;
   /** Vazio = o documento não discrimina material. */
   materiais: MaterialPublicado[];
+  /**
+   * As normas técnicas da seção 5, congeladas com o resto.
+   *
+   * **Nulo e vazio não são a mesma coisa aqui.** Nulo é publicação antiga,
+   * feita antes de as normas poderem ser por orçamento — o documento cai na
+   * lista da empreiteira, e nada do que já está no ar muda. Vazio é decisão:
+   * este orçamento publicou sem citar norma nenhuma.
+   */
+  normasTecnicas: string[] | null;
   /** Vazio = tabela única. Com opções, a tabela vira abas e cada uma soma a sua. */
   opcoes: OpcaoPublicada[];
   /** Soma dos itens, ou o preço fechado quando o orçamento é de valor único. */
@@ -210,6 +219,8 @@ type OrcamentoDeOrigem = {
   totalADefinir: boolean;
   materiais: MaterialPublicado[];
   opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
+  /** Vazio = o documento cita as normas da empreiteira. */
+  normas: Array<{ texto: string }>;
 };
 
 /**
@@ -223,6 +234,15 @@ type OrcamentoDeOrigem = {
 export function montarDocumento(
   orcamento: OrcamentoDeOrigem,
   versao: number,
+  /**
+   * As normas do Perfil, usadas quando o orçamento não escolheu as suas.
+   *
+   * Vem por parâmetro, e não dentro do orçamento, porque não é dado dele: é da
+   * empreiteira. Obrigatório de propósito — quem publica tem de ter ido buscar
+   * a lista, e um valor omitido viraria proposta sem norma nenhuma em
+   * silêncio.
+   */
+  normasDaEmpreiteira: string[],
 ): DocumentoPublicado {
   const vivos = orcamento.itens.filter((i) => !i.removidoEm);
 
@@ -283,6 +303,16 @@ export function montarDocumento(
       marco: c.marco,
       critico: c.critico,
     })),
+    /*
+     * A seleção é do orçamento; a lista do Perfil é o padrão. Resolvido aqui,
+     * na publicação, e não na hora de desenhar: assim o documento mostra as
+     * normas que valiam quando foi publicado, e não as que a empreiteira
+     * passou a usar depois. Norma citada é escopo declarado, e escopo
+     * declarado congela junto com o preço.
+     */
+    normasTecnicas: orcamento.normas.length
+      ? orcamento.normas.map((n) => n.texto)
+      : normasDaEmpreiteira,
     midias: orcamento.midias.map((m) => ({
       tipo: m.tipo,
       url: m.url,
@@ -527,6 +557,14 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     totalADefinir: d.totalADefinir === true,
     materiais,
     opcoes,
+    // Nulo de propósito quando o campo não existe: publicação antiga cai na
+    // lista da empreiteira, e o que já está no ar não muda de norma sozinho.
+    normasTecnicas: Array.isArray(d.normasTecnicas)
+      ? d.normasTecnicas.flatMap((n) => {
+          const t = texto(n);
+          return t ? [t] : [];
+        })
+      : null,
     total: numero(d.total) ?? 0,
     // Publicação antiga não tem o campo, e nela o total já era tudo.
     totalGeral: numero(d.totalGeral) ?? numero(d.total) ?? 0,

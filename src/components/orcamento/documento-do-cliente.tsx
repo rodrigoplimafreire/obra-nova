@@ -383,6 +383,22 @@ export function DocumentoDoCliente({
   const contrato =
     empreiteira && contratoPreenchido(empreiteira) ? empreiteira.contrato : null;
 
+  /*
+   * As normas saem da fotografia publicada, e não da empreiteira ao vivo.
+   *
+   * Garantia, horário e responsável técnico continuam vindo do Perfil porque
+   * são papel timbrado — mudam para todo mundo quando a RD muda. Norma é outra
+   * coisa: ela declara a disciplina do escopo, e um orçamento só de estrutura
+   * não cita assentamento de porcelanato. Por isso é escolhida por orçamento e
+   * congela com o preço.
+   *
+   * `null` é publicação anterior a esta regra: cai na lista da empreiteira, e
+   * nenhuma proposta no ar muda de norma sozinha. Lista vazia é decisão, e o
+   * bloco inteiro some — como manda a regra das seções sem conteúdo.
+   */
+  const normasTecnicas =
+    documento.normasTecnicas ?? contrato?.normasTecnicas ?? [];
+
   const garantias = contrato
     ? [
         contrato.garantiaSolidezAnos
@@ -1562,7 +1578,7 @@ export function DocumentoDoCliente({
               </>
             )}
 
-            {contrato.normasTecnicas.length > 0 && (
+            {normasTecnicas.length > 0 && (
               <>
                 <h3 className="cond-sub">Normas técnicas aplicáveis</h3>
                 <p className="intro">
@@ -1570,7 +1586,7 @@ export function DocumentoDoCliente({
                   Técnicas Brasileiras (ABNT NBR).
                 </p>
                 <ul className="clausulas">
-                  {contrato.normasTecnicas.map((n, i) => (
+                  {normasTecnicas.map((n, i) => (
                     <li key={i}>{n}</li>
                   ))}
                 </ul>

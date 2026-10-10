@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAdmin } from "@/lib/admin/sessao";
+import { empreiteiraDaOrg } from "@/lib/admin/empreiteira";
 import { carregarOrcamento } from "./dados";
 import { montarDocumento } from "./publicacao";
 import type { Resultado } from "@/lib/admin/tipos";
@@ -88,7 +89,13 @@ export async function publicarOrcamento(
   const versao = (orcamento.versaoPublicada ?? 0) + 1;
 
   // `montarDocumento` é quem deixa o custo para trás. Ver publicacao.ts.
-  const dados = montarDocumento(orcamento, versao);
+  // As normas do Perfil são o padrão de quem não escolheu as suas.
+  const empreiteira = await empreiteiraDaOrg(orgId);
+  const dados = montarDocumento(
+    orcamento,
+    versao,
+    empreiteira.contrato.normasTecnicas,
+  );
 
   const { error } = await sb.from("orc_publicacoes").insert({
     orcamento_id: id,

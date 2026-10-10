@@ -165,6 +165,20 @@ export async function obrasParaVincular(): Promise<ObraParaVincular[]> {
  * `percentual` são opcionais — quando o preço é fechado não existe valor por
  * módulo, e a tabela sai só com macroetapa e prazo.
  */
+/**
+ * Uma norma técnica da seção 5, como ela sai no documento.
+ *
+ * O texto mora aqui e não aponta para a lista da empreiteira de propósito:
+ * norma citada é escopo declarado, e escopo declarado congela com o resto da
+ * proposta. Se a RD corrigir a redação de uma norma amanhã, o contrato que o
+ * cliente já assinou continua dizendo o que dizia quando ele assinou.
+ */
+export type NormaDoOrcamento = {
+  id: string;
+  position: number;
+  texto: string;
+};
+
 export type ModuloDoOrcamento = {
   id: string;
   position: number;
@@ -264,6 +278,11 @@ export type OrcamentoCompleto = {
   opcoes: OpcaoDoOrcamento[];
   /** Vazio = o documento não discrimina material. */
   materiais: MaterialDoOrcamento[];
+  /**
+   * As normas técnicas da seção 5, quando este orçamento cita outras que não
+   * as da empreiteira. Vazio = usa a lista do Perfil, como sempre foi.
+   */
+  normas: NormaDoOrcamento[];
 
   senha: string | null;
   token: string;
@@ -401,6 +420,7 @@ export async function carregarOrcamento(
     { data: midias },
     { data: opcoes },
     { data: materiais },
+    { data: normas },
   ] = await Promise.all([
       sb
         .from("orc_itens")
@@ -443,6 +463,11 @@ export async function carregarOrcamento(
       sb
         .from("orc_materiais")
         .select("id, grupo, descricao, quantidade, unidade, valor, position")
+        .eq("orcamento_id", id)
+        .order("position"),
+      sb
+        .from("orc_normas")
+        .select("id, position, texto")
         .eq("orcamento_id", id)
         .order("position"),
     ]);
@@ -497,6 +522,7 @@ export async function carregarOrcamento(
     })),
     opcoes: opcoes ?? [],
     materiais: materiais ?? [],
+    normas: normas ?? [],
 
     senha: o.senha,
     token: o.token,

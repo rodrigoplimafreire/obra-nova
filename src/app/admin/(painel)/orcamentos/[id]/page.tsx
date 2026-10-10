@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { carregarOrcamento, obrasParaVincular } from "@/lib/orcamento/dados";
 import { custoComercialDoOrcamento } from "@/lib/pipeline/dados";
+import { empreiteiraAtual } from "@/lib/admin/empreiteira";
 import { TelaDoOrcamento } from "@/components/admin/tela-orcamento";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,9 @@ export default async function PaginaDoOrcamento({
       // pedido não há porte nem medição, e os números seriam genéricos
       // aparecendo numa tela onde ninguém pediu.
       custoComercial={await custoComercialDoOrcamento(id)}
+      // A lista do Perfil, para o card de normas mostrar o que esta
+      // proposta cita quando não escolheu as suas.
+      normasDoPerfil={(await empreiteiraAtual()).contrato.normasTecnicas}
       // Montada no servidor: o link que vai por WhatsApp precisa do endereço
       // público, e `window.location` no cliente daria o de desenvolvimento
       // quando alguém abrisse pelo túnel ou por IP da rede local.

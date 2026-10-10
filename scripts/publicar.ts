@@ -22,6 +22,7 @@ import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { carregarOrcamento } from "@/lib/orcamento/dados";
 import { montarDocumento } from "@/lib/orcamento/publicacao";
+import { empreiteiraDaOrg } from "@/lib/admin/empreiteira";
 
 config({ path: ".env.local" });
 
@@ -119,7 +120,13 @@ async function main() {
     const orcamento = await carregarOrcamento(plano.id, plano.orgId);
     if (!orcamento) continue;
 
-    const dados = montarDocumento(orcamento, plano.versao);
+    // As normas do Perfil são o padrão de quem não escolheu as suas.
+    const empreiteira = await empreiteiraDaOrg(plano.orgId);
+    const dados = montarDocumento(
+      orcamento,
+      plano.versao,
+      empreiteira.contrato.normasTecnicas,
+    );
 
     const { error } = await sb.from("orc_publicacoes").insert({
       orcamento_id: plano.id,
