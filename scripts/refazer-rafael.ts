@@ -1,34 +1,35 @@
 /**
  * Orçamento do Sr. Rafael — levantamento final do tratamento de infiltração.
  *
- * O levantamento passou a discriminar o tratamento **por ambiente**, com medida
- * e altura próprias, e isso resolve a discussão das duas faces: cada parede vem
- * medida uma vez, do jeito que foi conferida na obra. Onde antes havia uma
- * linha de 62,44 m de tratamento, agora há três serviços diferentes:
+ * O levantamento discrimina o tratamento **por ambiente**, com medida e altura
+ * próprias, e isso resolve a discussão das duas faces: cada parede vem medida
+ * uma vez, do jeito que foi conferida na obra. São **duas técnicas**, não três:
  *
- * - **garagem**, 10,46 × 1,00 m → 10,46 m² de faixa tratada;
- * - **quarto**, 20,76 m → o corte de 10 cm atravessando a parede a cada 2,00 m;
+ * - **garagem**, 10,46 m, e **quarto**, 20,76 m → o mesmo corte de 10 cm
+ *   atravessando a parede de um lado ao outro a cada 2,00 m, preenchido com
+ *   cimento, areia e rebotech. Medidos em metro corrido, cada um na sua linha
+ *   porque são ambientes que o cliente precisa reconhecer;
  * - **banheiro**, 4,00 × 1,50 m → retirada do reboco, impermeabilizante
- *   Tecplus, chapisco e reboco novo. Parede nova no escopo.
+ *   Tecplus, chapisco e reboco novo. Parede nova no escopo, e a única em metro
+ *   quadrado, porque aqui o serviço é de superfície e não de base.
  *
- * Os dois primeiros em metro quadrado e o do quarto em metro corrido porque são
- * serviços distintos, não o mesmo serviço medido de dois jeitos. O rodapé, a
- * massa corrida e a pintura seguem os 62,44 m do levantamento.
+ * O rodapé, a massa corrida e a pintura seguem os 62,44 m do levantamento.
  *
- * **Os preços.** Os que o cliente já viu ficam: R$ 20,00 o metro de rodapé,
- * R$ 85,00 o metro do corte do quarto, R$ 38,00 o m² de massa, R$ 25,00 o m² de
- * pintura, R$ 750,00 o rufo e R$ 450,00 a limpeza. O rufo ganhou a medida de
- * 5,18 m no levantamento, mas continua como verba pelo mesmo valor: a medida
- * entra na descrição, e o cliente não vê um preço que mudou sem motivo.
+ * **Os preços vêm todos do Rodrigo**, menos um. R$ 20,00 o metro de rodapé,
+ * R$ 85,00 o metro do corte, R$ 750,00 o rufo e R$ 450,00 a limpeza seguem do
+ * orçamento que o cliente já viu; a massa corrida e a pintura ele fechou neste
+ * ajuste, em R$ 28,00 e R$ 18,00 o m². O rufo ganhou a medida de 5,18 m no
+ * levantamento mas continua como verba pelo mesmo valor: a medida entra na
+ * descrição, e o cliente não vê um preço que mudou sem motivo.
  *
- * O tratamento em m² da garagem e do banheiro é **serviço novo neste
- * orçamento** e não tem preço anterior para preservar. São quatro operações na
- * mesma parede — retirar o reboco, impermeabilizar, chapiscar e rebocar — e o
- * valor foi montado somando o que a RD já pratica: R$ 45,00/m² de
- * impermeabilização, da proposta da Dona Fátima, mais R$ 5,50 de chapisco e
- * R$ 44,00 de reboco da planilha de mão de obra 2025 com os 10% de reajuste,
- * mais a retirada do reboco velho. Dá R$ 110,00 o m², e é a única linha deste
- * orçamento que o Reginato ainda não validou.
+ * A exceção é a parede do banheiro. É **serviço novo neste orçamento**, sem
+ * preço anterior para preservar, e são quatro operações na mesma parede —
+ * retirar o reboco, impermeabilizar, chapiscar e rebocar. O valor foi montado
+ * somando o que a RD já pratica: R$ 45,00/m² de impermeabilização, da proposta
+ * da Dona Fátima, mais R$ 5,50 de chapisco e R$ 44,00 de reboco da planilha de
+ * mão de obra 2025 com os 10% de reajuste, mais a retirada do reboco velho. Dá
+ * R$ 110,00 o m², e é a única linha deste orçamento que o Reginato ainda não
+ * validou.
  *
  * **Três consertos no documento**, que só apareceram ao reler a proposta
  * publicada:
@@ -41,8 +42,8 @@
  *    Sai inteiro.
  * 2. Dois cards de observação começavam repetindo o próprio título — "Corte em
  *    trechos de 2,00 m O corte no rodapé…" —, defeito que o importador deixou.
- * 3. Os cards do projeto descreviam só o corte tipo viga baldrame, que agora é
- *    a técnica de um ambiente entre três. Passam a dizer as duas.
+ * 3. Os cards do projeto falavam de um ambiente só. Passam a separar as duas
+ *    técnicas: o corte na base das paredes e o reboco refeito do banheiro.
  *
  * Rodar com `--gravar`.
  */
@@ -61,7 +62,13 @@ const sb = createClient(
 const GRAVAR = process.argv.includes("--gravar");
 const TOKEN = "NBMBKcxrrq264MOl3UtGYgSXS_MYKjpU";
 
-/** Tratamento em m²: retirar reboco, impermeabilizar, chapiscar, rebocar. */
+/** O corte na base da parede, a técnica da garagem e do quarto. */
+const CORTE = 85;
+
+/**
+ * A parede do banheiro, em m²: retirar reboco, impermeabilizar com Tecplus,
+ * chapiscar e rebocar. Único preço aqui que não veio do Rodrigo.
+ */
 const TRATAMENTO_M2 = 110;
 
 /** O corrido de parede do levantamento, que o rodapé, a massa e a tinta seguem. */
@@ -87,13 +94,10 @@ const ITENS: Item[] = [
   },
   {
     descricao:
-      "Tratamento de infiltração da garagem, em faixa de 1,00 m de altura (10,46 × 1,00 m)",
+      "Tratamento de infiltração do rodapé da garagem — corte de 10 cm de altura atravessando a parede de um lado ao outro, executado a cada 2,00 m, com cimento, areia e rebotech, técnica de viga baldrame sem armadura (10,46 m)",
     quantidade: 10.46,
-    unidade: "m²",
-    valor: TRATAMENTO_M2,
-    observacao:
-      "Retirada do reboco comprometido, aplicação de impermeabilizante, chapisco e reboco novo.",
-    novo: true,
+    unidade: "m linear",
+    valor: CORTE,
   },
   {
     descricao: "Correção do rufo do telhado, no lado direito da varanda (5,18 m)",
@@ -104,10 +108,10 @@ const ITENS: Item[] = [
   },
   {
     descricao:
-      "Tratamento de infiltração do rodapé do quarto — corte de 10 cm de altura atravessando a parede de um lado ao outro, executado a cada 2,00 m, com areia grossa, rebotech e cimento, técnica de viga baldrame sem armadura (20,76 m)",
+      "Tratamento de infiltração do rodapé do quarto — corte de 10 cm de altura atravessando a parede de um lado ao outro, executado a cada 2,00 m, com cimento, areia e rebotech, técnica de viga baldrame sem armadura (20,76 m)",
     quantidade: 20.76,
     unidade: "m linear",
-    valor: 85,
+    valor: CORTE,
   },
   {
     descricao:
@@ -124,14 +128,14 @@ const ITENS: Item[] = [
       "Aplicação de massa corrida PVA após o tratamento, em faixa de 1,00 m de altura (62,44 × 1,00 m)",
     quantidade: CORRIDO,
     unidade: "m²",
-    valor: 38,
+    valor: 28,
   },
   {
     descricao:
       "Pintura das paredes após o tratamento, com tinta látex na cor existente, até 2,70 m de altura (62,44 × 2,70 m)",
     quantidade: Math.round(CORRIDO * 2.7 * 100) / 100,
     unidade: "m²",
-    valor: 25,
+    valor: 18,
   },
   {
     descricao: "Retirada de entulho e limpeza pós-obra",
@@ -147,7 +151,7 @@ const ITENS: Item[] = [
  * gravar em vez de publicar uma quantidade que ninguém conferiu.
  */
 const CONFERENCIAS: Array<{ o_que: string; esperado: number; linha: number }> = [
-  { o_que: "garagem, 10,46 × 1,00 m", esperado: 10.46, linha: 1 },
+  { o_que: "garagem, 10,46 m de corrido", esperado: 10.46, linha: 1 },
   { o_que: "quarto, 20,76 m de corrido", esperado: 20.76, linha: 3 },
   { o_que: "banheiro, 4,00 × 1,50 m", esperado: 6, linha: 4 },
   { o_que: "massa corrida, 62,44 × 1,00 m", esperado: 62.44, linha: 5 },
@@ -155,22 +159,23 @@ const CONFERENCIAS: Array<{ o_que: string; esperado: number; linha: number }> = 
 ];
 
 /**
- * Os cards do documento. Os de `projeto` passam a descrever as duas técnicas
- * de tratamento, e os de `observacao` perdem o título repetido no começo do
- * texto. As etapas do "do aceite à entrega" não mudam.
+ * Os cards do documento. Os de `projeto` separam as duas técnicas — o corte na
+ * base das paredes, que é a da garagem e do quarto, e o reboco refeito da
+ * parede do banheiro —, e os de `observacao` perdem o título repetido no
+ * começo do texto. As etapas do "do aceite à entrega" não mudam.
  */
 const SECOES: Array<{ tipo: "projeto" | "observacao"; titulo: string; texto: string }> = [
   {
     tipo: "projeto",
-    titulo: "Garagem e banheiro · Reboco refeito com impermeabilizante",
+    titulo: "Garagem e quarto · Corte tipo viga baldrame",
     texto:
-      "Na faixa atingida pela umidade o reboco comprometido é retirado até a alvenaria, a parede recebe impermeabilizante, e vêm chapisco e reboco novos por cima — 1,00 m de altura na garagem e 1,50 m na parede do banheiro, no lado da cozinha.",
+      "Na garagem e no quarto a umidade sobe pela base da parede, e o tratamento ataca a base: corte de 10 cm de altura atravessando a parede de um lado ao outro, executado a cada 2,00 m e preenchido com cimento, areia e rebotech — sem armadura. São 10,46 m na garagem e 20,76 m no quarto.",
   },
   {
     tipo: "projeto",
-    titulo: "Quarto · Corte tipo viga baldrame",
+    titulo: "Banheiro · Reboco refeito com impermeabilizante",
     texto:
-      "No rodapé do quarto a infiltração sobe pela base da parede, e o tratamento é outro: corte de 10 cm de altura atravessando a parede de um lado ao outro, a cada 2,00 m, preenchido com areia grossa, rebotech e cimento — sem armadura.",
+      "Na parede do banheiro, no lado da cozinha, a umidade está na superfície e o tratamento é outro: o reboco comprometido sai até a alvenaria, a parede recebe impermeabilizante Tecplus, e vêm chapisco e reboco novos por cima — 4,00 m de extensão por 1,50 m de altura.",
   },
   {
     tipo: "projeto",
@@ -188,7 +193,7 @@ const SECOES: Array<{ tipo: "projeto" | "observacao"; titulo: string; texto: str
     tipo: "observacao",
     titulo: "Corte em trechos de 2,00 m",
     texto:
-      "No quarto, o corte no rodapé é feito por etapas de 2,00 m, nunca de uma vez só, exatamente para não comprometer a estrutura da parede durante o tratamento.",
+      "Na garagem e no quarto, o corte no rodapé é feito por etapas de 2,00 m, nunca de uma vez só, exatamente para não comprometer a estrutura da parede durante o tratamento.",
   },
   {
     tipo: "observacao",
@@ -198,9 +203,9 @@ const SECOES: Array<{ tipo: "projeto" | "observacao"; titulo: string; texto: str
   },
   {
     tipo: "observacao",
-    titulo: "Cada ambiente com a sua técnica",
+    titulo: "Duas técnicas, conforme a umidade chega",
     texto:
-      "A garagem e a parede do banheiro levam retirada de reboco, impermeabilizante e reboco novo; o quarto leva o corte atravessando a parede. São soluções diferentes porque a umidade chega de maneiras diferentes em cada ponto.",
+      "A garagem e o quarto levam o corte atravessando a base da parede, porque ali a umidade sobe do chão; a parede do banheiro leva retirada de reboco, impermeabilizante e reboco novo, porque ali o problema está na superfície. São soluções diferentes para problemas diferentes.",
   },
   {
     tipo: "observacao",
@@ -326,9 +331,9 @@ async function main() {
       // Nulo: o total é a soma da tabela e não pode divergir dela.
       valor_fechado: null,
       apresentacao:
-        "Tratamento de infiltração na garagem, no rodapé do quarto e numa parede do banheiro, cada ambiente com a técnica que a sua condição pede. O rodapé em porcelanato é retirado e reinstalado, reaproveitando as mesmas peças, e as paredes recebem massa corrida e pintura depois do tratamento. Inclui a correção do rufo do telhado, no lado direito da varanda.",
+        "Tratamento de infiltração no rodapé da garagem e do quarto e numa parede do banheiro, cada ambiente com a técnica que a sua condição pede. O rodapé em porcelanato é retirado e reinstalado, reaproveitando as mesmas peças, e as paredes recebem massa corrida e pintura depois do tratamento. Inclui a correção do rufo do telhado, no lado direito da varanda.",
       nota_custos:
-        "Cada ambiente é medido do jeito que foi conferido na obra: a garagem e a parede do banheiro em metro quadrado, porque levam retirada de reboco, impermeabilizante, chapisco e reboco novo; o quarto em metro corrido, porque leva o corte de 10 cm atravessando a parede a cada 2,00 m. O rodapé, a massa corrida e a pintura seguem os 62,44 m de corrido do levantamento. Os rodapés são reaproveitados, sem compra de peça nova. A correção do rufo permanece pelo valor do orçamento anterior.",
+        "Cada ambiente é medido do jeito que foi conferido na obra: a garagem e o quarto em metro corrido, porque levam o corte de 10 cm atravessando a parede a cada 2,00 m; a parede do banheiro em metro quadrado, porque leva retirada de reboco, impermeabilizante, chapisco e reboco novo. O rodapé, a massa corrida e a pintura seguem os 62,44 m de corrido do levantamento. Os rodapés são reaproveitados, sem compra de peça nova. A correção do rufo permanece pelo valor do orçamento anterior.",
       updated_at: new Date().toISOString(),
     })
     .eq("id", o.id);
