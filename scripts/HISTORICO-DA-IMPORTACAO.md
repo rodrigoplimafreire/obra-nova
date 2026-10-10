@@ -39,9 +39,13 @@ oito itens e R$ 12.611,47, com o total saindo da soma da tabela.
 > narrativa (hero, cronograma de 16 semanas, premissas com estimativa de
 > materiais) não foi reescrita até confirmar com o Rodrigo.
 
-**Pendência aberta**, e a mais séria das sete: a narrativa do documento do
-Livônio pode ainda descrever o acréscimo de pavimento completo e o cronograma
-de 16 semanas, enquanto a tabela traz o reforço estrutural. A conferir.
+**Resolvido em 10/10/2026.** A pendência era real: a apresentação e os três
+cards do projeto descreviam 70 m², dez sapatas, duas lajes, alvenaria nova e
+telhado colonial novo, enquanto a planilha revisada traz 31 m², oito sapatas,
+uma laje e a *reinstalação* do telhado existente. A narrativa prometia mais do
+que a tabela cobra. Foi reescrita a partir da planilha, item por item, por
+`scripts/narrativa-do-livonio.ts`, e o documento ganhou uma observação dizendo
+o que **não** está incluído. Nenhum preço foi tocado.
 
 ## Jeová Filho
 
