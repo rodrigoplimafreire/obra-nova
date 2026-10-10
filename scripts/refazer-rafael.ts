@@ -13,9 +13,12 @@
  * 62,44 m, o dobro exato: 31,22 m é o corrido de parede, e 62,44 m são as duas
  * faces dela.
  *
- * O tratamento entra pelo **corrido**, 31,22 m: o corte atravessa a parede de
- * um lado ao outro, e é um serviço só. Chegou a ser publicado pelas duas faces,
- * a R$ 5.307,40, e o Rodrigo mandou voltar.
+ * **O tratamento entra pelas duas faces**, 62,44 m, como a pintura e o rodapé.
+ * Foi a decisão do Rodrigo depois de ver as duas leituras lado a lado: o corte
+ * atravessa a parede, mas o serviço acontece dos dois lados e é cobrado nos
+ * dois. Os 31,22 m continuam declarados aqui como conferência — prendem um
+ * número ao outro, e o script para antes de gravar se o levantamento de um
+ * ambiente mudar.
  *
  * O `valor_fechado` passa a ser nulo: com todas as linhas precificadas, o
  * total vira a soma da tabela e não pode divergir dela.
@@ -68,11 +71,11 @@ const ITENS: Item[] = [
   {
     descricao:
       "Tratamento de infiltração das paredes na altura do rodapé — corte de 10 cm de altura atravessando a parede de um lado ao outro, executado a cada 2,00 m, com areia grossa, rebotech e cimento, técnica de viga baldrame sem armadura",
-    quantidade: CORRIDO,
+    quantidade: DUAS_FACES,
     unidade: "m linear",
     valor: 85,
     observacao:
-      "Corrido de parede: garagem 10,46 m e quarto 20,76 m. O corte atravessa a parede de um lado ao outro, e por isso a medida é do corrido e não das duas faces.",
+      "Garagem e quarto: 31,22 m de corrido de parede, medidos nos dois lados.",
   },
   {
     descricao:
@@ -176,7 +179,7 @@ async function main() {
       apresentacao:
         "Tratamento de infiltração nas paredes da garagem e do quarto, com corte atravessando a parede na altura do rodapé, recomposição, massa corrida e pintura. O rodapé em porcelanato é retirado e reinstalado, reaproveitando as mesmas peças. Inclui a correção do rufo do telhado, no lado direito da varanda.",
       nota_custos:
-        "Escopo reduzido em relação à versão anterior, com os mesmos preços unitários. O tratamento é medido pelo corrido de parede — 31,22 m entre a garagem e o quarto —, porque o corte atravessa a parede de um lado ao outro; o rodapé, a massa corrida e a pintura são medidos nas duas faces, 62,44 m. Os rodapés são reaproveitados, sem compra de peça nova. A correção do rufo permanece do orçamento anterior.",
+        "Escopo reduzido em relação à versão anterior, com os mesmos preços unitários. Todos os serviços de parede são medidos nos dois lados: 62,44 m, de um corrido de 31,22 m entre a garagem e o quarto. Os rodapés são reaproveitados, sem compra de peça nova. A correção do rufo permanece do orçamento anterior.",
       updated_at: new Date().toISOString(),
     })
     .eq("id", o.id);
