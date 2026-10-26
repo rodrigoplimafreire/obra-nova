@@ -279,7 +279,9 @@ const AREA_EXTERNA: Proposta = {
     senha: "Shalom2026",
     validade_dias: 20,
     valor_fechado: 7608,
-    prazo: null,
+    // Prazo do Rodrigo, 26/10/2026. Corridos, como no Rafael: o documento
+    // de assinar não pode deixar a contagem em aberto.
+    prazo: "15 dias corridos",
     entrada_percentual: null,
     parcelas: 2,
     pagamento: PAGAMENTO,
