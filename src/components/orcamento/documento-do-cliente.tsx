@@ -872,6 +872,15 @@ export function DocumentoDoCliente({
                     <span className="v">{documento.endereco}</span>
                   </div>
                 )}
+                {/* O prazo mora aqui também, e não só na etiqueta ao lado do
+                    texto: o resumo é o que o cliente lê para decidir, e prazo
+                    e preço são as duas perguntas que ele faz primeiro. */}
+                {documento.prazo && (
+                  <div className="sc-row">
+                    <span className="k">Prazo</span>
+                    <span className="v">{documento.prazo}</span>
+                  </div>
+                )}
                 {opcoes.length === 0 && (
                   <div className="sc-row">
                     <span className="k">Itens</span>
