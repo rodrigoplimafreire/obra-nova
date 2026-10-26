@@ -359,6 +359,27 @@ export function DocumentoDoCliente({
   // Coluna só existe se algum módulo tem o número. Coluna inteira de
   // travessões passa a impressão de proposta preenchida pela metade.
   const mostraValorDeModulo = modulos.some((m) => m.valor !== null);
+
+  // O acréscimo de nota fiscal incide sobre o total geral, material incluído.
+  // Arredondado ao centavo uma vez só, aqui, para o card e qualquer outro
+  // lugar que mostre o número dizerem a mesma coisa.
+  const notaFiscal =
+    documento.notaFiscalPercentual !== null &&
+    !documento.totalADefinir &&
+    opcoes.length === 0 &&
+    documento.totalGeral > 0
+      ? {
+          percentual: documento.notaFiscalPercentual,
+          valor:
+            Math.round(
+              documento.totalGeral * (1 + documento.notaFiscalPercentual / 100) * 100,
+            ) / 100,
+        }
+      : null;
+  // Mesma regra para o prazo. Preço fechado por macroetapa sem cronograma é
+  // o caso comum, e a coluna inteira de travessões ao lado dos valores faria
+  // a proposta parecer incompleta exatamente onde ela não está.
+  const mostraPrazoDeModulo = modulos.some((m) => m.prazo !== null);
   const mostraPercentual = modulos.some((m) => m.percentual !== null);
   const ultimaSemana = cronograma.reduce((m, c) => Math.max(m, c.semana), 0);
 
@@ -952,6 +973,26 @@ export function DocumentoDoCliente({
                     </span>
                   </div>
                 )}
+                {/* O valor com nota fiscal sai calculado, logo abaixo do
+                    total: quem precisa de nota quer esse número, e deixá-lo
+                    numa observação lá embaixo obrigava o cliente a fazer a
+                    conta. Some quando o total ainda não existe ou varia por
+                    opção — acréscimo sobre um número incerto é outro número
+                    incerto. */}
+                {notaFiscal !== null && (
+                  <div className="sc-row">
+                    <span className="k">
+                      Com nota fiscal (+{numero(notaFiscal.percentual)}%)
+                    </span>
+                    <span className="v">{moeda(notaFiscal.valor)}</span>
+                  </div>
+                )}
+                <div className="sc-row">
+                  <span className="k">Validade</span>
+                  <span className="v">
+                    até {validoAte(documento.publicadoEm, documento.validadeDias)}
+                  </span>
+                </div>
               </div>
               <div className="sc-print">
                 <BotaoImprimir />
@@ -1074,8 +1115,9 @@ export function DocumentoDoCliente({
             </p>
             <h2>As etapas da obra</h2>
             <p className="intro">
-              O serviço dividido em macroetapas, com o prazo previsto de cada
-              uma.
+              {mostraPrazoDeModulo
+                ? "O serviço dividido em macroetapas, com o prazo previsto de cada uma."
+                : "O serviço dividido em macroetapas, com o valor de cada uma e o quanto ela representa do total."}
             </p>
 
             <div className="cost-wrap">
@@ -1083,7 +1125,7 @@ export function DocumentoDoCliente({
                 <thead>
                   <tr>
                     <th>Macroetapa</th>
-                    <th>Prazo previsto</th>
+                    {mostraPrazoDeModulo && <th>Prazo previsto</th>}
                     {mostraValorDeModulo && <th className="ct-num">Valor</th>}
                     {mostraPercentual && <th className="ct-num">% do total</th>}
                   </tr>
@@ -1097,7 +1139,9 @@ export function DocumentoDoCliente({
                         </span>
                         {m.nome}
                       </td>
-                      <td className="unit">{m.prazo ?? "—"}</td>
+                      {mostraPrazoDeModulo && (
+                        <td className="unit">{m.prazo ?? "—"}</td>
+                      )}
                       {mostraValorDeModulo && (
                         <td className="num">
                           {m.valor !== null ? moeda(m.valor) : "—"}

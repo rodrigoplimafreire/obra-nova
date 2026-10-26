@@ -386,6 +386,7 @@ type TabelasDeOrcamento = {
       midias_titulo: string | null;
       midias_texto: string | null;
       material_percentual: number | null;
+      nota_fiscal_percentual: number | null;
       total_a_definir: boolean;
       valor_fechado: number | null;
       /** Eixo comercial, separado do `status` (preparo do documento). */
@@ -430,6 +431,7 @@ type TabelasDeOrcamento = {
       midias_titulo?: string | null;
       midias_texto?: string | null;
       material_percentual?: number | null;
+      nota_fiscal_percentual?: number | null;
       total_a_definir?: boolean;
       valor_fechado?: number | null;
       situacao?: OrcSituacao;
@@ -462,6 +464,7 @@ type TabelasDeOrcamento = {
       midias_titulo?: string | null;
       midias_texto?: string | null;
       material_percentual?: number | null;
+      nota_fiscal_percentual?: number | null;
       total_a_definir?: boolean;
       valor_fechado?: number | null;
       situacao?: OrcSituacao;

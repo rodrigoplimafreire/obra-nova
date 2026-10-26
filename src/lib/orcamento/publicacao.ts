@@ -141,6 +141,8 @@ export type DocumentoPublicado = {
    * separa material, e o total é o que sempre foi.
    */
   materialPercentual: number | null;
+  /** Acréscimo com nota fiscal, em %. Congelado: muda o número que o cliente aceita. */
+  notaFiscalPercentual: number | null;
   /**
    * O valor da obra ainda não existe. O documento mostra "a definir" no lugar
    * do total, mantém os subtotais do que já tem preço e não oferece aceite.
@@ -216,6 +218,7 @@ type OrcamentoDeOrigem = {
   midiasTitulo: string | null;
   midiasTexto: string | null;
   materialPercentual: number | null;
+  notaFiscalPercentual: number | null;
   totalADefinir: boolean;
   materiais: MaterialPublicado[];
   opcoes: Array<{ id: string; nome: string; descricao: string | null }>;
@@ -322,6 +325,7 @@ export function montarDocumento(
     midiasTitulo: orcamento.midiasTitulo,
     midiasTexto: orcamento.midiasTexto,
     materialPercentual: orcamento.materialPercentual,
+    notaFiscalPercentual: orcamento.notaFiscalPercentual,
     totalADefinir: orcamento.totalADefinir,
     materiais: orcamento.materiais.map((m) => ({
       grupo: m.grupo,
@@ -554,6 +558,7 @@ export function lerDocumento(bruto: unknown): DocumentoPublicado | null {
     midiasTitulo: texto(d.midiasTitulo),
     midiasTexto: texto(d.midiasTexto),
     materialPercentual: numero(d.materialPercentual),
+    notaFiscalPercentual: numero(d.notaFiscalPercentual),
     totalADefinir: d.totalADefinir === true,
     materiais,
     opcoes,

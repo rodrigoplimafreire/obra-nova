@@ -299,6 +299,8 @@ export type OrcamentoCompleto = {
   midiasTexto: string | null;
   /** Estimativa de material, em % sobre a mão de obra. Nulo = não separa. */
   materialPercentual: number | null;
+  /** Acréscimo, em %, quando o cliente pede nota fiscal. Nulo = não se fala nisso. */
+  notaFiscalPercentual: number | null;
   /** O valor da obra ainda não existe: o documento mostra "a definir". */
   totalADefinir: boolean;
 
@@ -533,6 +535,7 @@ export async function carregarOrcamento(
     midiasTitulo: o.midias_titulo,
     midiasTexto: o.midias_texto,
     materialPercentual: o.material_percentual,
+    notaFiscalPercentual: o.nota_fiscal_percentual,
     totalADefinir: o.total_a_definir,
 
     situacao: o.situacao,
