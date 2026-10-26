@@ -5,33 +5,27 @@
  * Maria Viviane Lucena Dodo (CREA 363320CE, junho de 2026, parecer NÃO
  * CONFORME, cobertura e elétrica em risco CRÍTICO) e oito fotos da obra.
  *
- * **Nenhum preço veio junto.** Tudo saiu da tabela de mão de obra da RD
- * (2025 + 10%, faixa de empresa) onde ela tem o serviço, e de estimativa
- * minha onde não tem — e cada estimativa está marcada. Por isso o documento
- * nasce **preliminar**, com a tarja:
+ * **Os preços são do Rodrigo**, por macroetapa, com material e mão de obra:
+ * R$ 69.679,00. A primeira versão saiu preliminar, com estimativa minha linha a
+ * linha e só mão de obra; esta substitui tudo aquilo.
  *
- * - da tabela: forro de drywall R$ 33/m², lavagem de telhado R$ 23,10/m²,
- *   ponto de eletroduto R$ 44, ponto elétrico R$ 55, disjuntor no quadro R$ 44;
- * - meus: demolição do forro, pintura anticorrosiva por metro de perfil e por
- *   tesoura, correção da tesoura rompida, troca de terça, troca de calha,
- *   retirada da elétrica antiga e remanejamento do rack.
+ * Como o preço vem por macroetapa e não por linha, o documento usa as duas
+ * seções que a estrutura canônica tem para isso: a **seção 2**, o resumo por
+ * módulo, leva o valor e o percentual de cada macroetapa; a **seção 3**, a
+ * planilha, leva os serviços item a item, sem valor por linha, e o total
+ * fecha em `valor_fechado`. Distribuir os R$ 22.457,00 do forro entre a
+ * demolição e o drywall novo seria inventar a divisão.
  *
- * **Três premissas que mudam o valor**, escritas no documento:
+ * O valor do forro confirma o que a primeira versão supunha: R$ 129 o m² com
+ * material não é só demolição, é demolição mais forro novo — o que o laudo
+ * recomenda.
  *
- * 1. **Só mão de obra.** O levantamento não diz, e é o regime de quase toda
- *    proposta da RD. Com material, o total sobe muito — perfis, calhas,
- *    chapas de drywall, cabos, quadro e disjuntores.
- * 2. **O forro novo entra.** O texto fala em demolição; o laudo recomenda
- *    remover o forro e instalar drywall novo, e a primeira foto já mostra a
- *    estrutura galvanizada pendurada. Se for só demolição, saem R$ 5.732,10.
- * 3. **57 pontos elétricos** para os cinco cômodos — 20 de iluminação, 24
- *    tomadas, 8 interruptores e 5 de ar-condicionado. A contagem não veio;
- *    é a densidade normal de loja com depósito, e o levantamento confirma.
+ * **Nota fiscal**: acréscimo de 15% quando o cliente pedir, a pedido do
+ * Rodrigo. O valor com nota sai escrito, para o cliente não fazer a conta.
  *
  * **Amianto.** As telhas existentes contêm amianto, proibido desde 2017. A
  * manutenção não usa jato de alta pressão, não corta nem lixa telha, e a
- * telha trocada é de fibrocimento sem amianto. O descarte do que sair é
- * resíduo classe D e vai para destino licenciado — à parte.
+ * telha trocada é de fibrocimento sem amianto.
  *
  * Rodar com `--gravar`.
  */
@@ -57,32 +51,38 @@ const FOTOS_DIR =
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-/* As medidas do levantamento. */
-const FORRO = r2(5.39 * 7.84 + 6.81 * 9.57 + 3.21 * 14.74 + 4.67 * 4.06);
-const GALPAO = r2(10.12 * 18.69);
-const TERCAS = r2(8 * 18.69);
-const COLUNAS = 8 * 4;
-const TERCAS_NOVAS = r2(2 * 18.69);
-const CALHAS = r2(2 * 18.69);
+const TOTAL = 69679;
+const NOTA_FISCAL = 0.15;
+const COM_NOTA = r2(TOTAL * (1 + NOTA_FISCAL));
 
-const PONTOS = { iluminacao: 20, tomada: 24, interruptor: 8, ar: 5 };
-const TOTAL_PONTOS = Object.values(PONTOS).reduce((a, b) => a + b, 0);
+/* As medidas do levantamento. */
+const FORRO = 173.7;
+const GALPAO = r2(10.12 * 18.69);
 
 const G1 = "1 · Forro";
-const G2 = "2 · Estrutura metálica e cobertura";
-const G3 = "3 · Instalação elétrica";
-const G4 = "4 · Rede de dados";
+const G2 = "2 · Estrutura metálica";
+const G3 = "3 · Calhas";
+const G4 = "4 · Telhado";
+const G5 = "5 · Instalação elétrica";
+const G6 = "6 · Rede de dados";
+
+/** Seção 2: o preço do Rodrigo, por macroetapa. Soma conferida contra o total. */
+const MODULOS: Array<{ grupo: string; nome: string; valor: number }> = [
+  { grupo: G1, nome: "Forro: demolição e forro novo em drywall", valor: 22457 },
+  { grupo: G2, nome: "Estrutura metálica: tratamento, tesoura e terças", valor: 12027 },
+  { grupo: G3, nome: "Substituição das calhas", valor: 4100 },
+  { grupo: G4, nome: "Manutenção do telhado de fibrocimento", valor: 3650 },
+  { grupo: G5, nome: "Instalação elétrica completa", valor: 26435 },
+  { grupo: G6, nome: "Remanejamento do rack de rede", valor: 1010 },
+];
 
 type Item = {
   grupo: string;
   descricao: string;
-  quantidade: number;
-  unidade: string;
-  valor: number;
+  quantidade?: number;
+  unidade?: string;
   observacao?: string;
 };
-
-const ESTIMATIVA = "Preço estimado pela RD: a tabela de mão de obra não tem este serviço.";
 
 const ITENS: Item[] = [
   {
@@ -91,8 +91,6 @@ const ITENS: Item[] = [
       "Demolição do forro de gesso em placas danificado por vícios construtivos e umidade, com ensacamento do entulho — quatro áreas: 5,39 × 7,84 m, 6,81 × 9,57 m, 3,21 × 14,74 m e 4,67 × 4,06 m",
     quantidade: FORRO,
     unidade: "m²",
-    valor: 15,
-    observacao: ESTIMATIVA,
   },
   {
     grupo: G1,
@@ -100,7 +98,6 @@ const ITENS: Item[] = [
       "Instalação de forro em gesso drywall nas mesmas áreas, com estrutura, chapas e tratamento de juntas",
     quantidade: FORRO,
     unidade: "m²",
-    valor: 33,
     observacao:
       "Recomendado pelo laudo. Executado só depois de resolvida a cobertura, para o forro novo não receber a mesma água.",
   },
@@ -109,138 +106,109 @@ const ITENS: Item[] = [
     grupo: G2,
     descricao:
       "Lixamento e pintura de proteção anticorrosiva, com fundo e acabamento, de 8 terças de 18,69 m",
-    quantidade: TERCAS,
-    unidade: "m",
-    valor: 18,
-    observacao: ESTIMATIVA,
+    quantidade: 8,
+    unidade: "un",
   },
   {
     grupo: G2,
     descricao:
-      "Lixamento e pintura de proteção anticorrosiva, com fundo e acabamento, de tesoura metálica de 10,12 m de vão — banzos, montantes e diagonais",
+      "Lixamento e pintura de proteção anticorrosiva, com fundo e acabamento, de 4 tesouras metálicas de 10,12 m de vão — banzos, montantes e diagonais",
     quantidade: 4,
     unidade: "un",
-    valor: 500,
-    observacao: ESTIMATIVA,
   },
   {
     grupo: G2,
     descricao:
       "Lixamento e pintura de proteção anticorrosiva, com fundo e acabamento, de 8 colunas metálicas de 4,00 m",
-    quantidade: COLUNAS,
-    unidade: "m",
-    valor: 18,
-    observacao: ESTIMATIVA,
+    quantidade: 8,
+    unidade: "un",
   },
   {
     grupo: G2,
     descricao:
-      "Correção da tesoura com o banzo inferior rompido por corrosão: escoramento, corte e substituição do perfil inferior de 10,12 m, com soldagem",
+      "Correção da tesoura com o banzo inferior danificado por oxidação: escoramento, corte e substituição do perfil inferior de 10,12 m, com soldagem",
     quantidade: 1,
-    unidade: "serv",
-    valor: 1200,
-    observacao: `${ESTIMATIVA} O laudo pede intervenção imediata nesta peça.`,
+    unidade: "un",
+    observacao: "O laudo pede intervenção imediata nesta peça.",
   },
   {
     grupo: G2,
     descricao: "Substituição de 2 terças de 18,69 m, com retirada das peças comprometidas",
-    quantidade: TERCAS_NOVAS,
-    unidade: "m",
-    valor: 25,
-    observacao: ESTIMATIVA,
+    quantidade: 2,
+    unidade: "un",
   },
+
   {
-    grupo: G2,
+    grupo: G3,
     descricao:
       "Retirada das 2 calhas de zinco danificadas e instalação de calhas novas de 20 × 10 cm",
-    quantidade: CALHAS,
+    quantidade: 37.38,
     unidade: "m",
-    valor: 35,
-    observacao: ESTIMATIVA,
   },
+
   {
-    grupo: G2,
+    grupo: G4,
     descricao:
-      "Manutenção do telhado de fibrocimento: limpeza a baixa pressão, revisão das fixações e vedações e troca pontual das telhas danificadas",
+      "Manutenção do telhado de fibrocimento: limpeza a baixa pressão, revisão das fixações e vedações e troca pontual das telhas danificadas (10,12 × 18,69 m)",
     quantidade: GALPAO,
     unidade: "m²",
-    valor: 23.1,
     observacao:
       "Telhas com amianto: sem jato de alta pressão, sem corte e sem lixamento. A telha trocada é de fibrocimento sem amianto.",
   },
 
   {
-    grupo: G3,
+    grupo: G5,
     descricao:
       "Retirada da instalação existente: cabos, eletrodutos de garganta e canaletas aparentes",
     quantidade: 1,
     unidade: "serv",
-    valor: 800,
-    observacao: ESTIMATIVA,
   },
   {
-    grupo: G3,
-    descricao: "Infraestrutura em eletroduto rígido com caixas de passagem, por ponto",
-    quantidade: TOTAL_PONTOS,
-    unidade: "un",
-    valor: 44,
-  },
-  {
-    grupo: G3,
-    descricao: "Pontos de iluminação, com passagem de cabos",
-    quantidade: PONTOS.iluminacao,
-    unidade: "un",
-    valor: 55,
-  },
-  {
-    grupo: G3,
-    descricao: "Pontos de tomada, com passagem de cabos",
-    quantidade: PONTOS.tomada,
-    unidade: "un",
-    valor: 55,
-  },
-  {
-    grupo: G3,
-    descricao: "Pontos de interruptor, com passagem de cabos",
-    quantidade: PONTOS.interruptor,
-    unidade: "un",
-    valor: 55,
-  },
-  {
-    grupo: G3,
-    descricao: "Pontos de ar-condicionado em circuito dedicado",
-    quantidade: PONTOS.ar,
-    unidade: "un",
-    valor: 55,
-  },
-  {
-    grupo: G3,
+    grupo: G5,
     descricao:
-      "Montagem do quadro de distribuição de 24 posições com 18 disjuntores DIN, DR e DPS, com folga para disjuntores futuros",
-    quantidade: 18,
-    unidade: "disjuntor",
-    valor: 44,
+      "Infraestrutura nova em eletroduto rígido com caixas de passagem, nos cinco cômodos (10,12 × 18,69 m, pé-direito de 2,70 m)",
+    quantidade: 1,
+    unidade: "serv",
+  },
+  {
+    grupo: G5,
+    descricao: "Passagem dos cabos elétricos em todos os circuitos",
+    quantidade: 1,
+    unidade: "serv",
+  },
+  {
+    grupo: G5,
+    descricao:
+      "Pontos de tomada, iluminação, interruptores e ar-condicionado, com circuitos dedicados para os aparelhos de ar",
+    quantidade: 1,
+    unidade: "serv",
+  },
+  {
+    grupo: G5,
+    descricao:
+      "Montagem do quadro de distribuição de 24 posições com 18 disjuntores DIN, com folga para disjuntores futuros",
+    quantidade: 1,
+    unidade: "un",
   },
 
   {
-    grupo: G4,
+    grupo: G6,
     descricao:
-      "Tubulação para passagem do cabeamento de dados até o escritório, em eletroduto, com cerca de 10 m",
+      "Tubulação para passagem do cabeamento de dados até o escritório, com cerca de 10 m",
     quantidade: 10,
     unidade: "m",
-    valor: 25,
-    observacao: ESTIMATIVA,
   },
   {
-    grupo: G4,
+    grupo: G6,
     descricao:
-      "Remanejamento do rack do servidor para o escritório: desmontagem, transporte, fixação, passagem e reconexão dos cabos",
+      "Remanejamento do rack do servidor de internet para o escritório: desmontagem, fixação, passagem e reconexão dos cabos",
     quantidade: 1,
     unidade: "serv",
-    valor: 450,
-    observacao: `${ESTIMATIVA} Configuração de rede e de equipamentos não incluída.`,
   },
 ];
+
+const moeda = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const CABECALHO = {
   cliente_nome: "Dovale Fortaleza Comércio de Chaves e Ferragens",
@@ -248,19 +216,20 @@ const CABECALHO = {
   objeto: "Recuperação da cobertura, estrutura metálica, forro e instalação elétrica",
   senha: "Dovale2026",
   validade_dias: 20,
-  valor_fechado: null,
+  valor_fechado: TOTAL,
   prazo: null,
   entrada_percentual: null,
   parcelas: 2,
   pagamento: "condições de pagamento a definir com a Dovale",
   marca: "rd",
-  preliminar: true,
+  preliminar: false,
+  // O card de resumo calcula e mostra o total com nota a partir daqui.
+  nota_fiscal_percentual: NOTA_FISCAL * 100,
   apresentacao:
-    "Recuperação do galpão da loja Dovale, de 10,12 × 18,69 m, a partir do laudo de inspeção predial que classificou a cobertura e a instalação elétrica em risco crítico: tratamento da estrutura metálica e correção da tesoura rompida, troca de terças e calhas, manutenção do telhado de fibrocimento, forro novo em drywall, instalação elétrica nova em eletroduto rígido e remanejamento do rack de rede para o escritório. Orçamento de mão de obra.",
+    "Recuperação do galpão da loja Dovale, de 10,12 × 18,69 m, a partir do laudo de inspeção predial que classificou a cobertura e a instalação elétrica em risco crítico: forro novo em drywall, tratamento da estrutura metálica e correção da tesoura danificada, troca de terças e calhas, manutenção do telhado de fibrocimento, instalação elétrica nova em eletroduto rígido e remanejamento do rack de rede para o escritório. Material e mão de obra inclusos.",
   intro_custos:
-    "Os serviços estão item a item, na ordem em que a obra deve acontecer: primeiro o que estanca a água, depois o que ela estragou. Os valores são de mão de obra; o material fica por conta da contratante.",
-  nota_custos:
-    "Somente mão de obra. Os preços seguem a tabela de mão de obra da RD onde ela tem o serviço; os demais são estimativa da RD e estão marcados na própria linha. A contagem de 57 pontos elétricos é premissa para cinco cômodos e será confirmada em levantamento. Não estão incluídos material, locação de andaime ou plataforma para o trabalho a 5 m de altura, caçamba, descarte das telhas e resíduos com amianto em destino licenciado, nem configuração de rede.",
+    "Os serviços estão item a item, na ordem das macroetapas. O valor de cada macroetapa está no resumo orçamentário acima; o total abaixo inclui material e mão de obra.",
+  nota_custos: `Valor com material e mão de obra. Com emissão de nota fiscal há acréscimo de 15%, e o total passa a ${moeda(COM_NOTA)}. Não estão incluídos a locação de andaime ou plataforma para o trabalho a 5 m de altura, o descarte das telhas e resíduos com amianto em destino licenciado, nem a configuração de rede e de equipamentos.`,
 };
 
 type Secao = { tipo: "projeto" | "observacao" | "etapa"; titulo: string; texto: string };
@@ -270,19 +239,19 @@ const SECOES: Secao[] = [
     tipo: "projeto",
     titulo: "Cobertura · Primeiro estancar a água",
     texto:
-      "O laudo aponta a cobertura como origem de quase tudo: frestas, telhas fissuradas, arremates soltos e calhas de zinco danificadas deixam a água entrar. Por isso a obra começa por cima — calhas novas de 20 × 10 cm, revisão de fixações e vedações e troca das telhas quebradas.",
+      "O laudo aponta a cobertura como origem de quase tudo: frestas, telhas fissuradas, arremates soltos e calhas de zinco danificadas deixam a água entrar. Por isso a obra começa por cima — 37,38 m de calhas novas de 20 × 10 cm, revisão de fixações e vedações e troca das telhas quebradas.",
   },
   {
     tipo: "projeto",
     titulo: "Estrutura metálica · Corrosão tratada e tesoura recuperada",
     texto:
-      "Terças, tesouras e colunas são lixadas até o metal são e recebem fundo anticorrosivo e acabamento. A tesoura com o banzo inferior rompido pela corrosão é escorada, e o perfil inferior de 10,12 m é substituído e soldado. Duas terças de 18,69 m saem e dão lugar a peças novas.",
+      "Terças, tesouras e colunas são lixadas até o metal são e recebem fundo anticorrosivo e acabamento. A tesoura com o banzo inferior danificado pela oxidação é escorada, e o perfil inferior de 10,12 m é substituído e soldado. Duas terças de 18,69 m saem e dão lugar a peças novas.",
   },
   {
     tipo: "projeto",
     titulo: "Elétrica · Instalação nova, longe da umidade",
     texto:
-      "Os cabos aparentes e os eletrodutos de garganta saem. A instalação nova corre em eletroduto rígido com caixas de passagem, com pontos de iluminação, tomadas, interruptores e circuitos dedicados de ar-condicionado, e um quadro de 24 posições com 18 disjuntores, DR e DPS, com folga para crescer.",
+      "Os cabos aparentes e os eletrodutos de garganta saem. A instalação nova corre em eletroduto rígido com caixas de passagem nos cinco cômodos, com pontos de tomada, iluminação, interruptores e circuitos de ar-condicionado, e um quadro de 24 posições com 18 disjuntores, com folga para crescer.",
   },
   {
     tipo: "projeto",
@@ -294,9 +263,14 @@ const SECOES: Secao[] = [
     tipo: "projeto",
     titulo: "Rede · Rack para o escritório",
     texto:
-      "O rack do servidor muda para o escritório, com tubulação própria de cerca de 10 m para o cabeamento de dados, separada da elétrica.",
+      "O rack do servidor de internet muda para o escritório, com tubulação própria de cerca de 10 m para o cabeamento de dados, separada da elétrica.",
   },
 
+  {
+    tipo: "observacao",
+    titulo: "Nota fiscal",
+    texto: `Os valores desta proposta são sem nota fiscal. Com emissão de nota fiscal, há acréscimo de 15%: o total de ${moeda(TOTAL)} passa a ${moeda(COM_NOTA)}.`,
+  },
   {
     tipo: "observacao",
     titulo: "Telhas com amianto",
@@ -311,22 +285,15 @@ const SECOES: Secao[] = [
   },
   {
     tipo: "observacao",
-    titulo: "Pontos elétricos a confirmar",
+    titulo: "Material e mão de obra inclusos",
     texto:
-      "A quantidade de pontos — 20 de iluminação, 24 tomadas, 8 interruptores e 5 de ar-condicionado — é estimada para os cinco cômodos. O levantamento em obra define o número final, e a diferença é ajustada por escrito, pelo mesmo preço por ponto.",
-  },
-  {
-    tipo: "observacao",
-    titulo: "Material por conta da contratante",
-    texto:
-      "Os valores são de mão de obra. Perfis, calhas, telhas, tinta anticorrosiva, chapas e estrutura de drywall, eletrodutos, cabos, quadro, disjuntores e acessórios ficam por conta da Dovale, conforme a especificação acordada com a RD.",
+      "O valor cobre o material e a mão de obra dos serviços descritos: chapas e estrutura de drywall, perfis, tinta anticorrosiva, calhas, telhas de reposição, eletrodutos, cabos, quadro, disjuntores e a tubulação da rede.",
   },
 
   {
     tipo: "etapa",
     titulo: "Aprovação e programação",
-    texto:
-      "Você aprova a proposta, confirmamos o levantamento elétrico e combinamos data de início, pagamento e compra dos materiais.",
+    texto: "Você aprova a proposta e combinamos data de início e condições de pagamento.",
   },
   {
     tipo: "etapa",
@@ -391,26 +358,22 @@ const FOTOS: Array<{ arquivo: string; legenda: string }> = [
   },
 ];
 
-const moeda = (n: number) =>
-  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const totalDaLinha = (i: Item) => r2(i.quantidade * i.valor);
-
 async function main() {
-  if (TOTAL_PONTOS !== 57) throw new Error(`os pontos somam ${TOTAL_PONTOS}, e eu contava 57.`);
+  const soma = MODULOS.reduce((s, m) => s + m.valor, 0);
+  if (soma !== TOTAL) throw new Error(`as macroetapas somam ${soma}, e o total é ${TOTAL}.`);
+  for (const m of MODULOS) {
+    if (!ITENS.some((i) => i.grupo === m.grupo)) throw new Error(`${m.grupo} sem itens.`);
+  }
   for (const f of FOTOS) {
     if (!existsSync(`${FOTOS_DIR}/${f.arquivo}`)) throw new Error(`não achei ${f.arquivo}`);
   }
 
-  const grupos = [...new Set(ITENS.map((i) => i.grupo))];
-  let total = 0;
-  console.log(`\nDovale · forro ${FORRO} m² · galpão ${GALPAO} m² · ${TOTAL_PONTOS} pontos\n`);
-  for (const g of grupos) {
-    const sub = r2(ITENS.filter((i) => i.grupo === g).reduce((s, i) => s + totalDaLinha(i), 0));
-    total += sub;
-    console.log(`  ${g.padEnd(38)} ${moeda(sub).padStart(13)}`);
+  console.log(`\nDovale · ${moeda(TOTAL)} com material · com nota ${moeda(COM_NOTA)}\n`);
+  for (const m of MODULOS) {
+    console.log(
+      `  ${m.nome.padEnd(52)} ${moeda(m.valor).padStart(12)}  ${((m.valor / TOTAL) * 100).toFixed(1)}%`,
+    );
   }
-  total = r2(total);
-  console.log(`  ${"TOTAL".padEnd(38)} ${moeda(total).padStart(13)}`);
   console.log(`\n  ${ITENS.length} itens · ${SECOES.length} seções · ${NORMAS.length} normas · ${FOTOS.length} fotos`);
 
   if (!GRAVAR) {
@@ -423,7 +386,7 @@ async function main() {
   if (existente) {
     id = existente.id;
     await sb.from("orc_orcamentos").update(CABECALHO).eq("id", id);
-    for (const t of ["orc_itens", "orc_secoes", "orc_normas", "orc_midias"] as const) {
+    for (const t of ["orc_itens", "orc_secoes", "orc_normas", "orc_midias", "orc_modulos"] as const) {
       await sb.from(t).delete().eq("orcamento_id", id);
     }
   } else {
@@ -443,9 +406,9 @@ async function main() {
       position: n + 1,
       descricao: i.descricao,
       observacao: i.observacao ?? null,
-      quantidade: i.quantidade,
-      unidade: i.unidade,
-      valor_unitario: i.valor,
+      quantidade: i.quantidade ?? null,
+      unidade: i.unidade ?? null,
+      valor_unitario: null,
       origem: "humano" as const,
     })),
   );
@@ -467,6 +430,18 @@ async function main() {
     NORMAS.map((texto, n) => ({ orcamento_id: id, position: n + 1, texto })),
   );
   if (e3.error) throw new Error(`normas: ${e3.error.message}`);
+
+  const e5 = await sb.from("orc_modulos").insert(
+    MODULOS.map((m, n) => ({
+      orcamento_id: id,
+      position: n + 1,
+      nome: m.nome,
+      prazo: null,
+      valor: m.valor,
+      percentual: Math.round((m.valor / TOTAL) * 1000) / 10,
+    })),
+  );
+  if (e5.error) throw new Error(`módulos: ${e5.error.message}`);
 
   for (const [n, f] of FOTOS.entries()) {
     const destino = `${id}/situacao-${String(n + 1).padStart(2, "0")}.jpg`;
@@ -495,10 +470,7 @@ async function main() {
     })
     .eq("id", id);
 
-  const { data: g } = await sb.from("orc_itens").select("total").eq("orcamento_id", id);
-  const noBanco = r2((g ?? []).reduce((s, l) => s + Number(l.total ?? 0), 0));
-  if (Math.abs(noBanco - total) > 0.01) throw new Error(`soma ${noBanco} ≠ ${total}`);
-  console.log(`\n  gravado · soma no banco ${moeda(noBanco)} ✓`);
+  console.log(`\n  gravado ✓`);
   console.log(`\nAgora publique:  npm run publicar -- ${TOKEN}`);
 }
 
