@@ -66,6 +66,12 @@ type Proposta = {
   itens: Item[];
   secoes: Secao[];
   normas: string[];
+  /**
+   * Seção 2, o resumo por macroetapa. Só entra com prazo: a coluna de prazo
+   * sempre aparece no documento, e sem ele viraria uma coluna inteira de
+   * travessões — por isso a capela, sem prazo ainda, fica sem resumo.
+   */
+  modulos?: Array<{ nome: string; prazo: string }>;
 };
 
 const PAGAMENTO =
@@ -385,6 +391,19 @@ const AREA_EXTERNA: Proposta = {
     NORMA_REFORMA,
     "ABNT NBR 10844 — Instalações prediais de águas pluviais: calha dimensionada e instalada com caimento contínuo para o escoamento.",
   ],
+  /*
+   * Os 15 dias do Rodrigo, distribuídos por mim — a divisão é proposta, não
+   * medida. As paredes levam mais da metade porque o reboco corrigido precisa
+   * curar antes do fundo preparador, e textura sobre reboco verde descasca.
+   * Sem valor por macroetapa: o preço é fechado, e a tabela sai só com
+   * macroetapa e prazo, como manda a estrutura canônica.
+   */
+  modulos: [
+    { nome: "Calha de PVC", prazo: "2 dias" },
+    { nome: "Piso da calçada: demolição, compactação e concretagem", prazo: "4 dias" },
+    { nome: "Paredes externas: textura, reboco, fundo e textura nova", prazo: "8 dias" },
+    { nome: "Limpeza e entrega", prazo: "1 dia" },
+  ],
 };
 
 const moeda = (n: number) =>
@@ -403,7 +422,7 @@ async function gravar(p: Proposta) {
   if (existente) {
     id = existente.id;
     await sb.from("orc_orcamentos").update(p.cabecalho).eq("id", id);
-    for (const t of ["orc_itens", "orc_secoes", "orc_normas"] as const) {
+    for (const t of ["orc_itens", "orc_secoes", "orc_normas", "orc_modulos"] as const) {
       await sb.from(t).delete().eq("orcamento_id", id);
     }
   } else {
@@ -447,6 +466,25 @@ async function gravar(p: Proposta) {
     p.normas.map((texto, n) => ({ orcamento_id: id, position: n + 1, texto })),
   );
   if (r3.error) throw new Error(`normas: ${r3.error.message}`);
+
+  if (p.modulos?.length) {
+    const dias = p.modulos.reduce((s, m) => s + parseInt(m.prazo, 10), 0);
+    const total = parseInt(String(p.cabecalho.prazo ?? ""), 10);
+    if (total && dias !== total) {
+      throw new Error(`as macroetapas somam ${dias} dias e o prazo é ${total}.`);
+    }
+    const r4 = await sb.from("orc_modulos").insert(
+      p.modulos.map((m, n) => ({
+        orcamento_id: id,
+        position: n + 1,
+        nome: m.nome,
+        prazo: m.prazo,
+        valor: null,
+        percentual: null,
+      })),
+    );
+    if (r4.error) throw new Error(`módulos: ${r4.error.message}`);
+  }
 
   if (!fechado) {
     const { data: g } = await sb.from("orc_itens").select("total").eq("orcamento_id", id);
