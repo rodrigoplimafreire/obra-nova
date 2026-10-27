@@ -229,7 +229,7 @@ const CABECALHO = {
     "Recuperação do galpão da loja Dovale, de 10,12 × 18,69 m, a partir do laudo de inspeção predial que classificou a cobertura e a instalação elétrica em risco crítico: forro novo em drywall, tratamento da estrutura metálica e correção da tesoura danificada, troca de terças e calhas, manutenção do telhado de fibrocimento, instalação elétrica nova em eletroduto rígido e remanejamento do rack de rede para o escritório. Material e mão de obra inclusos.",
   intro_custos:
     "Os serviços estão item a item, na ordem das macroetapas. O valor de cada macroetapa está no resumo orçamentário acima; o total abaixo inclui material e mão de obra.",
-  nota_custos: `Valor com material e mão de obra. Com emissão de nota fiscal há acréscimo de 15%, e o total passa a ${moeda(COM_NOTA)}. Não estão incluídos a locação de andaime ou plataforma para o trabalho a 5 m de altura, o descarte das telhas e resíduos com amianto em destino licenciado, nem a configuração de rede e de equipamentos.`,
+  nota_custos: `Valor com material e mão de obra. Com emissão de nota fiscal há acréscimo de 15%, e o total passa a ${moeda(COM_NOTA)}. Estão incluídos também o andaime ou a plataforma para o trabalho a 5 m de altura, a retirada do entulho e o descarte das telhas e resíduos com amianto em destino licenciado. Não está incluída a configuração de rede e de equipamentos.`,
 };
 
 type Secao = { tipo: "projeto" | "observacao" | "etapa"; titulo: string; texto: string };
@@ -275,13 +275,13 @@ const SECOES: Secao[] = [
     tipo: "observacao",
     titulo: "Telhas com amianto",
     texto:
-      "As telhas existentes contêm fibras de amianto. A manutenção é feita sem jato de alta pressão, sem corte e sem lixamento das telhas, com a equipe protegida, e as telhas trocadas são de fibrocimento sem amianto. O descarte do material retirado é feito em destino licenciado e não está neste valor.",
+      "As telhas existentes contêm fibras de amianto. A manutenção é feita sem jato de alta pressão, sem corte e sem lixamento das telhas, com a equipe protegida, e as telhas trocadas são de fibrocimento sem amianto. O descarte do material retirado é feito em destino licenciado, por conta da RD.",
   },
   {
     tipo: "observacao",
     titulo: "Trabalho a 5 m de altura",
     texto:
-      "Toda a cobertura e a estrutura ficam a cerca de 5,00 m. O serviço segue a NR-35, com equipe treinada e ancoragem. A locação de andaime ou plataforma não está incluída.",
+      "Toda a cobertura e a estrutura ficam a cerca de 5,00 m. O serviço segue a NR-35, com equipe treinada e ancoragem, e o andaime ou a plataforma ficam por conta da RD, já incluídos no valor.",
   },
   {
     tipo: "observacao",
